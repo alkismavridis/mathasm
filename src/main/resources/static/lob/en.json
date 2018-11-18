@@ -1,0 +1,58 @@
+{
+  "categories": {
+    "food":"Speciality Food",
+    "games":"Games",
+    "accessories":"Clothes & Accessoires",
+    "vehicles":"Vehicles"
+  },
+  "products": {
+    "cheeseMoon": {
+      "name": "Cheese from the Moon",
+      "desc": "Everybody knows the Moon is made of the finest Cheese."
+    },
+    "teleportChokolate": {
+      "name": "Teleport Chocolate",
+      "desc": "Different flavors available! Directly from the screen into your Mouth!"
+    },
+    "lasagne": {
+      "name": "Lasagne",
+      "desc": "I’ve never met a Lasagna yet, I didn’t like."
+    },
+    "strategema": {
+      "name": "Strategema",
+      "desc": "Try and beat Data in the hardest Strategy-game of the Galaxy!"
+    },
+    "dunshire": {
+      "name": "Cones of Dunshire",
+      "desc": "It involves an elaborate series of rules and playable characters. The goal is rather unclear."
+    },
+    "3dChess": {
+      "name": "3D-Chess",
+      "desc": "It’s like chess, but 3D. Go ask Sheldon about it."
+    },
+    "tardis": {
+      "name": "Tardis",
+      "desc": "It looks like a Phone Box, but it’s bigger on the inside."
+    },
+    "deLorean": {
+      "name": "DeLorean",
+      "desc": "Like a normal car, but capable of time-traveling. Buy now and get a Hoverboard for free!"
+    },
+    "voyager": {
+      "name": "USS Voyager",
+      "desc": "For Sale! If you actually want the Enterprise, but can’t afford it."
+    },
+    "invisibleClock": {
+      "name": "Invisibility Cloak",
+      "desc": "Nomen est Omen."
+    },
+    "ring": {
+      "name": "The Ring",
+      "desc": "No need for further description. Actually you can’t buy it. It finds you!"
+    },
+    "linusBlanket": {
+      "name": "Linus’ security blanket",
+      "desc": "Wash it before use."
+    }
+  }
+}

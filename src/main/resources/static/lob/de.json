@@ -1,0 +1,58 @@
+{
+  "categories": {
+    "food":"Kulinarische Spezialitäten",
+    "games":"Spiele",
+    "accessories":"Kleidung & Accessoires",
+    "vehicles":"Fahrzeuge"
+  },
+  "products": {
+    "cheeseMoon": {
+      "name": "Käse vom Mond",
+      "desc": "Wie jeder weiß, besteht der Mond aus Käse vom Allerfeinsten."
+    },
+    "teleportChokolate": {
+      "name": "Teleportierbare Schokolade",
+      "desc": "In unterschiedlichen Geschmacksrichtungen erhältlich! Direkt vom Bildschirm in Ihren Mund!"
+    },
+    "lasagne": {
+      "name": "Lasagne",
+      "desc": "Ich hab noch nie eine Lasagne getroffen, die ich nicht mochte."
+    },
+    "strategema": {
+      "name": "Strategema",
+      "desc": "Versuch dein Glück und schlag Data im schwierigsten Strategy-spiel der Galaxy!"
+    },
+    "dunshire": {
+      "name": "Cones of Dunshire",
+      "desc": "Beinhaltet ein ausgeklügeltes Regelwerk und eine Fülle an spielbaren Charakteren. Das Ziel ist eher unklar."
+    },
+    "3dChess": {
+      "name": "3D-Chess",
+      "desc": "Wie Schach, nur 3D. Frag Sheldon!"
+    },
+    "tardis": {
+      "name": "Tardis",
+      "desc": "Sieht aus wie eine Telefonbox, aber sie ist innen größer als außen."
+    },
+    "deLorean": {
+      "name": "DeLorean",
+      "desc": "Wie ein normales Auto, nur fähig in der Zeit zu reisen. Wenn Sie jetzt kaufen, bekommen Sie ein gratis Hoverboard dazu!"
+    },
+    "voyager": {
+      "name": "USS Voyager",
+      "desc": "Aktion! Für alle, die sich die Enterprise nicht leisten können."
+    },
+    "invisibleClock": {
+      "name": "Unsichtbarkeitsumhang",
+      "desc": "Nomen est Omen."
+    },
+    "ring": {
+      "name": "Der Ring",
+      "desc": "Bedarf keiner weiteren Erklärung. Eigentlich kannst du ihn gar nicht kaufen. Er wird dich finden!"
+    },
+    "linusBlanket": {
+      "name": "Linus’ Schmusedecke",
+      "desc": "Vor Gebrauch bitte waschen."
+    }
+  }
+}

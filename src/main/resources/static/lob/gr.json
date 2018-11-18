@@ -1,0 +1,58 @@
+{
+  "categories": {
+    "food":"Ιδιαίτερα φαγητά",
+    "games":"Παιχνίδια",
+    "accessories":"Ρούχα & εργαλεία",
+    "vehicles":"Οχήματα"
+  },
+  "products": {
+    "cheeseMoon": {
+      "name": "Τυρί από το φεγγάρι",
+      "desc": "Όλοι ξέρουν ότι το φεγγάρι είναι φτιαγμένο από τυρί."
+    },
+    "teleportChokolate": {
+      "name": "Σοκολάτα τηλεμεταφοράς",
+      "desc": "Σε διάφπρες γεύσεις! Απο την οθόνη, κατ ευθείαν στο στόμα σας!"
+    },
+    "lasagne": {
+      "name": "Λαζάνια",
+      "desc": "Δε γνώρισα ποτέ μου λαζάνια, που να μην αγαπήσω."
+    },
+    "strategema": {
+      "name": "Strategema",
+      "desc": "Παίξε και κέρδισε τον Data στο πιο δύσκολο παιχνίδι στρατηγικής του γαλαξία!"
+    },
+    "dunshire": {
+      "name": "Cones of Dunshire",
+      "desc": "It involves an elaborate series of rules and playable characters. The goal is rather unclear."
+    },
+    "3dChess": {
+      "name": "Σκάκι 3D",
+      "desc": "Σαν σκάκι, αλλά τρισδιάστατο. Ρωτήστε τον Sheldon για πληροφορίες."
+    },
+    "tardis": {
+      "name": "Tardis",
+      "desc": "Μοιάζει με τηλεφωνικό θάλαμο, αλλά είναι πολύ μεγαλύτερο από μέσα."
+    },
+    "deLorean": {
+      "name": "DeLorean",
+      "desc": "Ένα απλό αμάξι, με extra δυνατότητα για ταξίδια στο χρόνο. Αγοράστε το τώρα για να κερδίσετε ένα δωρεάν Hoverboard!"
+    },
+    "voyager": {
+      "name": "USS Voyager",
+      "desc": "Πωλείται! Σε περίπτωση που θέλατε το Enterprise, αλλά δεν είχατε τα λεφτά."
+    },
+    "invisibleClock": {
+      "name": "Αόρατο ρολόι.",
+      "desc": "Nomen est Omen."
+    },
+    "ring": {
+      "name": "Το δαχτυλίδι",
+      "desc": "Δε χρειάζεται διευκρινήσεις. Στην πραγματικότητα, δεν το αγόρασες. Αυτό σε βρήκε."
+    },
+    "linusBlanket": {
+      "name": "Η κουβερτουα του Linus.",
+      "desc": "Πλύντε το πριν τη χρήση."
+    }
+  }
+}

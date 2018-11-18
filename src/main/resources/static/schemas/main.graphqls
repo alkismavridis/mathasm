@@ -1,0 +1,83 @@
+scalar Long
+
+
+
+#region ROOT TYPES
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+type Query {
+    #App constants
+    defaultLanguage:String!
+    languages:[String!]!
+
+    #user getters
+    users:[User!]!
+    user(id:Long): User
+
+    #symbol getters
+    symbolRange(idFrom:Long!, idTo:Long!):[MathAsmSymbol!]!
+    symbols(ids:[Long!]!):[MathAsmSymbol!]!
+
+    #logic value getters
+    rootObject(depth:Int = 1): MathAsmObjectEntity
+    logicObject(id:Long!, depth:Int = 1): MathAsmObjectEntity
+
+    statement(id:Long!, depth:Int = 1): MathAsmStatementEntity
+}
+
+type Mutation {
+    login(username:String!, password:String!):User
+    signin(username:String!, password:String!):User
+    logout:Boolean!
+
+    #symbol management
+    createSymbol(text:String!, uid:Long!) : MathAsmSymbol
+
+    #axiom creation
+    createAxiom(parentId:Long!, name:String!, left:[Long!]!, grade:Int = 0, isBidirectional:Boolean = false, right:[Long!]!) : MathAsmStatementEntity!
+    createObject(parentId:Long!, name:String!) : MathAsmObjectEntity!
+}
+#endregion
+
+
+
+
+
+
+type User {
+    id:Long!
+    userName:String!
+    rights:Int!
+}
+
+
+type MathAsmStatementEntity {
+    id:Long!
+    name:String!
+    type:Int!
+
+    left : [Long!]!
+    right : [Long!]!
+
+    isBidirectional: Boolean!
+    grade: Int!
+}
+
+type MathAsmObjectEntity {
+    id:Long
+    name:String
+
+    statements:[MathAsmStatementEntity!]!
+    objects:[MathAsmObjectEntity!]!
+}
+
+type MathAsmSymbol {
+    uid:Long!
+    text:String!
+}
+
+
+
