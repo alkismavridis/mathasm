@@ -84,11 +84,6 @@ class ProofExecutorTest {
     }
 
     @Test
-    fun getInternalTest() {
-        //TODO maybe not needed. indirectly tested
-    }
-
-    @Test
     fun getSourceSideTest() {
         //1. Create a proof executor
         val state = CoreState()
@@ -102,11 +97,6 @@ class ProofExecutorTest {
         //2. assert source side
         assertEquals(MathAsmStatement_LEFT_SIDE ,executor.getSourceSide(LogicMove_LTR))
         assertEquals(MathAsmStatement_RIGHT_SIDE ,executor.getSourceSide(LogicMove_RTL))
-    }
-
-    @Test
-    fun assertBaseNotNullTest() {
-        //TODO maybe not needed. indirectly tested
     }
     //endregion
 

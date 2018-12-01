@@ -1,7 +1,9 @@
 package eu.alkismavridis.mathasm.api.resolvers
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
-import eu.alkismavridis.mathasm.api.utils.GraphqlContext
+import eu.alkismavridis.mathasm.api.GraphqlContext
+import eu.alkismavridis.mathasm.api.controller.security.SecurityService
+import eu.alkismavridis.mathasm.api.types.LoginResponse
 import eu.alkismavridis.mathasm.services.App
 import eu.alkismavridis.mathasm.core.error.ErrorCode
 import eu.alkismavridis.mathasm.core.error.MathAsmException
@@ -14,27 +16,24 @@ import eu.alkismavridis.mathasm.services.utils.SymbolUtils
 import graphql.schema.DataFetchingEnvironment
 import java.time.Instant
 
-class Mutation: GraphQLMutationResolver {
+class Mutation(private var app: App, private val secService:SecurityService) : GraphQLMutationResolver {
 
     //region FIELDS
-    private var app: App
+
     //endregion
-
-
-    constructor(app: App) {
-        this.app = app
-    }
 
 
 
 
     //region SESSION RELATED
     fun logout(env:DataFetchingEnvironment): Boolean {
-        //TODO remove user from session
-        return true
+        val session = env.getContext<GraphqlContext>().session
+        if (session==null) return false //no session to destroy!
+
+        return secService.destroySession(session.sessionKey) != null
     }
 
-    fun login(username:String, password:String, env:DataFetchingEnvironment): User? {
+    fun login(username:String, password:String, env:DataFetchingEnvironment): LoginResponse {
         val user = app.userService.get(username)
 
         //1 check user name existence
@@ -44,11 +43,11 @@ class Mutation: GraphQLMutationResolver {
         if (password != user.password) throw MathAsmException(ErrorCode.WRONG_PASSWORD, "Incorrect password")
 
         //3. all correct. setup the session and return the user
-        //TODO add user into session
-        return user
+        val sessionKey = secService.createSessionKeyFor(user)
+        return LoginResponse(user, sessionKey)
     }
 
-    fun signin(username:String, password:String, env:DataFetchingEnvironment): User? {
+    fun signin(username:String, password:String, env:DataFetchingEnvironment): LoginResponse {
         var user = app.userService.get(username)
 
         //1 check user name existence
@@ -58,8 +57,8 @@ class Mutation: GraphQLMutationResolver {
         user = app.userService.save( User(username).setPassword(password) )
 
         //3. all correct. setup the session and return the user
-        //TODO add user into session
-        return user
+        val sessionKey = secService.createSessionKeyFor(user)
+        return LoginResponse(user, sessionKey)
     }
     //endregion
 
@@ -103,7 +102,12 @@ class Mutation: GraphQLMutationResolver {
         val parent: MathAsmObjectEntity? = app.objectRepo.findById(parentId, 0).orElse(null)
         if (parent==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Object with uid $parentId not found.")
 
-        //3. Create and persist the object
+        //3. Check name availability
+        val isNameTaken = app.objectRepo.hasChildWithName(parentId, name)
+        if (isNameTaken) throw MathAsmException(ErrorCode.NAME_ALREADY_EXISTS, "Name  \"$name\" already exists.")
+
+
+        //4. Create and persist the object
         val newObject = MathAsmObjectEntity(name)
         newObject.author = requestingUser
         newObject.createdAt = Instant.now()
@@ -124,7 +128,12 @@ class Mutation: GraphQLMutationResolver {
         val parent: MathAsmObjectEntity? = app.objectRepo.findById(parentId, 0).orElse(null)
         if (parent==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Object with uid $parentId not found.")
 
-        //3. Create and persist the axiom
+
+        //3. Check name availability
+        val isNameTaken = app.objectRepo.hasChildWithName(parentId, name)
+        if (isNameTaken) throw MathAsmException(ErrorCode.NAME_ALREADY_EXISTS, "Name  \"$name\" already exists.")
+
+        //4. Create and persist the axiom
         val newAxiom = MathAsmStatementEntity.createAxiom(name, left.toLongArray(), right.toLongArray(), isBidirectional, grade)
         newAxiom.author = requestingUser
         newAxiom.createdAt = Instant.now()

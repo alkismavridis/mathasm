@@ -1,6 +1,6 @@
 package eu.alkismavridis.mathasm.api.test_utils
 
-import eu.alkismavridis.mathasm.api.utils.GraphqlContext
+import eu.alkismavridis.mathasm.api.GraphqlContext
 import eu.alkismavridis.mathasm.db.entities.User
 import graphql.execution.ExecutionContext
 import graphql.execution.ExecutionId
@@ -11,7 +11,7 @@ import graphql.schema.*
 
 class DummyFetchingEnvironment : DataFetchingEnvironment {
 
-    val context:GraphqlContext
+    val context: GraphqlContext
 
     constructor(user: User?) {
         context = GraphqlContext(user)

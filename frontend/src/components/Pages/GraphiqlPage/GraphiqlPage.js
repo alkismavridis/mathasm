@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
 import PropTypes from "prop-types";
 import "./GraphiqlPage.css";
-import Urls from "../../../constants/Urls";
 import GraphiQL from "graphiql";
-import GraphQl from "../../../utils/GraphQl";
+import GraphQL from "../../../services/GraphQL";
+import SessionService from "../../../services/SessionService";
 
 export default class GraphiqlPage extends Component {
     static propTypes = {
@@ -40,10 +40,11 @@ export default class GraphiqlPage extends Component {
 
     //region EVENT HANDLERS
     graphQLFetcher(graphQLParams) {
-        return GraphQl.run(
+        return GraphQL.run(
+            SessionService.getSessionKey(),
             graphQLParams.query,
             graphQLParams.variables,
-            graphQLParams.operationName
+            graphQLParams.operationName,
         );
     }
     //endregion

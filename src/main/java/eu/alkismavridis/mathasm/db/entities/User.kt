@@ -1,5 +1,8 @@
 package eu.alkismavridis.mathasm.db.entities
 
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import org.neo4j.ogm.annotation.GeneratedValue
 import org.neo4j.ogm.annotation.Id
 import org.neo4j.ogm.annotation.NodeEntity
@@ -19,7 +22,7 @@ const val UserRights_MAX:Int =
 
 const val UserRights_MIN = 0
 
-@NodeEntity
+@NodeEntity(label="user")
 class User {
     //region FIELDS
     @Id
@@ -94,6 +97,16 @@ class User {
 
     override fun hashCode(): Int {
         return id?.hashCode() ?: 0
+    }
+    //endregion
+
+
+    //region DB SERIALIZATION
+    fun toNodeJson() : JsonNode {
+        return JsonNodeFactory.instance.objectNode()
+                .put("id", this.id)
+                .put("userName", this.userName)
+                .put("rights", this.rights)
     }
     //endregion
 }

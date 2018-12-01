@@ -1,5 +1,8 @@
 package eu.alkismavridis.mathasm.db.entities
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import eu.alkismavridis.mathasm.core.sentence.*
 import eu.alkismavridis.mathasm.db.converter.SentenceConverter
 import org.neo4j.ogm.annotation.GeneratedValue
@@ -10,7 +13,7 @@ import org.neo4j.ogm.annotation.typeconversion.Convert
 import org.neo4j.ogm.annotation.typeconversion.DateLong
 import java.time.Instant
 
-@NodeEntity
+@NodeEntity(label="stmt")
 class MathAsmStatementEntity : MathAsmStatement {
     //region FIELDS
     //1. Metadata
@@ -59,6 +62,30 @@ class MathAsmStatementEntity : MathAsmStatement {
         return this
     }
 
+    //endregion
+
+
+
+    //region DB SERIALIZATION
+    fun toNodeJson() : JsonNode {
+        val sen1ToJson = JsonNodeFactory.instance.arrayNode()
+        for (l in this.sen1.getWords()) sen1ToJson.add(l)
+
+        val sen2ToJson = JsonNodeFactory.instance.arrayNode()
+        for (l in this.sen2.getWords()) sen2ToJson.add(l)
+
+        val ret = JsonNodeFactory.instance.objectNode()
+                .put("id", this.id)
+                .put("name", this.name)
+                .put("type", this.type.toInt())
+                .put("bidirectionalFlag", this.bidirectionalFlag)
+                .put("grade", this.grade)
+                .put("createdAt", this.createdAt?.toEpochMilli())
+
+        ret.set("sen1", sen1ToJson)
+        ret.set("sen2", sen2ToJson)
+        return ret
+    }
     //endregion
 
 

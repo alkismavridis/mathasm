@@ -1,5 +1,6 @@
-package eu.alkismavridis.mathasm.api.utils
+package eu.alkismavridis.mathasm.api
 
+import eu.alkismavridis.mathasm.api.controller.MathAsmSession
 import eu.alkismavridis.mathasm.db.entities.User
 
 /**
@@ -9,14 +10,16 @@ import eu.alkismavridis.mathasm.db.entities.User
 class GraphqlContext {
     //region FIELDS
     var user: User? = null
+    var session: MathAsmSession?
     var httpStatus = 200
     //... more to come
     //endregion
 
 
     //region LIFE CYCLE
-    constructor(user: User?) {
+    constructor(user: User? = null, session: MathAsmSession? = null) {
         this.user = user
+        this.session = session
     }
     //endregion
 

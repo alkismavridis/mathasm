@@ -8,6 +8,7 @@ import eu.alkismavridis.mathasm.db.entities.LogicMoveEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmObjectEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmStatementEntity
 import eu.alkismavridis.mathasm.db.entities.User
+import eu.alkismavridis.mathasm.db.util_entities.BasicMathAsmState
 import eu.alkismavridis.mathasm.services.App
 import org.junit.*
 import org.junit.Assert.*
@@ -190,6 +191,29 @@ class ProofUtilsTest {
         catch (e: MathAsmException) {
             assertEquals(ErrorCode.OBJECT_NOT_FOUND, e.code)
             assertEquals("Object with id 9999999 not found.", e.message)
+        }
+
+        //5. Save with a name of an existing object
+        val state = BasicMathAsmState(app)
+        try {
+            val stmt = MathAsmStatementEntity.createAxiom("obj1_1_1!", longArrayOf(1,2,3), longArrayOf(4,5,6), true, 0)
+            ProofUtils.persistTheorem(theoremList, stmt, state.obj1_1.id!!, "obj1_1_1", user, app)
+            fail("Exception was not thrown")
+        }
+        catch (e: MathAsmException) {
+            assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
+            assertEquals("Name  \"obj1_1_1\" already exists.", e.message)
+        }
+
+        //6. Save with a name of an existing statement
+        try {
+            val stmt = MathAsmStatementEntity.createAxiom("stmt1_1a!", longArrayOf(1,2,3), longArrayOf(4,5,6), true, 0)
+            ProofUtils.persistTheorem(theoremList, stmt, state.obj1_1.id!!, "stmt1_1a", user, app)
+            fail("Exception was not thrown")
+        }
+        catch (e: MathAsmException) {
+            assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
+            assertEquals("Name  \"stmt1_1a\" already exists.", e.message)
         }
     }
     //endregion

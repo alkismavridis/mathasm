@@ -1,5 +1,7 @@
 package eu.alkismavridis.mathasm.db.entities
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import eu.alkismavridis.mathasm.core.proof.*
 import org.neo4j.ogm.annotation.GeneratedValue
 import org.neo4j.ogm.annotation.Id
@@ -8,7 +10,7 @@ import org.neo4j.ogm.annotation.NodeEntity
 /** This is the type that the client side sends to the server as a logic move.
  * Not all fields have sense for every move type, but this object should include them all anyway.
  * */
-@NodeEntity
+@NodeEntity(label="move")
 class LogicMoveEntity {
     //region FIELDS
     @Id
@@ -69,6 +71,23 @@ class LogicMoveEntity {
         fun makeSave(templateIndex: Int, parentId: Long, name: String) : LogicMoveEntity {
             return LogicMoveEntity(0, LOGIC_MOVE_SAVE, templateIndex, 0, 0, 0, 0, parentId, name)
         }
+    }
+    //endregion
+
+
+    //region DB SERIALIZATION
+    fun toNodeJson() : JsonNode {
+        return JsonNodeFactory.instance.objectNode()
+                .put("id", this.id)
+                .put("index", this.index)
+                .put("moveType", this.moveType.toInt())
+                .put("templateIndex", this.templateIndex)
+                .put("targetId", this.targetId)
+                .put("side", this.side.toInt())
+                .put("dir", this.dir.toInt())
+                .put("position", this.position)
+                .put("parentId", this.parentId)
+                .put("name", this.name)
     }
     //endregion
 }

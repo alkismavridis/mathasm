@@ -8,6 +8,6 @@ import org.springframework.data.repository.query.Param;
 
 
 public interface MathAsmObjectRepository extends Neo4jRepository<MathAsmObjectEntity, Long> {
-    //@Query("MATCH (th:MathAsmTheory)-[ROOT]->(n:MathAsmObjectEntity) WITH n RETURN n,[ [ (n)-[r_r1:`ROOT`]->(l1:`MathAsmObjectEntity`) | [ r_r1, l1 ] ] ]")
-    //MathAsmObjectEntity rootObject();
+    @Query("MATCH (o :obj)-[r:STMT|OBJ]->(n) where ID(o)={id} and n.name={name} return count(n)>0;")
+    boolean hasChildWithName(@Param("id") Long id, @Param("name") String name);
 }

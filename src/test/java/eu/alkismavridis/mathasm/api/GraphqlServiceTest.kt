@@ -1,7 +1,6 @@
 package eu.alkismavridis.mathasm.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import eu.alkismavridis.mathasm.api.utils.GraphqlContext
 import eu.alkismavridis.mathasm.db.entities.User
 import eu.alkismavridis.mathasm.services.App
 import org.junit.*

@@ -23,3 +23,28 @@ html, body {
 
 
 
+/*region LAYOUT*/
+.Globals_centerFlex {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/*endregion*/
+
+
+
+/*region REUSABLE CLASSES*/
+
+/** Every page must include this class, along with more page-specific classes and styles, if desired. */
+.Globals_page {
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.Globals_pageMainContent {
+    flex:1;
+    overflow: auto;
+}
+/*endregion*/

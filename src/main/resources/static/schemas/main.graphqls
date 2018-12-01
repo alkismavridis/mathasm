@@ -29,8 +29,8 @@ type Query {
 }
 
 type Mutation {
-    login(username:String!, password:String!):User
-    signin(username:String!, password:String!):User
+    login(username:String!, password:String!):LoginResponse
+    signin(username:String!, password:String!):LoginResponse
     logout:Boolean!
 
     #symbol management
@@ -51,6 +51,11 @@ type User {
     id:Long!
     userName:String!
     rights:Int!
+}
+
+type LoginResponse {
+    user:User!
+    sessionKey:String!
 }
 
 

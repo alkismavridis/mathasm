@@ -41,10 +41,13 @@ class ProofUtils {
             val parent: MathAsmObjectEntity? = app.objectRepo.findById(parentId, 0).orElse(null)
             if (parent==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Object with id $parentId not found.")
 
+            //3. Check name availability
+            val isNameTaken = app.objectRepo.hasChildWithName(parentId, name)
+            if (isNameTaken) throw MathAsmException(ErrorCode.NAME_ALREADY_EXISTS, "Name  \"$name\" already exists.")
+
+            //4. Save the statement on list and db
             parent.add(entityToSave)
             app.objectRepo.save(parent, 2)
-
-            //3. Add it on the list
             targetList.add(entityToSave)
         }
 

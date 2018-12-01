@@ -1,12 +1,14 @@
 package eu.alkismavridis.mathasm.db.entities
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import org.neo4j.ogm.annotation.GeneratedValue
 import org.neo4j.ogm.annotation.Id
 import org.neo4j.ogm.annotation.NodeEntity
 import org.neo4j.ogm.annotation.Relationship
 
 
-@NodeEntity
+@NodeEntity(label="theory")
 class MathAsmTheory {
     //region FIELDS
     @Id
@@ -15,7 +17,7 @@ class MathAsmTheory {
 
     var name:String = ""
 
-    @Relationship(type = "ROOT", direction = Relationship.OUTGOING)
+    @Relationship(type = "OBJ", direction = Relationship.OUTGOING)
     var rootObj: MathAsmObjectEntity? = null
     //endregion
 
@@ -34,23 +36,17 @@ class MathAsmTheory {
 
 
 
-    //region WORD MANAGEMENT
-    /*fun getWords() : List<LogicWord> { return this.words }
-    fun getWordCount() : Int { return this.words.size }
+    //region DATA ACCESSORS
 
-    fun getWord(symbol:String) : LogicWord {
-        //1. Try to find an already existing word with the given symbol
-        var word = this.words.find { w -> w.symbol == symbol }
-        if (word!=null) return word
 
-        //2. If it is not found, create it, add it into the list and return it.
-        word = LogicWord(++lastGivenId, symbol)
-        words.add(word)
-
-        return word
-    }*/
     //endregion
 
 
-
+    //region DB SERIALIZATION
+    fun toNodeJson() : JsonNode {
+        return JsonNodeFactory.instance.objectNode()
+                .put("id", this.id)
+                .put("name", this.name)
+    }
+    //endregion
 }

@@ -6,6 +6,10 @@ import createHistory from "history/createBrowserHistory";
 import NotFoundPage from "../Pages/NotFoundPage/NotFoundPage";
 import Urls from "../../constants/Urls";
 import GraphiqlPage from "../Pages/GraphiqlPage/GraphiqlPage";
+import LoginPage from "../Pages/LoginPage/LoginPage";
+import SessionService from "../../services/SessionService";
+import DbVisualisationPage from "../Pages/DbVisualisationPage/DbVisualisationPage";
+
 
 export default class App extends Component {
   //region FIELDS
@@ -26,12 +30,14 @@ export default class App extends Component {
     //2. Setup a listener to react to url changes...
     this._history.listen((location, action) => {
         // location is an object like window.location
-        console.log(action, location.pathname, location.state);
         this.setState({location:location});
     });
 
     //3. Set the current url into the state.
     this.setState({location:this._history.location});
+
+    //4. Load session storage
+    SessionService.initialize();
   }
   //endregion
 
@@ -42,8 +48,9 @@ export default class App extends Component {
 
     switch (this.state.location.pathname) {
         case Urls.pages.graphiql: return <GraphiqlPage history={this._history}/>;
-        case Urls.pages.login: return <div>Login page!!</div>;
+        case Urls.pages.login: return <LoginPage history={this._history}/>;
         case Urls.pages.theory: return <div>Theory page!!</div>;
+        case Urls.pages.dbVisualisation: return <DbVisualisationPage history={this._history}/>;
         default: return <NotFoundPage history={this._history}/>;
     }
 

@@ -1,4 +1,4 @@
-package eu.alkismavridis.mathasm.api;
+package eu.alkismavridis.mathasm.api.controller;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;

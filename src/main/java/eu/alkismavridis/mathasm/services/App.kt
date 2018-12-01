@@ -59,12 +59,15 @@ class App {
         println("App.postConstruct")
         //initApp(this)
 
+        //1. Create root user, if non is present
+        if (userService.users.isEmpty()) userService.createRootUser()
 
         //detect if root env exists. Create it if it does not
         val theoryCount = this.theoryRepo.count()
         if (theoryCount == 0L) {
-            val rootTheory = MathAsmTheory("root", MathAsmObjectEntity())
-            this.theoryRepo.save(rootTheory, 1)
+            val rootTheory = MathAsmTheory("root", MathAsmObjectEntity("rootObj"))
+            rootTheory.rootObj?.author = userService.find{it.userName == "root"}
+            this.theoryRepo.save(rootTheory, 2)
         }
     }
     //endregion

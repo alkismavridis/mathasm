@@ -1,13 +1,16 @@
-package eu.alkismavridis.mathasm.api;
+package eu.alkismavridis.mathasm.api.controller;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import eu.alkismavridis.mathasm.api.GraphqlService;
 import eu.alkismavridis.mathasm.core.error.MathAsmException;
-import eu.alkismavridis.mathasm.api.utils.GraphqlContext;
+import eu.alkismavridis.mathasm.api.GraphqlContext;
+import eu.alkismavridis.mathasm.db.entities.User;
 import eu.alkismavridis.mathasm.services.App;
 import org.neo4j.ogm.model.Result;
 import org.neo4j.ogm.session.Session;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Map;
 
@@ -35,6 +39,9 @@ public class GraphqlController {
 
     @Autowired
     private GraphqlService graphqlService;
+
+    @Autowired
+    private HttpServletRequest request;
     //endregion
 
 
@@ -50,7 +57,9 @@ public class GraphqlController {
     }
 
     private GraphqlContext makeContext() {
-        return new GraphqlContext(null);
+        final MathAsmSession session = (MathAsmSession)request.getAttribute("session");
+        final User user = session==null? null : app.getUserService().get(session.getUserId());
+        return new GraphqlContext(user, session);
     }
 
     private static ResponseEntity sendJson(String message, int status) {
@@ -76,7 +85,7 @@ public class GraphqlController {
     //region GRAPH-QL FUNCTIONS
     @RequestMapping(value="", method=RequestMethod.POST)
     public ResponseEntity simpleQuery(@RequestBody String query) {
-        final String result =  graphqlService.execute(query, null, null, this.makeContext());
+            final String result =  graphqlService.execute(query, null, null, this.makeContext());
         return ResponseEntity.ok(result);
     }
 
@@ -96,23 +105,4 @@ public class GraphqlController {
         return ResponseEntity.ok(result);
     }
     //endregion
-
-
-
-
-    //region DUMMY - TO BE DELETED
-    @RequestMapping(value="/runCypher", method=RequestMethod.POST)
-    public ResponseEntity sentences(@RequestBody String query) {
-        Session ses = sessionFactory.openSession();
-//        ses.beginTransaction();
-        Result res = ses.query(query, Collections.emptyMap());
-        try {
-            return ResponseEntity.ok(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(res));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return GraphqlController.sendJson(e, 500);
-        }
-    }
-
-        //endregion
 }

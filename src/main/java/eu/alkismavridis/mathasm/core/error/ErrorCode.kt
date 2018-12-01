@@ -16,6 +16,7 @@ enum class ErrorCode {
     NOT_A_THEOREM_TEMPLATE(10),
     NOT_AN_AXIOM_TEMPLATE(11),
     STATEMENT_NOT_FOUND(12),
+    NAME_ALREADY_EXISTS(13),
     //endregion
 
 

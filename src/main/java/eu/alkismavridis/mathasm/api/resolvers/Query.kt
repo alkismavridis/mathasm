@@ -1,7 +1,7 @@
 package eu.alkismavridis.mathasm.api.resolvers
 
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
-import eu.alkismavridis.mathasm.api.utils.GraphqlContext
+import eu.alkismavridis.mathasm.api.GraphqlContext
 import eu.alkismavridis.mathasm.db.entities.MathAsmObjectEntity
 import eu.alkismavridis.mathasm.services.App
 import eu.alkismavridis.mathasm.db.entities.MathAsmStatementEntity

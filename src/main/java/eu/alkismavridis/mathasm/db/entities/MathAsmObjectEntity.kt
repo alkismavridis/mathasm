@@ -1,5 +1,7 @@
 package eu.alkismavridis.mathasm.db.entities
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement
 import eu.alkismavridis.mathasm.core.env.MathAsmObject
 import eu.alkismavridis.mathasm.core.error.ErrorCode
@@ -9,7 +11,7 @@ import org.neo4j.ogm.annotation.typeconversion.DateLong
 import java.time.Instant
 import java.util.stream.Stream
 
-@NodeEntity
+@NodeEntity(label="obj")
 class MathAsmObjectEntity : MathAsmObject {
     //region FIELDS
     @Id
@@ -20,7 +22,7 @@ class MathAsmObjectEntity : MathAsmObject {
      *  It is used by DB for navigation in the graph. */
     override var name:String = ""
 
-    @Relationship(type = "SEN", direction = Relationship.OUTGOING)
+    @Relationship(type = "STMT", direction = Relationship.OUTGOING)
     var statements:MutableList<MathAsmStatementEntity> = ArrayList()
 
     @Relationship(type = "OBJ", direction = Relationship.OUTGOING)
@@ -39,6 +41,7 @@ class MathAsmObjectEntity : MathAsmObject {
     constructor() {}
     constructor(name:String) {
         this.name = name
+        this.createdAt = Instant.now()
     }
     //endregion
 
@@ -113,6 +116,18 @@ class MathAsmObjectEntity : MathAsmObject {
         this.objects[index] = value
     }
     //endregion
+
+
+
+    //region DB SERIALIZATION
+    fun toNodeJson() : JsonNode {
+        return JsonNodeFactory.instance.objectNode()
+                .put("id", this.id)
+                .put("name", this.name)
+                .put("createdAt", this.createdAt?.toEpochMilli())
+    }
+    //endregion
+
 
 
     //region OVERRIDES

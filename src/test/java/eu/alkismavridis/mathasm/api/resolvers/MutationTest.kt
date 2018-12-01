@@ -1,5 +1,6 @@
 package eu.alkismavridis.mathasm.api.resolvers
 
+import eu.alkismavridis.mathasm.api.controller.security.SecurityService
 import eu.alkismavridis.mathasm.api.test_utils.DummyFetchingEnvironment
 import eu.alkismavridis.mathasm.core.error.ErrorCode
 import eu.alkismavridis.mathasm.core.error.MathAsmException
@@ -7,7 +8,9 @@ import eu.alkismavridis.mathasm.core.proof.*
 import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement_BOTH_SIDES
 import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement_LEFT_SIDE
 import eu.alkismavridis.mathasm.db.entities.*
+import eu.alkismavridis.mathasm.db.util_entities.BasicMathAsmState
 import eu.alkismavridis.mathasm.services.App
+import eu.alkismavridis.mathasm.services.utils.ProofUtils
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -24,6 +27,9 @@ class MutationTest {
     @Autowired
     lateinit var app: App
 
+    @Autowired
+    lateinit var secService:SecurityService
+
     lateinit var mutation: Mutation
     //endregion
 
@@ -37,7 +43,7 @@ class MutationTest {
     @Before
     @Throws(Exception::class)
     fun beforeEvery() {
-        mutation = Mutation(app)
+        mutation = Mutation(app, secService)
         user = app.userService.save(User("hello")).withRights(UserRights_MAX)
     }
 
@@ -270,6 +276,27 @@ class MutationTest {
             assertEquals(ErrorCode.OBJECT_NOT_FOUND, e.code)
             assertEquals("Object with uid 9999 not found.", e.message)
         }
+
+        //5. Save with a name of an existing object
+        val state = BasicMathAsmState(app)
+        try {
+            mutation.createObject(state.obj1_1.id!!, "obj1_1_1", DummyFetchingEnvironment(user))
+            fail("Exception was not thrown")
+        }
+        catch (e: MathAsmException) {
+            assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
+            assertEquals("Name  \"obj1_1_1\" already exists.", e.message)
+        }
+
+        //6. Save with a name of an existing statement
+        try {
+            mutation.createObject(state.obj1_1.id!!, "stmt1_1a", DummyFetchingEnvironment(user))
+            fail("Exception was not thrown")
+        }
+        catch (e: MathAsmException) {
+            assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
+            assertEquals("Name  \"stmt1_1a\" already exists.", e.message)
+        }
     }
 
     @Test
@@ -373,6 +400,27 @@ class MutationTest {
         catch (e:MathAsmException) {
             assertEquals(ErrorCode.OBJECT_NOT_FOUND, e.code)
             assertEquals("Object with uid 99999 not found.", e.message)
+        }
+
+        //5. Save with a name of an existing object
+        val state = BasicMathAsmState(app)
+        try {
+            mutation.createAxiom(state.obj1_1.id!!, "obj1_1_1",  listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+            fail("Exception was not thrown")
+        }
+        catch (e: MathAsmException) {
+            assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
+            assertEquals("Name  \"obj1_1_1\" already exists.", e.message)
+        }
+
+        //6. Save with a name of an existing statement
+        try {
+            mutation.createAxiom(state.obj1_1.id!!, "stmt1_1a",  listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+            fail("Exception was not thrown")
+        }
+        catch (e: MathAsmException) {
+            assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
+            assertEquals("Name  \"stmt1_1a\" already exists.", e.message)
         }
     }
     //endregion
@@ -538,6 +586,34 @@ class MutationTest {
             assertEquals(ErrorCode.MATCH_FAILED, e.code)
         }
         moves[3] = LogicMoveEntity.makeReplaceAll(0, LogicMove_RTL)
+
+        //5. Save with a name of an existing object
+        val state = BasicMathAsmState(app)
+        try {
+            moves.find{ e -> e.moveType == LOGIC_MOVE_SAVE}!!.apply {
+                name = "obj1_1_1"
+                parentId = state.obj1_1.id!!
+            }
+            mutation.createTheorem(moves, DummyFetchingEnvironment(user))
+            fail("Exception was not thrown")
+        }
+        catch (e: MathAsmException) {
+            assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
+            assertEquals("Name  \"obj1_1_1\" already exists.", e.message)
+        }
+
+        //6. Save with a name of an existing statement
+        try {
+            moves.find{ e -> e.moveType == LOGIC_MOVE_SAVE}!!.apply {
+                name = "stmt1_1a"
+                parentId = state.obj1_1.id!!
+            }
+            mutation.createTheorem(moves, DummyFetchingEnvironment(user))
+            fail("Exception was not thrown")        }
+        catch (e: MathAsmException) {
+            assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
+            assertEquals("Name  \"stmt1_1a\" already exists.", e.message)
+        }
     }
     //endregion
 }

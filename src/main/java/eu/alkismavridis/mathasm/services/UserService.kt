@@ -6,6 +6,8 @@ import eu.alkismavridis.mathasm.db.entities.UserRights_MAX
 import eu.alkismavridis.mathasm.db.repo.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import java.util.function.Predicate
+import java.util.stream.Collectors
 import java.util.stream.Stream
 import javax.annotation.PostConstruct
 
@@ -41,15 +43,11 @@ class UserService {
         val usersFromDb = userRepo.findAll()
         for (u in usersFromDb) this.users[u.id!!] = u
 
-        //2. If no users are present, create a root user
-        if (this.users.isEmpty()) this.createRootUser()
-
-
         println("${this.users.size} Users where loaded")
     }
 
 
-    private fun createRootUser() {
+    fun createRootUser() {
         println("No users where found. Creating root user...")
         val rootUser = userRepo.save(
             User("root").setPassword(conf.rootUserPassword).withRights(UserRights_MAX)
@@ -77,6 +75,12 @@ class UserService {
     fun userStream() : Stream<User> {
         return this.users.values.stream()
     }
+
+    fun find(condition: (User)->Boolean) : User? {
+        return this.users.values.stream().filter(condition).findAny().orElse(null)
+    }
+
+    fun filter(condition: (User)->Boolean) : Collection<User> { return this.users.values.stream().filter(condition).collect(Collectors.toList()) }
     //endregion
 
 

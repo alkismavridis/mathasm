@@ -52,32 +52,6 @@ class UserServiceTest {
 
     //region TESTS
     @Test
-    fun postConstructTest() {
-        //1. Delete all entities. (like the app starts for the first time)
-        userRepo.deleteAll()
-        app.userService.users.clear()
-        assertEquals(0, userRepo.count())
-        assertEquals(0, app.userService.users.size)
-
-
-        //2. call post construct
-        app.userService.postConstruct()
-
-        //3. Assert that the root user is created in DB
-        val usersFromRepo = IterableUtils.toList(userRepo.findAll())
-        assertEquals(1, usersFromRepo.size)
-        assertEquals("root", usersFromRepo[0].userName)
-        assertTrue(usersFromRepo[0].rights == UserRights_MAX)
-
-        //4. Assert that the root user is created in service
-        val usersFromService = app.userService.userStream().collect(Collectors.toList())
-        assertEquals(1, usersFromService.size)
-        assertEquals("root", usersFromService[0].userName)
-        assertTrue(usersFromService[0].rights == UserRights_MAX)
-    }
-
-
-    @Test
     fun crudTest() {
         //1. Start from zero
         app.userService.deleteAll()

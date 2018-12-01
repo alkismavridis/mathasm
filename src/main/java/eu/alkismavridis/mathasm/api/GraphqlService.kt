@@ -3,6 +3,7 @@ package eu.alkismavridis.mathasm.api
 import com.coxautodev.graphql.tools.SchemaParser
 import com.fasterxml.jackson.databind.ObjectMapper
 import eu.alkismavridis.mathasm.MathAsmConfig
+import eu.alkismavridis.mathasm.api.controller.security.SecurityService
 import eu.alkismavridis.mathasm.db.entities.MathAsmObjectEntity
 import eu.alkismavridis.mathasm.api.resolvers.MathAsmObjectResolver
 import eu.alkismavridis.mathasm.services.App
@@ -10,7 +11,6 @@ import eu.alkismavridis.mathasm.api.resolvers.SentenceResolver
 import eu.alkismavridis.mathasm.api.resolvers.UserResolver
 import eu.alkismavridis.mathasm.api.resolvers.Mutation
 import eu.alkismavridis.mathasm.api.resolvers.Query
-import eu.alkismavridis.mathasm.api.utils.GraphqlContext
 import graphql.ExecutionInput
 import graphql.schema.GraphQLSchema
 import graphql.GraphQL
@@ -36,6 +36,9 @@ class GraphqlService {
 
     @Autowired
     private lateinit var conf: MathAsmConfig
+
+    @Autowired
+    lateinit var secService: SecurityService
 
 
 
@@ -74,7 +77,7 @@ class GraphqlService {
         //2. SETUP RESOLVERS
         val resolvers = listOf(
                 Query(app),
-                Mutation(app),
+                Mutation(app, secService),
             UserResolver(),
             SentenceResolver(),
             MathAsmObjectResolver()
