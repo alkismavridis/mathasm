@@ -1,0 +1,33 @@
+.LoginForm_root {
+    display:flex;
+    flex-direction: column;
+    max-width: 300px;
+    padding: 12px;
+
+    border-radius: 10px;
+    border: solid 1px #18c726;
+    box-shadow: #18c7265e 3px 4px 9px 0;
+}
+
+.LoginForm_title {
+    font-size: 20px;
+    margin-bottom: 8px;
+    margin-left: 5px;
+}
+
+.LoginForm_inp {
+    margin-bottom:8px;
+}
+
+.LoginForm_noAccount {
+    align-self: flex-end;
+    cursor: pointer;
+    margin-top:8px;
+}
+
+.LoginForm_errorMes {
+    font-weight: bold;
+    text-align: center;
+    margin: 8px 0;
+    color: #ff2929;
+}

@@ -29,6 +29,24 @@ html, body {
     justify-content: center;
     align-items: center;
 }
+
+.Globals_flexStart {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.Globals_flexEnd {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.Globals_centerAway {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 /*endregion*/
 
 
@@ -46,5 +64,24 @@ html, body {
 .Globals_pageMainContent {
     flex:1;
     overflow: auto;
+}
+/*endregion*/
+
+
+/*region INPUTS*/
+.Globals_inp {
+    border-radius: 8px;
+    padding:8px 8px;
+    font-size: 20px;
+    outline: none;
+}
+
+.Globals_but {
+    padding:8px 16px;
+    border-radius: 8px;
+    color:white;
+    background-color:black;
+    font-size: 20px;
+    outline: none;
 }
 /*endregion*/

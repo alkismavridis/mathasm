@@ -9,6 +9,7 @@ import GraphiqlPage from "../Pages/GraphiqlPage/GraphiqlPage";
 import LoginPage from "../Pages/LoginPage/LoginPage";
 import SessionService from "../../services/SessionService";
 import DbVisualisationPage from "../Pages/DbVisualisationPage/DbVisualisationPage";
+import AboutPage from "../Pages/AboutPage/AboutPage";
 
 
 export default class App extends Component {
@@ -51,6 +52,7 @@ export default class App extends Component {
         case Urls.pages.login: return <LoginPage history={this._history}/>;
         case Urls.pages.theory: return <div>Theory page!!</div>;
         case Urls.pages.dbVisualisation: return <DbVisualisationPage history={this._history}/>;
+        case Urls.pages.about: return <AboutPage history={this._history}/>;
         default: return <NotFoundPage history={this._history}/>;
     }
 

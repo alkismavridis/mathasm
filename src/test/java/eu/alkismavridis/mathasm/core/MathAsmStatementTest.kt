@@ -96,43 +96,43 @@ class MathAsmStatementTest {
         var base = MathAsmStatement.createAxiom("someName", words3, words4, true, 0)
         var move = ReplaceSentenceMove(0, 0, LogicMove_LTR, MathAsmStatement_LEFT_SIDE)
 
-        try { plasi.assertReplacePhraseLegality(move, base) }
+        try { plasi.assertReplaceSentenceLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT, e.code) }
 
 
         //Make plasi two way. Now it should be allowed
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, true, 0)
-        plasi.assertReplacePhraseLegality(move, base)
+        plasi.assertReplaceSentenceLegality(move, base)
 
         //Test base grade less than plasis
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, true, 5)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 4)
-        plasi.assertReplacePhraseLegality(move, base)
+        plasi.assertReplaceSentenceLegality(move, base)
 
         //Test base grade equal to plasis
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 5)
-        plasi.assertReplacePhraseLegality(move, base)
+        plasi.assertReplaceSentenceLegality(move, base)
 
         //Test base grade grater than to plasis
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 6)
-        try { plasi.assertReplacePhraseLegality(move, base) }
+        try { plasi.assertReplaceSentenceLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.BASE_GRADE_TO_BIG, e.code) }
 
 
         //Test base grade less than plasis (ONE_WAY plasi)
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, false, 5)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 4)
-        try { plasi.assertReplacePhraseLegality(move, base) }
+        try { plasi.assertReplaceSentenceLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT, e.code) }
 
         //Test base grade equal to plasis (ONE_WAY plasi)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 5)
-        try { plasi.assertReplacePhraseLegality(move, base) }
+        try { plasi.assertReplaceSentenceLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT, e.code) }
 
         //Test base grade grater than to plasis (ONE_WAY plasi)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 6)
-        try { plasi.assertReplacePhraseLegality(move, base) }
+        try { plasi.assertReplaceSentenceLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT, e.code) }
 
 
@@ -140,38 +140,38 @@ class MathAsmStatementTest {
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, false, 0)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 0)
         move = ReplaceSentenceMove(0, 0, LogicMove_LTR, MathAsmStatement_RIGHT_SIDE)
-        plasi.assertReplacePhraseLegality(move, base)
+        plasi.assertReplaceSentenceLegality(move, base)
 
         //Make plasi two way. It should be allowed too
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, true, 0)
-        plasi.assertReplacePhraseLegality(move, base)
+        plasi.assertReplaceSentenceLegality(move, base)
 
         //Test base grade less than plasis
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, true, 5)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 4)
-        plasi.assertReplacePhraseLegality(move, base)
+        plasi.assertReplaceSentenceLegality(move, base)
 
         //Test base grade equal to plasis
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 5)
-        plasi.assertReplacePhraseLegality(move, base)
+        plasi.assertReplaceSentenceLegality(move, base)
 
         //Test base grade grater than to plasis
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 6)
-        try { plasi.assertReplacePhraseLegality(move, base) }
+        try { plasi.assertReplaceSentenceLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.BASE_GRADE_TO_BIG, e.code) }
 
         //Test base grade less than plasis (ONE_WAY plasi)
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, false, 5)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 4)
-        plasi.assertReplacePhraseLegality(move, base)
+        plasi.assertReplaceSentenceLegality(move, base)
 
         //Test base grade equal to plasis (ONE_WAY plasi)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 5)
-        plasi.assertReplacePhraseLegality(move, base)
+        plasi.assertReplaceSentenceLegality(move, base)
 
         //Test base grade grater than to plasis (ONE_WAY plasi)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 6)
-        try { plasi.assertReplacePhraseLegality(move, base) }
+        try { plasi.assertReplaceSentenceLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.BASE_GRADE_TO_BIG, e.code) }
     }
 

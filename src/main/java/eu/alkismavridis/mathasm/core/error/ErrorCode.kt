@@ -2,7 +2,7 @@ package eu.alkismavridis.mathasm.core.error
 
 enum class ErrorCode {
     //region CORE ERRORS
-    UNKNOWN(0),
+    NO_ERROR(0),
     ILLEGAL_INTERNAL_SELECT(1),
     ILLEGAL_INDEX_FOR_THEOREM_START(2),
     NULL_BASE(3),
@@ -17,6 +17,8 @@ enum class ErrorCode {
     NOT_AN_AXIOM_TEMPLATE(11),
     STATEMENT_NOT_FOUND(12),
     NAME_ALREADY_EXISTS(13),
+    UNKNOWN_ERROR(14),
+    CONNECTION_ERROR(15),
     //endregion
 
 

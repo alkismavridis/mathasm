@@ -98,7 +98,6 @@ public class GraphqlController {
             return GraphqlController.sendJson(ex, 400);
         }
 
-
         //2. Create the context
         final GraphqlContext ctx = this.makeContext();
         final String result =  graphqlService.execute((String)request.get("q"), (Map<String,Object>)request.get("p"), (String)request.get("n"), ctx);

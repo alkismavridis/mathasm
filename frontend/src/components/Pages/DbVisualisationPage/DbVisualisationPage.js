@@ -37,6 +37,7 @@ class DbVisualisationPage extends Component {
     state = {
         cypherCommand:"match (o)-[r]-(f) return o,r,f;",
         selectedNode:null,
+        isLoading:false,
     };
 
     _canvasRoot = null;
@@ -138,14 +139,26 @@ class DbVisualisationPage extends Component {
         this._network.setData(this.toVisData(this._visData.nodes, this._visData.edges));
     }
 
-    runCypher() {
-        console.log("I run the cypher!");
-        GraphQL.runUrl(Urls.cypher.raw, this.state.cypherCommand, SessionService.getSessionKey()).then(resp => {
+    /** does the actual request to the server. */
+    async runCypher() {
+        //1. Set the loading state
+        this.setState({
+            selectedNode:null,
+            isLoading:true
+        });
+
+        //2. Do the request
+        try {
+            const resp = await GraphQL.runUrl(Urls.cypher.raw, this.state.cypherCommand, SessionService.getSessionKey());
             if (resp.data) this.integrateDBData(resp.data);
             else window.alert(resp.message);
-        }, err => {
-            console.log("ERRPR", err);
-        })
+        }
+        catch (e) {
+            console.log("Error", e);
+        }
+
+        //3. Undo loading
+        this.setState({isLoading:false});
     }
     //endregion
 
@@ -153,10 +166,7 @@ class DbVisualisationPage extends Component {
 
     //region EVENT HANDLERS
     handlerCypherCommandKeyPress(keyEvent) {
-        if (keyEvent.ctrlKey && keyEvent.charCode==13) {
-            this.runCypher();
-            return;
-        }
+        if (keyEvent.ctrlKey && keyEvent.charCode===13) this.runCypher();
     }
 
     handlerCypherCommandChange(e) {
@@ -174,7 +184,6 @@ class DbVisualisationPage extends Component {
         }
 
         //2. Get the selected node
-        console.log(selectedId);
         const node = this._visData.nodes.find(n => n.id === selectedId);
         if (node==null) return;
 
@@ -192,6 +201,12 @@ class DbVisualisationPage extends Component {
             <div className="DbVisualisationPage_selectedNode">
                 {JSON.stringify(this.state.selectedNode._data, null, 2)}
             </div>
+        );
+    }
+
+    renderLoadingIcon() {
+        return (
+            <div className="DbVisualisationPage_loadingIcon" />
         );
     }
 
@@ -214,6 +229,7 @@ class DbVisualisationPage extends Component {
                 <div className="Globals_pageMainContent" style={{position:"relative"}}>
                     <div className="DbVisualisationPage_canvasRoot" ref={el => this._canvasRoot=el}/>
                     {this.renderSelectedElement()}
+                    {this.state.isLoading? this.renderLoadingIcon() : null}
                 </div>
             </div>
         );

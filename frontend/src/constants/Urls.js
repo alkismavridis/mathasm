@@ -7,7 +7,8 @@ export default {
       graphiql: FRONTEND_BASE+"graphiql",
       login: FRONTEND_BASE+"login",
       theory: FRONTEND_BASE+"theory",
-      dbVisualisation: FRONTEND_BASE+"vis"
+      dbVisualisation: FRONTEND_BASE+"vis",
+      about: FRONTEND_BASE+"about"
   },
 
   graphql: {

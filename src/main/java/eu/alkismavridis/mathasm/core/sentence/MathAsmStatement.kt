@@ -81,7 +81,7 @@ open class MathAsmStatement {
         }
     }
 
-    fun assertReplacePhraseLegality(move:ReplaceSentenceMove, base: MathAsmStatement) {
+    fun assertReplaceSentenceLegality(move:ReplaceSentenceMove, base: MathAsmStatement) {
         if (move.dir == LogicMove_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
 
         if (move.side== MathAsmStatement_LEFT_SIDE) {
@@ -126,7 +126,7 @@ open class MathAsmStatement {
     }
 
     fun selectPhrase(move:ReplaceSentenceMove, base: MathAsmStatement, sel: LogicSelection, check:Boolean) : MathAsmStatement {
-        if (check) this.assertReplacePhraseLegality(move, base)
+        if (check) this.assertReplaceSentenceLegality(move, base)
 
         if (move.side == MathAsmStatement_LEFT_SIDE) {
             sel.side2.clear()
