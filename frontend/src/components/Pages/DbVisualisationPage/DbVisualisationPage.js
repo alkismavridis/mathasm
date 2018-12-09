@@ -3,11 +3,7 @@ import PropTypes from "prop-types";
 import "./DbVisualisationPage.css";
 import GraphQL from "../../../services/GraphQL";
 import Urls from "../../../constants/Urls";
-import SessionService from "../../../services/SessionService";
 import vis from "vis";
-import CypherService from "../../../services/CypherService";
-import {nl2br} from "../../../services/FormattingUtils";
-
 
 
 const GraphTypes = {
@@ -24,10 +20,7 @@ class DbVisualisationPage extends Component {
     //region PROPS AND STATE
     static propTypes = {
         //data
-        history:PropTypes.object.isRequired,
-
         //actions
-
         //styling
     };
 
@@ -65,26 +58,21 @@ class DbVisualisationPage extends Component {
     //region LIFE CYCLE
 
     componentDidMount() {
-        console.log(this._canvasRoot);
         this._network = new vis.Network(this._canvasRoot, this.toVisData(this._visData.nodes, this._visData.edges), {});
         this._network.on("select", this.nodeSelected.bind(this));
     }
 
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
-
-    }
 
 
 
-    //static getDerivedStateFromProps(nextProps, prevState) {}
-    //shouldComponentUpdate(nextProps, nextState) { return true; }
-    //getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
-    //componentWillUnmount() {}
+    // componentDidUpdate(prevProps, prevState, snapshot) {}
+    // static getDerivedStateFromProps(nextProps, prevState) {}
+    // shouldComponentUpdate(nextProps, nextState) { return true; }
+    // getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
+    // componentWillUnmount() {}
 
-    //componentDidCatch(error, info) {
-    //    console.error("Exception caught");
-    //}
+    // componentDidCatch(error, info) { console.error("Exception caught"); }
 
     //endregion
 
@@ -92,7 +80,6 @@ class DbVisualisationPage extends Component {
 
     //region UTILS
     toVisData(nodes, edges) {
-        console.log("nodes are", nodes);
         for (let node of nodes) {
             switch (node._t) {
                 case GraphTypes.USER:
@@ -149,7 +136,7 @@ class DbVisualisationPage extends Component {
 
         //2. Do the request
         try {
-            const resp = await GraphQL.runUrl(Urls.cypher.raw, this.state.cypherCommand, SessionService.getSessionKey());
+            const resp = await GraphQL.runUrl(Urls.cypher.raw, this.state.cypherCommand);
             if (resp.data) this.integrateDBData(resp.data);
             else window.alert(resp.message);
         }

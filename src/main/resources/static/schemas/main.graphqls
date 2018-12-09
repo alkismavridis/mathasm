@@ -22,8 +22,9 @@ type Query {
     symbols(ids:[Long!]!):[MathAsmSymbol!]!
 
     #logic value getters
-    rootObject(depth:Int = 1): MathAsmObjectEntity
-    logicObject(id:Long!, depth:Int = 1): MathAsmObjectEntity
+    rootDir(depth:Int = 1): MathAsmDirEntity
+    logicDir(id:Long!, depth:Int = 1): MathAsmDirEntity
+    dirParent(id:Long!, depth:Int = 1): MathAsmDirEntity
 
     statement(id:Long!, depth:Int = 1): MathAsmStatementEntity
 }
@@ -34,16 +35,13 @@ type Mutation {
     logout:Boolean!
 
     #symbol management
-    createSymbol(text:String!, uid:Long!) : MathAsmSymbol
+    createSymbol(parentId:Long!, text:String!, uid:Long!) : MathAsmSymbol
 
     #axiom creation
     createAxiom(parentId:Long!, name:String!, left:[Long!]!, grade:Int = 0, isBidirectional:Boolean = false, right:[Long!]!) : MathAsmStatementEntity!
-    createObject(parentId:Long!, name:String!) : MathAsmObjectEntity!
+    createDir(parentId:Long!, name:String!) : MathAsmDirEntity!
 }
 #endregion
-
-
-
 
 
 
@@ -71,12 +69,13 @@ type MathAsmStatementEntity {
     grade: Int!
 }
 
-type MathAsmObjectEntity {
+type MathAsmDirEntity {
     id:Long
     name:String
 
     statements:[MathAsmStatementEntity!]!
-    objects:[MathAsmObjectEntity!]!
+    subDirs:[MathAsmDirEntity!]!
+    symbols:[MathAsmSymbol!]!
 }
 
 type MathAsmSymbol {

@@ -2,7 +2,7 @@ package eu.alkismavridis.mathasm.api.resolvers
 
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import eu.alkismavridis.mathasm.api.GraphqlContext
-import eu.alkismavridis.mathasm.db.entities.MathAsmObjectEntity
+import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.services.App
 import eu.alkismavridis.mathasm.db.entities.MathAsmStatementEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmSymbol
@@ -55,12 +55,20 @@ class Query: GraphQLQueryResolver {
 
 
     //region LOGIC VALUE GETTERS
-    fun rootObject(depth:Int) : MathAsmObjectEntity? {
+    fun rootDir(depth:Int) : MathAsmDirEntity? {
         return app.theoryRepo.findAll(depth+1).iterator().next().rootObj
     }
 
-    fun logicObject(id:Long, depth:Int) : MathAsmObjectEntity? {
-        return app.objectRepo.findById(id, depth).orElse(null)
+    /** returns the given directory's parent */
+    fun dirParent(id:Long, depth:Int) : MathAsmDirEntity? {
+        val parentId = app.dirRepo.findParentIdOfDir(id)
+        if (parentId==null) return null
+
+        return app.dirRepo.findById(parentId, depth).orElse(null)
+    }
+
+    fun logicDir(id:Long, depth:Int) : MathAsmDirEntity? {
+        return app.dirRepo.findById(id, depth).orElse(null)
     }
 
     fun statement(id:Long, depth:Int) : MathAsmStatementEntity? {

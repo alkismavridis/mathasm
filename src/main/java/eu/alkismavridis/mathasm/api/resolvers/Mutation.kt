@@ -65,11 +65,11 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
 
 
     //region SYMBOL MANAGEMENT
-    fun createSymbol(text:String, uid:Long, env:DataFetchingEnvironment) : MathAsmSymbol {
+    fun createSymbol(parentId:Long, text:String, uid:Long, env:DataFetchingEnvironment) : MathAsmSymbol {
         //1. Check user permissions
         val requestingUser = env.getContext<GraphqlContext>().user
         if (requestingUser==null) throw MathAsmException(ErrorCode.UNAUTHORIZED, "No session.")
-        if (!requestingUser.canCreateSymbols()) throw MathAsmException(ErrorCode.UNAUTHORIZED, "Not enough rights to create symbols.")
+        if (!requestingUser.canCreateSymbols()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to create symbols.")
 
         //2. Sanitize and validate the incoming text
         val textToUse = SymbolUtils.sanitizeSymbolTest(text)
@@ -77,13 +77,18 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
         //3. Check if symbol with the given uid is already registered
         val existingSymbol = app.symbolRepo.findBySymbolIdOrText(uid, textToUse)
         if (existingSymbol!=null) {
-            if (existingSymbol.uid == uid) throw MathAsmException(ErrorCode.SYMBOL_ALREADY_REGISTERED, "Symbol with uid $uid already registered.")
-            else throw MathAsmException(ErrorCode.SYMBOL_ALREADY_REGISTERED, "Symbol with text \"$textToUse\" already registered.")
+            if (existingSymbol.uid == uid) throw MathAsmException(ErrorCode.SYMBOL_UID_ALREADY_REGISTERED, "Symbol with uid $uid already registered.")
+            else throw MathAsmException(ErrorCode.SYMBOL_TEXT_ALREADY_REGISTERED, "Symbol with text \"$textToUse\" already registered.")
         }
 
+        //4. Get the parent
+        val parent: MathAsmDirEntity? = app.dirRepo.findById(parentId, 0).orElse(null)
+        if (parent==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Object with uid $parentId not found.")
+
         //4. Create and save the symbol
-        val newSymbol = MathAsmSymbol(textToUse, uid)
-        app.symbolRepo.save(newSymbol)
+        val newSymbol = MathAsmSymbol(requestingUser, textToUse, uid)
+        parent.symbols.add(newSymbol)
+        app.dirRepo.save(parent, 3)
 
         return newSymbol
     }
@@ -91,29 +96,29 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
 
 
     //region SENTENCE GENERATION
-    fun createObject(parentId:Long, name:String, env:DataFetchingEnvironment) : MathAsmObjectEntity {
+    fun createDir(parentId:Long, name:String, env:DataFetchingEnvironment) : MathAsmDirEntity {
         //1. Check user permissions
         val requestingUser = env.getContext<GraphqlContext>().user
         if (requestingUser==null) throw MathAsmException(ErrorCode.UNAUTHORIZED, "No session.")
-        if (!requestingUser.canCreateObjects()) throw MathAsmException(ErrorCode.UNAUTHORIZED, "Not enough rights to create objects.")
+        if (!requestingUser.cancreateDirs()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to create dirs.")
 
 
         //2. Get the parent
-        val parent: MathAsmObjectEntity? = app.objectRepo.findById(parentId, 0).orElse(null)
+        val parent: MathAsmDirEntity? = app.dirRepo.findById(parentId, 0).orElse(null)
         if (parent==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Object with uid $parentId not found.")
 
         //3. Check name availability
-        val isNameTaken = app.objectRepo.hasChildWithName(parentId, name)
+        val isNameTaken = app.dirRepo.hasChildWithName(parentId, name)
         if (isNameTaken) throw MathAsmException(ErrorCode.NAME_ALREADY_EXISTS, "Name  \"$name\" already exists.")
 
 
         //4. Create and persist the object
-        val newObject = MathAsmObjectEntity(name)
+        val newObject = MathAsmDirEntity(name)
         newObject.author = requestingUser
         newObject.createdAt = Instant.now()
 
         parent.add(newObject)
-        app.objectRepo.save(parent, 2)
+        app.dirRepo.save(parent, 2)
 
         return newObject
     }
@@ -122,15 +127,15 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
         //1. Check user permissions
         val requestingUser = env.getContext<GraphqlContext>().user
         if (requestingUser==null) throw MathAsmException(ErrorCode.UNAUTHORIZED, "No session.")
-        if (!requestingUser.canCreateAxioms()) throw MathAsmException(ErrorCode.UNAUTHORIZED, "Not enough rights to create axioms.")
+        if (!requestingUser.canCreateAxioms()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to create axioms.")
 
         //2. Get the parent
-        val parent: MathAsmObjectEntity? = app.objectRepo.findById(parentId, 0).orElse(null)
+        val parent: MathAsmDirEntity? = app.dirRepo.findById(parentId, 0).orElse(null)
         if (parent==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Object with uid $parentId not found.")
 
 
         //3. Check name availability
-        val isNameTaken = app.objectRepo.hasChildWithName(parentId, name)
+        val isNameTaken = app.dirRepo.hasChildWithName(parentId, name)
         if (isNameTaken) throw MathAsmException(ErrorCode.NAME_ALREADY_EXISTS, "Name  \"$name\" already exists.")
 
         //4. Create and persist the axiom
@@ -139,7 +144,7 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
         newAxiom.createdAt = Instant.now()
 
         parent.add(newAxiom)
-        app.objectRepo.save(parent, 2)
+        app.dirRepo.save(parent, 2)
 
         return newAxiom
     }
@@ -148,7 +153,7 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
         //1. Check user permissions
         val requestingUser = env.getContext<GraphqlContext>().user
         if (requestingUser==null) throw MathAsmException(ErrorCode.UNAUTHORIZED, "No session.")
-        if (!requestingUser.canCreateTheorems()) throw MathAsmException(ErrorCode.UNAUTHORIZED, "Not enough rights to create theorems.")
+        if (!requestingUser.canCreateTheorems()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to create theorems.")
 
 
         //2. Create the executor environment
@@ -171,9 +176,7 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
         app.proofRepo.save(proof, 1)
 
         //5. Associate all theorems with their proof
-        theoremList.forEach { th ->
-            th.proof = proof
-        }
+        theoremList.forEach { it.proof = proof }
         app.statementRepo.saveAll(theoremList)
 
         return proof

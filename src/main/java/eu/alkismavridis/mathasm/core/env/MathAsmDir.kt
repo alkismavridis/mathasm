@@ -1,9 +1,8 @@
 package eu.alkismavridis.mathasm.core.env
 
 import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement
-import java.util.stream.Stream
 
-abstract class MathAsmObject {
+abstract class MathAsmDir {
     //region FIELDS
     open var id:Long? = null
 
@@ -17,7 +16,7 @@ abstract class MathAsmObject {
     //region LOGIC VALUE OVERRIDES
     //getters
     abstract fun getSentence(index:Int) : MathAsmStatement?
-    abstract fun getObject(index:Int) : MathAsmObject?
+    abstract fun getObject(index:Int) : MathAsmDir?
 
     //sentence setters
     abstract fun add(value: MathAsmStatement)
@@ -25,8 +24,8 @@ abstract class MathAsmObject {
     abstract fun set(index:Int, value: MathAsmStatement)
 
     //object setters
-    abstract fun add(value: MathAsmObject)
-    abstract fun add(index:Int, value: MathAsmObject)
-    abstract fun set(index:Int, value: MathAsmObject)
+    abstract fun add(value: MathAsmDir)
+    abstract fun add(index:Int, value: MathAsmDir)
+    abstract fun set(index:Int, value: MathAsmDir)
     //endregion
 }

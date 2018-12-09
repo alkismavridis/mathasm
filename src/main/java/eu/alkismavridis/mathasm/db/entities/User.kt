@@ -1,6 +1,5 @@
 package eu.alkismavridis.mathasm.db.entities
 
-import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import org.neo4j.ogm.annotation.GeneratedValue
@@ -10,14 +9,14 @@ import org.neo4j.ogm.annotation.NodeEntity
 const val UserRights_CAN_CREATE_THEOREMS = 1
 const val UserRights_CAN_CREATE_SYMBOLS = 2
 const val UserRights_CAN_CREATE_AXIOMS = 4
-const val UserRights_CAN_CREATE_OBJECTS = 8
+const val UserRights_CAN_CREATE_DIRS = 8
 const val UserRights_CAN_CREATE_USERS = 16
 
 const val UserRights_MAX:Int =
         UserRights_CAN_CREATE_THEOREMS or
         UserRights_CAN_CREATE_SYMBOLS or
         UserRights_CAN_CREATE_AXIOMS or
-        UserRights_CAN_CREATE_OBJECTS or
+        UserRights_CAN_CREATE_DIRS or
         UserRights_CAN_CREATE_USERS
 
 const val UserRights_MIN = 0
@@ -56,8 +55,8 @@ class User {
         return this.rights and UserRights_CAN_CREATE_AXIOMS != 0
     }
 
-    fun canCreateObjects() : Boolean {
-        return this.rights and UserRights_CAN_CREATE_OBJECTS != 0
+    fun cancreateDirs() : Boolean {
+        return this.rights and UserRights_CAN_CREATE_DIRS != 0
     }
 
     fun canCreateUsers() : Boolean {

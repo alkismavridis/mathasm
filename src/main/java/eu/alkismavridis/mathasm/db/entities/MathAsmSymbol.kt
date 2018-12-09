@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import org.neo4j.ogm.annotation.GeneratedValue
 import org.neo4j.ogm.annotation.Id
 import org.neo4j.ogm.annotation.NodeEntity
+import org.neo4j.ogm.annotation.Relationship
+import org.neo4j.ogm.annotation.typeconversion.DateLong
+import java.time.Instant
 
 @NodeEntity(label="symbol")
 class MathAsmSymbol {
@@ -15,13 +18,21 @@ class MathAsmSymbol {
 
     var uid:Long = 0
     var text:String = ""
+
+    @DateLong
+    var createdAt: Instant? = null
+
+    @Relationship(type = "AUTH", direction = Relationship.OUTGOING)
+    var author:User? = null
     //endregion
 
 
     constructor() {}
-    constructor(text:String, uid:Long) {
+    constructor(author:User, text:String, uid:Long) {
         this.text = text
         this.uid = uid
+        this.createdAt = Instant.now()
+        this.author = author
     }
 
 

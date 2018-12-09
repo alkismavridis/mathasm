@@ -6,7 +6,7 @@ import eu.alkismavridis.mathasm.core.proof.*
 import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement
 import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement_BOTH_SIDES
 import eu.alkismavridis.mathasm.db.entities.LogicMoveEntity
-import eu.alkismavridis.mathasm.db.entities.MathAsmObjectEntity
+import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmStatementEntity
 import eu.alkismavridis.mathasm.db.entities.User
 import eu.alkismavridis.mathasm.services.App
@@ -19,7 +19,7 @@ class ProofUtils {
          *
          * Validations:
          * - The statementToSave to be saved must be an instance of MathAsmStatementEntity.
-         * - The MathAsmObjectEntity with id $parentId must exist in the DB.
+         * - The MathAsmDirEntity with id $parentId must exist in the DB.
          *
          *
          * The following fields of the CLONE to be saved will be set up:
@@ -38,16 +38,16 @@ class ProofUtils {
             entityToSave.name = name
 
             //2. Fetch parent and add the statement to it
-            val parent: MathAsmObjectEntity? = app.objectRepo.findById(parentId, 0).orElse(null)
+            val parent: MathAsmDirEntity? = app.dirRepo.findById(parentId, 0).orElse(null)
             if (parent==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Object with id $parentId not found.")
 
             //3. Check name availability
-            val isNameTaken = app.objectRepo.hasChildWithName(parentId, name)
+            val isNameTaken = app.dirRepo.hasChildWithName(parentId, name)
             if (isNameTaken) throw MathAsmException(ErrorCode.NAME_ALREADY_EXISTS, "Name  \"$name\" already exists.")
 
             //4. Save the statement on list and db
             parent.add(entityToSave)
-            app.objectRepo.save(parent, 2)
+            app.dirRepo.save(parent, 2)
             targetList.add(entityToSave)
         }
 

@@ -1,6 +1,5 @@
 package eu.alkismavridis.mathasm.api.controller
 
-import eu.alkismavridis.mathasm.db.entities.User
 import java.time.Instant
 
 

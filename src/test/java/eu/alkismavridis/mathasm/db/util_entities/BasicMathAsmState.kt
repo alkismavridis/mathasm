@@ -10,17 +10,17 @@ class BasicMathAsmState {
 
     var theory = MathAsmTheory()
 
-    var sym1 = MathAsmSymbol("x", 1)
-    var sym2 = MathAsmSymbol("+", 2)
-    var sym3 = MathAsmSymbol("y", 3)
-    var sym4 = MathAsmSymbol("=", 4)
+    var sym1 = MathAsmSymbol(user1, "x", 1)
+    var sym2 = MathAsmSymbol(user1, "+", 2)
+    var sym1_1 = MathAsmSymbol(user2, "y", 3)
+    var sym2_1 = MathAsmSymbol(user2,"=", 4)
 
-    var rootObj = MathAsmObjectEntity("rootObj")        //author: user1
-    var obj1 = MathAsmObjectEntity("obj1")              //author: user2
-    var obj1_1 = MathAsmObjectEntity("obj1_1")          //author: user2
-    var obj1_1_1 = MathAsmObjectEntity("obj1_1_1")      //author: user1
-    var obj2 = MathAsmObjectEntity("obj2")              //author: user1
-    var obj2_1 = MathAsmObjectEntity("obj2_1")          //author: user2
+    var rootObj = MathAsmDirEntity("rootObj")        //author: user1
+    var obj1 = MathAsmDirEntity("obj1")              //author: user2
+    var obj1_1 = MathAsmDirEntity("obj1_1")          //author: user2
+    var obj1_1_1 = MathAsmDirEntity("obj1_1_1")      //author: user1
+    var obj2 = MathAsmDirEntity("obj2")              //author: user1
+    var obj2_1 = MathAsmDirEntity("obj2_1")          //author: user2
 
     var stmt1a = MathAsmStatementEntity.createAxiom("stmt1a", longArrayOf(1,2,3), longArrayOf(3,2,1), true, 0)  //author: user1
     var stmt2a = MathAsmStatementEntity.createAxiom("stmt2a", longArrayOf(1,4,1), longArrayOf(3,4,3), true, 0)  //author: user2
@@ -40,28 +40,34 @@ class BasicMathAsmState {
         rootObj.author = user1
         app.theoryRepo.save(theory, 3)
 
-        //3. Persist the symbols
-        app.symbolRepo.saveAll(listOf(sym1, sym2, sym3, sym4))
 
-        //4. Setup and persist the object/statement tree
-        rootObj.objects.add(obj1.apply{ author=user2 })
-        obj1.objects.add(obj1_1.apply{ author=user2 })
-        obj1_1.objects.add(obj1_1_1.apply{ author=user1 })
 
-        rootObj.objects.add(obj2.apply{ author=user1 })
-        obj2.objects.add(obj2_1.apply{ author=user2 })
+        //3. Setup and persist the object/statement tree
+        rootObj.subDirs.add(obj1.apply{ author=user2 })
+        obj1.subDirs.add(obj1_1.apply{ author=user2 })
+        obj1_1.subDirs.add(obj1_1_1.apply{ author=user1 })
 
-        //4b. add the statements
+        rootObj.subDirs.add(obj2.apply{ author=user1 })
+        obj2.subDirs.add(obj2_1.apply{ author=user2 })
+
+        //3b. add the statements
         obj1.statements.add(stmt1a.apply { author=user1 })
         obj2.statements.add(stmt2a.apply { author=user2 })
         obj1_1.statements.add(stmt1_1a.apply { author=user1 })
 
-        app.objectRepo.save(rootObj, 2)
-        app.objectRepo.save(obj1, 2)
-        app.objectRepo.save(obj1_1, 2)
-        app.objectRepo.save(obj1_1_1, 2)
-        app.objectRepo.save(obj2, 2)
-        app.objectRepo.save(obj2_1, 2)
+
+        //3c. add the symbols
+        obj1.symbols.add(sym1)
+        obj2.symbols.add(sym2)
+        obj1_1.symbols.add(sym1_1)
+        obj2_1.symbols.add(sym2_1)
+
+        app.dirRepo.save(rootObj, 2)
+        app.dirRepo.save(obj1, 2)
+        app.dirRepo.save(obj1_1, 2)
+        app.dirRepo.save(obj1_1_1, 2)
+        app.dirRepo.save(obj2, 2)
+        app.dirRepo.save(obj2_1, 2)
     }
     //endregion
 }

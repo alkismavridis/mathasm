@@ -1,10 +1,10 @@
 import React, {Component} from 'react';
 import PropTypes from "prop-types";
 import "./LoginForm.css";
-import Urls from "../../../../constants/Urls";
-import SessionService from "../../../../services/SessionService";
 import GraphQL from "../../../../services/GraphQL";
 import ErrorCode from "../../../../constants/ErrorCode";
+import ModalHeader from "../../ModalHeader/ModalHeader";
+import DomUtils from "../../../../services/DomUtils";
 
 
 
@@ -61,7 +61,7 @@ class LoginForm extends Component {
     handleFormSubmit(event) {
         event.preventDefault();
 
-        GraphQL.run("", q.LOGIN, {userName:this.state.userName, password:this.state.password})
+        GraphQL.run(q.LOGIN, {userName:this.state.userName, password:this.state.password})
             .then(data => {
                 if (!data || !data.login) return;
                 this.props.onSuccessfulLogin(data.login);
@@ -87,13 +87,17 @@ class LoginForm extends Component {
     }
 
     render() {
+        const formHandler = this.handleFormSubmit.bind(this);
         return (
-            <form onSubmit={this.handleFormSubmit.bind(this)} style={this.props.style} className="LoginForm_root">
-                <div className="LoginForm_title">Login</div>
+            <form onSubmit={formHandler} style={this.props.style} className="LoginForm_root">
+                <ModalHeader
+                    title="Login"
+                    onConfirm={formHandler}/>
                 <input
                     className="Globals_inp LoginForm_inp"
                     value={this.state.userName}
                     placeholder={"Username"}
+                    onKeyDown={DomUtils.handleEnter(formHandler)}
                     onChange={event => this.setState({userName:event.target.value, errorCode:null})}/>
 
                 <input
@@ -101,14 +105,9 @@ class LoginForm extends Component {
                     type="password"
                     value={this.state.password}
                     placeholder={"Password"}
+                    onKeyDown={DomUtils.handleEnter(formHandler)}
                     onChange={event => this.setState({password:event.target.value, errorCode:null})}/>
 
-                <button
-                    className="Globals_but"
-                    style={{alignSelf:"flex-end"}}
-                    onClick={this.handleFormSubmit.bind(this)}>
-                    Login
-                </button>
                 {this.state.errorCode==null? null : this.renderErrorMessage(this.state.errorCode)}
                 <div
                     className="LoginForm_noAccount"

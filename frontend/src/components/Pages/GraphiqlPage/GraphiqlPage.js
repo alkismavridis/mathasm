@@ -3,13 +3,10 @@ import PropTypes from "prop-types";
 import "./GraphiqlPage.css";
 import GraphiQL from "graphiql";
 import GraphQL from "../../../services/GraphQL";
-import SessionService from "../../../services/SessionService";
 
 export default class GraphiqlPage extends Component {
     static propTypes = {
         //data
-        history:PropTypes.object.isRequired,
-
         //actions
 
         //styling
@@ -41,7 +38,6 @@ export default class GraphiqlPage extends Component {
     //region EVENT HANDLERS
     graphQLFetcher(graphQLParams) {
         return GraphQL.run(
-            SessionService.getSessionKey(),
             graphQLParams.query,
             graphQLParams.variables,
             graphQLParams.operationName,

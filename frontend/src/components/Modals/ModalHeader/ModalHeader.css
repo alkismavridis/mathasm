@@ -1,0 +1,23 @@
+.ModalHeader_root {
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+    border-bottom: dashed 1px #00000030;
+}
+
+.ModalHeader_title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.ModalHeader_close {
+    color: black;
+    margin-left: 8px;
+    cursor: pointer;
+}
+
+.ModalHeader_confirm {
+    color: green;
+    margin-left: 8px;
+    cursor: pointer;
+}

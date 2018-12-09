@@ -4,25 +4,24 @@ import com.coxautodev.graphql.tools.SchemaParser
 import com.fasterxml.jackson.databind.ObjectMapper
 import eu.alkismavridis.mathasm.MathAsmConfig
 import eu.alkismavridis.mathasm.api.controller.security.SecurityService
-import eu.alkismavridis.mathasm.db.entities.MathAsmObjectEntity
-import eu.alkismavridis.mathasm.api.resolvers.MathAsmObjectResolver
+import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
+import eu.alkismavridis.mathasm.api.resolvers.MathAsmDirResolver
 import eu.alkismavridis.mathasm.services.App
 import eu.alkismavridis.mathasm.api.resolvers.SentenceResolver
 import eu.alkismavridis.mathasm.api.resolvers.UserResolver
 import eu.alkismavridis.mathasm.api.resolvers.Mutation
 import eu.alkismavridis.mathasm.api.resolvers.Query
-import graphql.ExecutionInput
+import eu.alkismavridis.mathasm.core.error.MathAsmException
+import graphql.*
 import graphql.schema.GraphQLSchema
-import graphql.GraphQL
-import graphql.Scalars
 import graphql.execution.AsyncExecutionStrategy
 import graphql.execution.AsyncSerialExecutionStrategy
 import graphql.execution.DataFetcherExceptionHandler
 import graphql.execution.ExecutionStrategy
 import graphql.schema.GraphQLScalarType
 import java.nio.file.Files
-import graphql.ExceptionWhileDataFetching
 import graphql.execution.DataFetcherExceptionHandlerParameters
+import graphql.language.SourceLocation
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
@@ -43,7 +42,7 @@ class GraphqlService {
 
 
     var mainSchema: GraphQLSchema? = null
-    val exceptionHandler:ShopExceptionHandler
+    val exceptionHandler:MathAsmExceptionHandler
     val mutationStrategy:ExecutionStrategy
     val queryStrategy:ExecutionStrategy
     private val objectMapper = ObjectMapper()
@@ -58,7 +57,7 @@ class GraphqlService {
 
 
         //2. SETUP HANDLERS
-        exceptionHandler = ShopExceptionHandler()
+        exceptionHandler = MathAsmExceptionHandler()
         mutationStrategy = AsyncSerialExecutionStrategy(exceptionHandler)
         queryStrategy = AsyncExecutionStrategy(exceptionHandler)
 
@@ -76,18 +75,18 @@ class GraphqlService {
 
         //2. SETUP RESOLVERS
         val resolvers = listOf(
-                Query(app),
-                Mutation(app, secService),
+            Query(app),
+            Mutation(app, secService),
             UserResolver(),
             SentenceResolver(),
-            MathAsmObjectResolver()
+            MathAsmDirResolver()
         )
 
         //3. Create the schema
         val schemaPath = conf.resources.resolve("schemas/main.graphqls")
         val schemaString = String(Files.readAllBytes(schemaPath))
         mainSchema = SchemaParser.newParser()
-                .dictionary("MathAsmObjectEntity", MathAsmObjectEntity::class)
+                .dictionary("MathAsmDirEntity", MathAsmDirEntity::class)
                 .schemaString(schemaString)
                 .scalars(*scalars)
                 .resolvers(resolvers)
@@ -116,13 +115,42 @@ class GraphqlService {
 
 
 
-class ShopExceptionHandler : DataFetcherExceptionHandler {
+class MathAsmExceptionHandler : DataFetcherExceptionHandler {
     override fun accept(handlerParameters: DataFetcherExceptionHandlerParameters) {
         val exception = handlerParameters.exception
         val sourceLocation = handlerParameters.field.sourceLocation
         val path = handlerParameters.path
-        val error = ExceptionWhileDataFetching(path, exception, sourceLocation)
+        val error = MathAsmGraphqlError(exception, sourceLocation)
 
         handlerParameters.executionContext.addError(error, path)
+    }
+}
+
+class MathAsmGraphqlError(thr:Throwable, sourceLocation:SourceLocation) : GraphQLError {
+    private val locations:MutableList<SourceLocation>
+    private val message:String
+    private val extensions:Map<String, Any>
+
+    init {
+        this.locations = mutableListOf(sourceLocation)
+        this.message = if (thr.message==null) thr.javaClass.simpleName else thr.message!!
+        this.extensions = if (thr is MathAsmException) thr.extensions else mapOf()
+    }
+
+
+    override fun getMessage(): String {
+        return this.message
+    }
+
+    override fun getErrorType(): ErrorType {
+        return ErrorType.DataFetchingException
+    }
+
+    override fun getLocations(): MutableList<SourceLocation> {
+        return this.locations
+    }
+
+    override fun getExtensions(): Map<String, Any> {
+        return this.extensions
     }
 }

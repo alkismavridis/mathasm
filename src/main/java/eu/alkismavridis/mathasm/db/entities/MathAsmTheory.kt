@@ -18,14 +18,14 @@ class MathAsmTheory {
     var name:String = ""
 
     @Relationship(type = "OBJ", direction = Relationship.OUTGOING)
-    var rootObj: MathAsmObjectEntity? = null
+    var rootObj: MathAsmDirEntity? = null
     //endregion
 
 
 
     //region LIFE CYCLE
     constructor() {}
-    constructor(name:String, rootObj: MathAsmObjectEntity) {
+    constructor(name:String, rootObj: MathAsmDirEntity) {
         this.rootObj = rootObj
         this.name = name
     }

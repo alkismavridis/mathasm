@@ -3,7 +3,7 @@ package eu.alkismavridis.mathasm.db.entities
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement
-import eu.alkismavridis.mathasm.core.env.MathAsmObject
+import eu.alkismavridis.mathasm.core.env.MathAsmDir
 import eu.alkismavridis.mathasm.core.error.ErrorCode
 import eu.alkismavridis.mathasm.core.error.MathAsmException
 import org.neo4j.ogm.annotation.*
@@ -12,7 +12,7 @@ import java.time.Instant
 import java.util.stream.Stream
 
 @NodeEntity(label="obj")
-class MathAsmObjectEntity : MathAsmObject {
+class MathAsmDirEntity : MathAsmDir {
     //region FIELDS
     @Id
     @GeneratedValue
@@ -25,8 +25,11 @@ class MathAsmObjectEntity : MathAsmObject {
     @Relationship(type = "STMT", direction = Relationship.OUTGOING)
     var statements:MutableList<MathAsmStatementEntity> = ArrayList()
 
+    @Relationship(type = "SYM", direction = Relationship.OUTGOING)
+    var symbols:MutableList<MathAsmSymbol> = ArrayList()
+
     @Relationship(type = "OBJ", direction = Relationship.OUTGOING)
-    var objects = mutableListOf<MathAsmObjectEntity>()
+    var subDirs = mutableListOf<MathAsmDirEntity>()
 
     //extentions
     @Relationship(type = "AUTH", direction = Relationship.OUTGOING)
@@ -55,14 +58,14 @@ class MathAsmObjectEntity : MathAsmObject {
         return this.statements[index]
     }
 
-    override fun getObject(index:Int) : MathAsmObject? {
-        if (index<0 || index>=this.objects.size) return null
-        return this.objects[index]
+    override fun getObject(index:Int) : MathAsmDir? {
+        if (index<0 || index>=this.subDirs.size) return null
+        return this.subDirs[index]
     }
 
 
     fun sentenceStream() : Stream<MathAsmStatementEntity> = this.statements.stream()
-    fun objectStream() : Stream<MathAsmObjectEntity> = this.objects.stream()
+    fun subDirStream() : Stream<MathAsmDirEntity> = this.subDirs.stream()
 
 
 
@@ -93,27 +96,27 @@ class MathAsmObjectEntity : MathAsmObject {
 
     //object setters
     @Synchronized
-    override fun add(value: MathAsmObject) {
-        if (!(value is MathAsmObjectEntity)) {
-            throw MathAsmException(ErrorCode.WRONG_CLASS_INSTANCE, "Only MathAsmObjectEntity is allowed")
+    override fun add(value: MathAsmDir) {
+        if (!(value is MathAsmDirEntity)) {
+            throw MathAsmException(ErrorCode.WRONG_CLASS_INSTANCE, "Only MathAsmDirEntity is allowed")
         }
-        this.objects.add(value)
+        this.subDirs.add(value)
     }
 
     @Synchronized
-    override fun add(index:Int, value: MathAsmObject) {
-        if (!(value is MathAsmObjectEntity)) {
-            throw MathAsmException(ErrorCode.WRONG_CLASS_INSTANCE, "Only MathAsmObjectEntity is allowed")
+    override fun add(index:Int, value: MathAsmDir) {
+        if (!(value is MathAsmDirEntity)) {
+            throw MathAsmException(ErrorCode.WRONG_CLASS_INSTANCE, "Only MathAsmDirEntity is allowed")
         }
-        this.objects.add(index, value)
+        this.subDirs.add(index, value)
     }
 
     @Synchronized
-    override fun set(index:Int, value: MathAsmObject) {
-        if (!(value is MathAsmObjectEntity)) {
-            throw MathAsmException(ErrorCode.WRONG_CLASS_INSTANCE, "Only MathAsmObjectEntity is allowed")
+    override fun set(index:Int, value: MathAsmDir) {
+        if (!(value is MathAsmDirEntity)) {
+            throw MathAsmException(ErrorCode.WRONG_CLASS_INSTANCE, "Only MathAsmDirEntity is allowed")
         }
-        this.objects[index] = value
+        this.subDirs[index] = value
     }
     //endregion
 
@@ -133,7 +136,7 @@ class MathAsmObjectEntity : MathAsmObject {
     //region OVERRIDES
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is MathAsmObjectEntity) return false
+        if (other !is MathAsmDirEntity) return false
 
         if (id == null) return false
         if (id != other.id) return false

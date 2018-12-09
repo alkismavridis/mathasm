@@ -1,0 +1,16 @@
+.GlobalHeader_root {
+    padding:8px;
+    box-shadow: black -5px -4px 25px 9px;
+    background-color: #51a0bd;
+}
+
+.GlobalHeader_userDiv {
+    font-size: 32px;
+    color:#f5f5f5;
+    cursor:pointer;
+}
+
+.GlobalHeader_userName {
+    margin-left:12px;
+    font-size:18px;
+}

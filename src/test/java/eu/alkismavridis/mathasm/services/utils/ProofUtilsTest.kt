@@ -5,7 +5,7 @@ import eu.alkismavridis.mathasm.core.error.MathAsmException
 import eu.alkismavridis.mathasm.core.proof.*
 import eu.alkismavridis.mathasm.core.sentence.*
 import eu.alkismavridis.mathasm.db.entities.LogicMoveEntity
-import eu.alkismavridis.mathasm.db.entities.MathAsmObjectEntity
+import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmStatementEntity
 import eu.alkismavridis.mathasm.db.entities.User
 import eu.alkismavridis.mathasm.db.util_entities.BasicMathAsmState
@@ -126,10 +126,10 @@ class ProofUtilsTest {
 
         //1. Clean up existing db entities
         app.statementRepo.deleteAll()
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
 
         //2. Create a parent object
-        val obj = app.objectRepo.save(MathAsmObjectEntity("root"))
+        val obj = app.dirRepo.save(MathAsmDirEntity("root"))
         assertNotNull(obj.id)
 
         //3. Save a theorem
@@ -137,7 +137,7 @@ class ProofUtilsTest {
         ProofUtils.persistTheorem(theoremList, stmt, obj.id!!, "someName", user, app)
 
         //4. Check that the theorem is persisted.
-        val objRefetched = app.objectRepo.findById(obj.id!!, 2).orElse(null)
+        val objRefetched = app.dirRepo.findById(obj.id!!, 2).orElse(null)
         assertEquals(1, objRefetched.statements.size)
 
         assertNotNull(objRefetched.statements[0].id)
@@ -165,10 +165,10 @@ class ProofUtilsTest {
 
         //1. Clean up existing db entities
         app.statementRepo.deleteAll()
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
 
         //2. Create a parent object
-        val obj = app.objectRepo.save(MathAsmObjectEntity("root"))
+        val obj = app.dirRepo.save(MathAsmDirEntity("root"))
         assertNotNull(obj.id)
 
         //3. Try to persist a non-DB instance

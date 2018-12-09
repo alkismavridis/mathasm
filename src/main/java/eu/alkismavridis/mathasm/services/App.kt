@@ -1,7 +1,7 @@
 package eu.alkismavridis.mathasm.services
 
 import eu.alkismavridis.mathasm.MathAsmConfig
-import eu.alkismavridis.mathasm.db.entities.MathAsmObjectEntity
+import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmTheory
 import eu.alkismavridis.mathasm.api.GraphqlService
 import eu.alkismavridis.mathasm.db.repo.*
@@ -30,7 +30,7 @@ class App {
 
 
     @Autowired
-    lateinit var objectRepo: MathAsmObjectRepository
+    lateinit var dirRepo: MathAsmDirRepository
         private set
 
     @Autowired
@@ -65,7 +65,7 @@ class App {
         //detect if root env exists. Create it if it does not
         val theoryCount = this.theoryRepo.count()
         if (theoryCount == 0L) {
-            val rootTheory = MathAsmTheory("root", MathAsmObjectEntity("rootObj"))
+            val rootTheory = MathAsmTheory("root", MathAsmDirEntity("rootObj"))
             rootTheory.rootObj?.author = userService.find{it.userName == "root"}
             this.theoryRepo.save(rootTheory, 2)
         }

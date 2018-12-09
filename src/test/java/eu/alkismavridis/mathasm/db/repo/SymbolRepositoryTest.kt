@@ -2,6 +2,8 @@ package eu.alkismavridis.mathasm.db.repo
 
 import com.google.common.primitives.UnsignedInts.toLong
 import eu.alkismavridis.mathasm.db.entities.MathAsmSymbol
+import eu.alkismavridis.mathasm.db.entities.User
+import eu.alkismavridis.mathasm.services.App
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -15,6 +17,9 @@ class SymbolRepositoryTest {
     //region INJECTIONS
     @Autowired
     lateinit var symboleRepo: SymbolRepository
+
+    @Autowired
+    lateinit var app: App
     //endregion
 
 
@@ -50,9 +55,12 @@ class SymbolRepositoryTest {
     //region TESTS
     @Test
     fun findBySymbolIdAndRange() {
+        val user = app.userService.save(User("testUser"))
+        assertNotNull(user.id)
+
         //1. Persist a couple of symbols
         for (i in 1..10) {
-            val symb = MathAsmSymbol("sym_$i", toLong(i))
+            val symb = MathAsmSymbol(user, "sym_$i", toLong(i))
             symboleRepo.save(symb)
         }
 
@@ -101,9 +109,12 @@ class SymbolRepositoryTest {
 
     @Test
     fun findByText() {
+        val user = app.userService.save(User("testUser"))
+        assertNotNull(user.id)
+
         //1. Persist a couple of symbols
         for (i in 1..10) {
-            val symb = MathAsmSymbol("sym_$i", toLong(i))
+            val symb = MathAsmSymbol(user, "sym_$i", toLong(i))
             symboleRepo.save(symb)
         }
 
@@ -146,9 +157,12 @@ class SymbolRepositoryTest {
 
     @Test
     fun findAllByUidTest() {
+        val user = app.userService.save(User("testUser"))
+        assertNotNull(user.id)
+
         //1. Persist a couple of symbols
         for (i in 1..10) {
-            val symb = MathAsmSymbol("sym_$i", toLong(i))
+            val symb = MathAsmSymbol(user,"sym_$i", toLong(i))
             symboleRepo.save(symb)
         }
 

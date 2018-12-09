@@ -5,8 +5,8 @@ export default {
 
   pages:{
       graphiql: FRONTEND_BASE+"graphiql",
-      login: FRONTEND_BASE+"login",
       theory: FRONTEND_BASE+"theory",
+      main: FRONTEND_BASE+"main",
       dbVisualisation: FRONTEND_BASE+"vis",
       about: FRONTEND_BASE+"about"
   },

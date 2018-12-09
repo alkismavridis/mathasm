@@ -1,10 +1,11 @@
 package eu.alkismavridis.mathasm.api.resolvers
 
 import eu.alkismavridis.mathasm.api.test_utils.DummyFetchingEnvironment
-import eu.alkismavridis.mathasm.db.entities.MathAsmObjectEntity
+import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmStatementEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmSymbol
 import eu.alkismavridis.mathasm.db.entities.User
+import eu.alkismavridis.mathasm.db.util_entities.BasicMathAsmState
 import eu.alkismavridis.mathasm.services.App
 import org.junit.*
 import org.junit.Assert.*
@@ -122,12 +123,15 @@ class QueryTest {
     //region SYMBOL GETTER TESTS
     @Test
     fun symbolGetterTest() {
+        val user = app.userService.save(User("testUser"))
+        assertNotNull(user.id)
+
         //1. Create a couple of symbols
         app.symbolRepo.deleteAll()
-        val sym1 = app.symbolRepo.save(MathAsmSymbol("sym1", 1))
-        val sym2 = app.symbolRepo.save(MathAsmSymbol("sym2", 2))
-        val sym3 = app.symbolRepo.save(MathAsmSymbol("sym3", 3))
-        val sym4 = app.symbolRepo.save(MathAsmSymbol("sym4", 4))
+        val sym1 = app.symbolRepo.save(MathAsmSymbol(user, "sym1", 1))
+        val sym2 = app.symbolRepo.save(MathAsmSymbol(user, "sym2", 2))
+        val sym3 = app.symbolRepo.save(MathAsmSymbol(user, "sym1_1", 3))
+        val sym4 = app.symbolRepo.save(MathAsmSymbol(user, "sym2_1", 4))
 
 
         //2. Try getting by range
@@ -154,126 +158,194 @@ class QueryTest {
 
     //region TREE GETTERS
     @Test
-    fun getRootObjectTest() {
+    fun getRootDirTest() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.postConstruct()
 
         val theory = app.theoryRepo.findAll(5).iterator().next()!!
 
-        //2. Create some objects in it
-        val child1 = MathAsmObjectEntity("child1")
-        val grandChild1 = MathAsmObjectEntity("grandChild1")
-        val grandGrandChild = MathAsmObjectEntity("grandGrandChild")
+        //2. Create some dirs in it
+        val child1 = MathAsmDirEntity("child1")
+        val grandChild1 = MathAsmDirEntity("grandChild1")
+        val grandGrandChild = MathAsmDirEntity("grandGrandChild")
 
-        grandChild1.objects.add(grandGrandChild)
-        child1.objects.add(grandChild1)
-        child1.objects.add(grandChild1)
-        theory.rootObj!!.objects.add(child1)
-        app.objectRepo.save(theory.rootObj, 10)
+        grandChild1.subDirs.add(grandGrandChild)
+        child1.subDirs.add(grandChild1)
+        child1.subDirs.add(grandChild1)
+        theory.rootObj!!.subDirs.add(child1)
+        app.dirRepo.save(theory.rootObj, 10)
 
-        assertEquals(4, app.objectRepo.count())
+        assertEquals(4, app.dirRepo.count())
 
         //3. Get root with depth of zero.
-        var result = query.rootObject(0)!!
+        var result = query.rootDir(0)!!
         assertEquals(theory.rootObj!!.id, result.id)
-        assertEquals(0, result.objects.size) //depth 0 should not fetch children
+        assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
 
         //4. Get root with depth 1
-        result = query.rootObject(1)!!
+        result = query.rootDir(1)!!
         assertEquals(theory.rootObj!!.id, result.id)
-        assertEquals(1, result.objects.size)
+        assertEquals(1, result.subDirs.size)
 
-        assertEquals(child1.id, result.objects[0].id)
-        assertEquals(0, result.objects[0].objects.size) //depth 1 should not fetch grand children
+        assertEquals(child1.id, result.subDirs[0].id)
+        assertEquals(0, result.subDirs[0].subDirs.size) //depth 1 should not fetch grand children
 
         //5. Get root with depth 2
-        result = query.rootObject(2)!!
+        result = query.rootDir(2)!!
         assertEquals(theory.rootObj!!.id, result.id)
-        assertEquals(1, result.objects.size)
+        assertEquals(1, result.subDirs.size)
 
-        assertEquals(child1.id, result.objects[0].id)
-        assertEquals(1, result.objects[0].objects.size)
+        assertEquals(child1.id, result.subDirs[0].id)
+        assertEquals(1, result.subDirs[0].subDirs.size)
 
-        assertEquals(grandChild1.id, result.objects[0].objects[0].id)
-        assertEquals(0, result.objects[0].objects[0].objects.size) //depth 2 should not fetch grand-grand children
+        assertEquals(grandChild1.id, result.subDirs[0].subDirs[0].id)
+        assertEquals(0, result.subDirs[0].subDirs[0].subDirs.size) //depth 2 should not fetch grand-grand children
     }
 
 
     @Test
-    fun getLogicObjectTest() {
+    fun getLogicDirTest() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.postConstruct()
 
         val theory = app.theoryRepo.findAll(5).iterator().next()!!
 
-        //2. Create some objects in it
-        val child1 = MathAsmObjectEntity("child1")
-        val grandChild1 = MathAsmObjectEntity("grandChild1")
-        val grandGrandChild = MathAsmObjectEntity("grandGrandChild")
+        //2. Create some dirs in it
+        val child1 = MathAsmDirEntity("child1")
+        val grandChild1 = MathAsmDirEntity("grandChild1")
+        val grandGrandChild = MathAsmDirEntity("grandGrandChild")
 
-        grandChild1.objects.add(grandGrandChild)
-        child1.objects.add(grandChild1)
-        child1.objects.add(grandChild1)
-        theory.rootObj!!.objects.add(child1)
-        app.objectRepo.save(theory.rootObj, 10)
+        grandChild1.subDirs.add(grandGrandChild)
+        child1.subDirs.add(grandChild1)
+        child1.subDirs.add(grandChild1)
+        theory.rootObj!!.subDirs.add(child1)
+        app.dirRepo.save(theory.rootObj, 10)
 
-        assertEquals(4, app.objectRepo.count())
+        assertEquals(4, app.dirRepo.count())
 
         //3. Get root with depth of zero.
-        var result = query.logicObject(theory.rootObj!!.id!!, 0)!!
+        var result = query.logicDir(theory.rootObj!!.id!!, 0)!!
         assertEquals(theory.rootObj!!.id, result.id)
-        assertEquals(0, result.objects.size) //depth 0 should not fetch children
+        assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
 
-        result = query.logicObject(child1.id!!, 0)!!
+        result = query.logicDir(child1.id!!, 0)!!
         assertEquals(child1.id, result.id)
-        assertEquals(0, result.objects.size) //depth 0 should not fetch children
+        assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
 
-        result = query.logicObject(grandChild1.id!!, 0)!!
+        result = query.logicDir(grandChild1.id!!, 0)!!
         assertEquals(grandChild1.id, result.id)
-        assertEquals(0, result.objects.size) //depth 0 should not fetch children
+        assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
 
 
         //4. Get root with depth 1
-        result = query.logicObject(child1.id!!, 1)!!
+        result = query.logicDir(child1.id!!, 1)!!
         assertEquals(child1.id, result.id)
-        assertEquals(1, result.objects.size)
+        assertEquals(1, result.subDirs.size)
 
-        assertEquals(grandChild1.id, result.objects[0].id)
-        assertEquals(0, result.objects[0].objects.size) //depth 1 should not fetch grand children
+        assertEquals(grandChild1.id, result.subDirs[0].id)
+        assertEquals(0, result.subDirs[0].subDirs.size) //depth 1 should not fetch grand children
 
         //fetch one more...
-        result = query.logicObject(grandChild1.id!!, 1)!!
+        result = query.logicDir(grandChild1.id!!, 1)!!
         assertEquals(grandChild1.id, result.id)
-        assertEquals(1, result.objects.size)
+        assertEquals(1, result.subDirs.size)
 
-        assertEquals(grandGrandChild.id, result.objects[0].id)
-        assertEquals(0, result.objects[0].objects.size) //depth 1 should not fetch grand children
+        assertEquals(grandGrandChild.id, result.subDirs[0].id)
+        assertEquals(0, result.subDirs[0].subDirs.size) //depth 1 should not fetch grand children
 
         //5. Get root with depth 2
-        result = query.logicObject(child1.id!!, 2)!!
+        result = query.logicDir(child1.id!!, 2)!!
         assertEquals(child1.id!!, result.id)
-        assertEquals(1, result.objects.size)
+        assertEquals(1, result.subDirs.size)
 
-        assertEquals(grandChild1.id, result.objects[0].id)
-        assertEquals(1, result.objects[0].objects.size)
+        assertEquals(grandChild1.id, result.subDirs[0].id)
+        assertEquals(1, result.subDirs[0].subDirs.size)
 
-        assertEquals(grandGrandChild.id, result.objects[0].objects[0].id)
-        assertEquals(0, result.objects[0].objects[0].objects.size) //depth 2 should not fetch grand-grand children
+        assertEquals(grandGrandChild.id, result.subDirs[0].subDirs[0].id)
+        assertEquals(0, result.subDirs[0].subDirs[0].subDirs.size) //depth 2 should not fetch grand-grand children
 
         //6. Try getting a non existing object
-        assertNull(query.logicObject(9999L, 2))
+        assertNull(query.logicDir(9999L, 2))
+    }
+
+    @Test
+    fun dirParentTest() {
+        app.symbolRepo.deleteAll()
+        app.proofRepo.deleteAll()
+        app.statementRepo.deleteAll()
+        app.dirRepo.deleteAll()
+        app.userService.deleteAll()
+
+        val state = BasicMathAsmState(app)
+
+
+        //1. Get root parent (should return null)
+        var result = query.dirParent(state.rootObj.id!!, 0)
+        assertNull(result)
+
+
+        //2. Get with depth zero
+        result = query.dirParent(state.obj1.id!!, 0)
+        assertEquals(state.rootObj.id, result!!.id)
+        assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
+
+        result = query.dirParent(state.obj2.id!!, 0)!!
+        assertEquals(state.rootObj.id, result.id)
+        assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
+
+        result = query.dirParent(state.obj1_1.id!!, 0)!!
+        assertEquals(state.obj1.id, result.id)
+        assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
+
+        result = query.dirParent(state.obj1_1_1.id!!, 0)!!
+        assertEquals(state.obj1_1.id, result.id)
+        assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
+
+
+        //4. Get root with depth 1
+        result = query.dirParent(state.obj1.id!!, 1)!!
+        assertEquals(state.rootObj.id, result.id)
+        assertEquals(2, result.subDirs.size)
+
+        var objectToTest = result.subDirs.find { it.name == "obj1" }
+        assertEquals(state.obj1.id, objectToTest!!.id)
+        assertEquals(0, objectToTest.subDirs.size) //depth 1 should not fetch grand children
+
+        result = query.dirParent(state.obj1_1.id!!, 1)!!
+        assertEquals(state.obj1.id, result.id)
+        assertEquals(1, result.subDirs.size)
+
+        objectToTest = result.subDirs.find { it.name == "obj1_1" }
+        assertEquals(state.obj1_1.id, objectToTest!!.id)
+        assertEquals(0, objectToTest.subDirs.size) //depth 1 should not fetch grand children
+
+        //5. Get root with depth 2
+        result = query.dirParent(state.obj1.id!!, 2)!!
+        assertEquals(state.rootObj.id!!, result.id)
+        assertEquals(2, result.subDirs.size)
+
+        objectToTest = result.subDirs.find { it.name == "obj1" }
+        assertEquals(state.obj1.id, objectToTest!!.id)
+        assertEquals(1, objectToTest.subDirs.size)
+
+        objectToTest = objectToTest.subDirs.find { it.name == "obj1_1" }
+        assertEquals(state.obj1_1.id, objectToTest!!.id)
+        assertEquals(0, objectToTest.subDirs.size) //depth 2 should not fetch grand-grand children
+
+        //6. Try getting a non existing object
+        assertNull(query.dirParent(9999L, 2))
     }
 
     @Test
     fun getStatementTest() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.postConstruct()

@@ -10,7 +10,6 @@ import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement_LEFT_SIDE
 import eu.alkismavridis.mathasm.db.entities.*
 import eu.alkismavridis.mathasm.db.util_entities.BasicMathAsmState
 import eu.alkismavridis.mathasm.services.App
-import eu.alkismavridis.mathasm.services.utils.ProofUtils
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -89,54 +88,83 @@ class MutationTest {
     @Test
     fun createSymbolTest() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.symbolRepo.deleteAll()
         app.postConstruct()
+
+        val th = app.theoryRepo.findAll().iterator().next()
+        assertNotNull(th)
 
         //2. Create a symbol
         assertEquals(0, app.symbolRepo.count())
         user.rights = UserRights_MAX
 
         //assert response
-        var result = mutation.createSymbol("   hello   \t", 1, DummyFetchingEnvironment(user))
+        var result = mutation.createSymbol(th.rootObj!!.id!!, "   hello   \t", 1, DummyFetchingEnvironment(user))
         assertNotNull(result.id)
         assertEquals(1, result.uid)
         assertEquals("hello", result.text)
+        assertEquals(user.id, result.author!!.id)
+        assertTrue(Instant.now().epochSecond - result.createdAt!!.epochSecond < 5)
+
 
         //assert that symbol is persisted in DB
-        var symbols = IterableUtils.toList(app.symbolRepo.findAll())
-        assertEquals(1, symbols.size)
-        assertEquals(1, symbols[0].uid)
-        assertEquals("hello", symbols[0].text)
+        var fromDb = IterableUtils.toList(app.symbolRepo.findAll())
+        assertEquals(1, fromDb.size)
+        assertEquals(1, fromDb[0].uid)
+        assertEquals("hello", fromDb[0].text)
+        assertEquals(user.id, fromDb[0].author!!.id)
+        assertEquals(result.createdAt!!.toEpochMilli(), fromDb[0].createdAt!!.toEpochMilli())
+        assertEquals(result.id, fromDb[0].id)
+
+        var rootObjFromDb = app.dirRepo.findById(th.rootObj!!.id, 3).orElse(null)
+        assertEquals(1, rootObjFromDb.symbols.size)
+        assertEquals(result.id, rootObjFromDb.symbols[0].id)
 
         //3. Create one more...
-        result = mutation.createSymbol("\nworld  \r\n \t", 2, DummyFetchingEnvironment(user))
+        result = mutation.createSymbol(th.rootObj!!.id!!, "\nworld  \r\n \t", 2, DummyFetchingEnvironment(user))
         assertNotNull(result.id)
         assertEquals(2, result.uid)
         assertEquals("world", result.text)
+        assertEquals(user.id, result.author!!.id)
+        assertTrue(Instant.now().epochSecond - result.createdAt!!.epochSecond < 5)
 
         //check db
-        symbols = IterableUtils.toList(app.symbolRepo.findAll())
-        symbols.sortWith(compareBy({it.uid}))
-        assertEquals(2, symbols.size)
-        assertEquals(2, symbols[1].uid)
-        assertEquals("world", symbols[1].text)
+        fromDb = IterableUtils.toList(app.symbolRepo.findAll())
+        fromDb.sortWith(compareBy({it.uid}))
+        assertEquals(2, fromDb.size)
+        assertEquals(2, fromDb[1].uid)
+        assertEquals("world", fromDb[1].text)
+        assertEquals(user.id, fromDb[1].author!!.id)
+        assertEquals(result.createdAt!!.toEpochMilli(), fromDb[1].createdAt!!.toEpochMilli())
+        assertEquals(result.id, fromDb[1].id)
+
+        rootObjFromDb = app.dirRepo.findById(th.rootObj!!.id, 3).orElse(null)
+        assertEquals(2, rootObjFromDb.symbols.size)
+        assertTrue(rootObjFromDb.symbols.any{ it.uid == result.uid })
     }
 
     @Test
     fun createSymbolFailCases() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.symbolRepo.deleteAll()
         app.postConstruct()
 
+        val th = app.theoryRepo.findAll().iterator().next()
+        assertNotNull(th)
+
+        val user = app.userService.save(User("testUser"))
+        assertNotNull(user.id)
+
+
         //2. Null user
         try {
-            mutation.createSymbol("hello", 1, DummyFetchingEnvironment(null))
+            mutation.createSymbol(th.rootObj!!.id!!, "hello", 1, DummyFetchingEnvironment(null))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -147,18 +175,18 @@ class MutationTest {
         //3. User without permission to create symbols
         user.rights = UserRights_MIN
         try {
-            mutation.createSymbol("hello", 1, DummyFetchingEnvironment(user))
+            mutation.createSymbol(th.rootObj!!.id!!, "hello", 1, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
-            assertEquals(ErrorCode.UNAUTHORIZED, e.code)
+            assertEquals(ErrorCode.FORBIDDEN, e.code)
             assertEquals("Not enough rights to create symbols.", e.message)
         }
         user.rights = UserRights_MAX
 
         //4. Invalid symbol text
         try {
-            mutation.createSymbol("", 1, DummyFetchingEnvironment(user))
+            mutation.createSymbol(th.rootObj!!.id!!, "", 1, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -167,31 +195,41 @@ class MutationTest {
         }
 
         //5. Existing symbol text
-        app.symbolRepo.save(MathAsmSymbol("existing", 1))
+        app.symbolRepo.save(MathAsmSymbol(user, "existing", 1))
         try {
-            mutation.createSymbol("existing", 2, DummyFetchingEnvironment(user))
+            mutation.createSymbol(th.rootObj!!.id!!, "existing", 2, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
-            assertEquals(ErrorCode.SYMBOL_ALREADY_REGISTERED, e.code)
+            assertEquals(ErrorCode.SYMBOL_TEXT_ALREADY_REGISTERED, e.code)
             assertEquals("Symbol with text \"existing\" already registered.", e.message)
         }
 
         //6. Existing symbol uid
         try {
-            mutation.createSymbol("newSymbol", 1, DummyFetchingEnvironment(user))
+            mutation.createSymbol(th.rootObj!!.id!!, "newSymbol", 1, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
-            assertEquals(ErrorCode.SYMBOL_ALREADY_REGISTERED, e.code)
+            assertEquals(ErrorCode.SYMBOL_UID_ALREADY_REGISTERED, e.code)
             assertEquals("Symbol with uid 1 already registered.", e.message)
+        }
+
+        //7. Non existing parent id
+        try {
+            mutation.createSymbol(9999L, "newSymbol", 2, DummyFetchingEnvironment(user))
+            fail("Exception was not thrown!")
+        }
+        catch (e:MathAsmException) {
+            assertEquals(ErrorCode.OBJECT_NOT_FOUND, e.code)
+            assertEquals("Object with uid 9999 not found.", e.message)
         }
     }
 
     @Test
-    fun createObjectTest() {
+    fun createDirTest() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.symbolRepo.deleteAll()
@@ -203,41 +241,41 @@ class MutationTest {
         assertEquals(0, app.symbolRepo.count())
         user.rights = UserRights_MAX
 
-        var result = mutation.createObject(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(user))
+        var result = mutation.createDir(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(user))
         assertNotNull(result.id)
         assertEquals("child1", result.name)
         assertEquals(user, result.author)
         assertTrue(Instant.now().epochSecond - result.createdAt!!.epochSecond < 5)
 
         //assertDB
-        var parentObj = app.objectRepo.findById(theory.rootObj!!.id!!, 2).orElse(null)
-        assertEquals(1, parentObj.objects.size)
-        assertEquals(result.id, parentObj.objects[0].id)
-        assertEquals(result.name, parentObj.objects[0].name)
-        assertEquals(result.author, parentObj.objects[0].author)
-        assertEquals(result.createdAt!!.epochSecond, parentObj.objects[0].createdAt!!.epochSecond)
+        var parentObj = app.dirRepo.findById(theory.rootObj!!.id!!, 2).orElse(null)
+        assertEquals(1, parentObj.subDirs.size)
+        assertEquals(result.id, parentObj.subDirs[0].id)
+        assertEquals(result.name, parentObj.subDirs[0].name)
+        assertEquals(result.author, parentObj.subDirs[0].author)
+        assertEquals(result.createdAt!!.epochSecond, parentObj.subDirs[0].createdAt!!.epochSecond)
 
 
         //3. Create one more
-        result = mutation.createObject(parentObj.objects[0].id!!, "grandChild", DummyFetchingEnvironment(user)) //save the new object under the previous one.
+        result = mutation.createDir(parentObj.subDirs[0].id!!, "grandChild", DummyFetchingEnvironment(user)) //save the new object under the previous one.
         assertNotNull(result.id)
         assertEquals("grandChild", result.name)
         assertEquals(user, result.author)
         assertTrue(Instant.now().epochSecond - result.createdAt!!.epochSecond < 5)
 
         //assertDB
-        parentObj = app.objectRepo.findById(parentObj.objects[0].id!!, 2).orElse(null)
-        assertEquals(1, parentObj.objects.size)
-        assertEquals(result.id, parentObj.objects[0].id)
-        assertEquals(result.name, parentObj.objects[0].name)
-        assertEquals(result.author, parentObj.objects[0].author)
-        assertEquals(result.createdAt!!.epochSecond, parentObj.objects[0].createdAt!!.epochSecond)
+        parentObj = app.dirRepo.findById(parentObj.subDirs[0].id!!, 2).orElse(null)
+        assertEquals(1, parentObj.subDirs.size)
+        assertEquals(result.id, parentObj.subDirs[0].id)
+        assertEquals(result.name, parentObj.subDirs[0].name)
+        assertEquals(result.author, parentObj.subDirs[0].author)
+        assertEquals(result.createdAt!!.epochSecond, parentObj.subDirs[0].createdAt!!.epochSecond)
     }
 
     @Test
-    fun createObjectFailCases() {
+    fun createDirFailCases() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.symbolRepo.deleteAll()
@@ -247,7 +285,7 @@ class MutationTest {
 
         //2. Null user
         try {
-            mutation.createObject(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(null))
+            mutation.createDir(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(null))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -255,21 +293,21 @@ class MutationTest {
             assertEquals("No session.", e.message)
         }
 
-        //3. User without permission to create objects
+        //3. User without permission to create dirs
         user.rights = UserRights_MIN
         try {
-            mutation.createObject(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(user))
+            mutation.createDir(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
-            assertEquals(ErrorCode.UNAUTHORIZED, e.code)
-            assertEquals("Not enough rights to create objects.", e.message)
+            assertEquals(ErrorCode.FORBIDDEN, e.code)
+            assertEquals("Not enough rights to create dirs.", e.message)
         }
         user.rights = UserRights_MAX
 
         //4. Non existing parent id
         try {
-            mutation.createObject(9999L, "child1", DummyFetchingEnvironment(user))
+            mutation.createDir(9999L, "child1", DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -280,7 +318,7 @@ class MutationTest {
         //5. Save with a name of an existing object
         val state = BasicMathAsmState(app)
         try {
-            mutation.createObject(state.obj1_1.id!!, "obj1_1_1", DummyFetchingEnvironment(user))
+            mutation.createDir(state.obj1_1.id!!, "obj1_1_1", DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -290,7 +328,7 @@ class MutationTest {
 
         //6. Save with a name of an existing statement
         try {
-            mutation.createObject(state.obj1_1.id!!, "stmt1_1a", DummyFetchingEnvironment(user))
+            mutation.createDir(state.obj1_1.id!!, "stmt1_1a", DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -302,7 +340,7 @@ class MutationTest {
     @Test
     fun createAxiomTest() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.symbolRepo.deleteAll()
@@ -362,7 +400,7 @@ class MutationTest {
     @Test
     fun createAxiomFailCases() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.symbolRepo.deleteAll()
@@ -380,14 +418,14 @@ class MutationTest {
             assertEquals("No session.", e.message)
         }
 
-        //3. User without permission to create objects
+        //3. User without permission to create dirs
         user.rights = UserRights_MIN
         try {
             mutation.createAxiom(theory.rootObj!!.id!!, "stmt2", listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
-            assertEquals(ErrorCode.UNAUTHORIZED, e.code)
+            assertEquals(ErrorCode.FORBIDDEN, e.code)
             assertEquals("Not enough rights to create axioms.", e.message)
         }
         user.rights = UserRights_MAX
@@ -430,7 +468,7 @@ class MutationTest {
     @Test
     fun createTheorem1Test() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.symbolRepo.deleteAll()
@@ -475,7 +513,7 @@ class MutationTest {
         //TODO assert result
 
         //6. Assert statement
-        val obj = app.objectRepo.findById(theory.rootObj!!.id!!, 3).orElse(null)
+        val obj = app.dirRepo.findById(theory.rootObj!!.id!!, 3).orElse(null)
         assertEquals(1, obj.statements.size)
         assertNotNull(obj.statements[0].id)
         assertEquals("dummyTheorem", obj.statements[0].name)
@@ -503,7 +541,7 @@ class MutationTest {
     @Test
     fun createTheorem1FailCases() {
         //1. Make sure that a clean theory exists
-        app.objectRepo.deleteAll()
+        app.dirRepo.deleteAll()
         app.statementRepo.deleteAll()
         app.theoryRepo.deleteAll()
         app.symbolRepo.deleteAll()
@@ -551,14 +589,14 @@ class MutationTest {
             assertEquals("No session.", e.message)
         }
 
-        //5. User without permission to create objects
+        //5. User without permission to create dirs
         user.rights = UserRights_MIN
         try {
             mutation.createTheorem(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
-            assertEquals(ErrorCode.UNAUTHORIZED, e.code)
+            assertEquals(ErrorCode.FORBIDDEN, e.code)
             assertEquals("Not enough rights to create theorems.", e.message)
         }
         user.rights = UserRights_MAX

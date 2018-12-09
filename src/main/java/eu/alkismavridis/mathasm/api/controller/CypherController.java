@@ -1,9 +1,7 @@
 package eu.alkismavridis.mathasm.api.controller;
 
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -133,7 +131,7 @@ public class CypherController {
             else if (val instanceof MathAsmSymbol) addNode(nodes, ((MathAsmSymbol) val).getId(), ((MathAsmSymbol) val).getText(), GraphNodeType.SYMBOL, ((MathAsmSymbol) val).toNodeJson());
             else if (val instanceof MathAsmStatementEntity) addNode(nodes, ((MathAsmStatementEntity) val).getId(), ((MathAsmStatementEntity) val).getName(), GraphNodeType.STATEMENT, ((MathAsmStatementEntity) val).toNodeJson());
             else if (val instanceof MathAsmProof) addNode(nodes, ((MathAsmProof) val).getId(), "Proof", GraphNodeType.PROOF, ((MathAsmProof) val).toNodeJson());
-            else if (val instanceof MathAsmObjectEntity) addNode(nodes, ((MathAsmObjectEntity) val).getId(), ((MathAsmObjectEntity) val).getName(), GraphNodeType.OBJECT, ((MathAsmObjectEntity) val).toNodeJson());
+            else if (val instanceof MathAsmDirEntity) addNode(nodes, ((MathAsmDirEntity) val).getId(), ((MathAsmDirEntity) val).getName(), GraphNodeType.OBJECT, ((MathAsmDirEntity) val).toNodeJson());
             else if (val instanceof LogicMoveEntity) addNode(nodes, ((LogicMoveEntity) val).getId(), "move", GraphNodeType.MOVE, ((LogicMoveEntity) val).toNodeJson());
 
             else if (val instanceof Edge) {

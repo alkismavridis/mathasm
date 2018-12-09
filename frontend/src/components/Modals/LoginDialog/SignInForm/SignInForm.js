@@ -3,6 +3,8 @@ import PropTypes from "prop-types";
 import "./SignInForm.css";
 import GraphQL from "../../../../services/GraphQL";
 import ErrorCode from "../../../../constants/ErrorCode";
+import ModalHeader from "../../ModalHeader/ModalHeader";
+import DomUtils from "../../../../services/DomUtils";
 
 
 
@@ -59,7 +61,7 @@ export default class SignInForm extends Component {
     handleFormSubmit(event) {
         event.preventDefault();
 
-        GraphQL.run("", q.SIGN_IN, {userName:this.state.userName, password:this.state.password})
+        GraphQL.run(q.SIGN_IN, {userName:this.state.userName, password:this.state.password})
             .then(data => {
                 if (!data || !data.signin) return;
                 this.props.onSuccessfulSignIn(data.signin);
@@ -82,13 +84,18 @@ export default class SignInForm extends Component {
 
 
     render() {
+        const formHandler = this.handleFormSubmit.bind(this);
         return (
-            <form onSubmit={this.handleFormSubmit.bind(this)} style={this.props.style} className="SignInForm_root">
-                <div className="SignInForm_title">Create new account</div>
+            <form onSubmit={formHandler} style={this.props.style} className="SignInForm_root">
+                <ModalHeader
+                    title="Sign in"
+                    onConfirm={formHandler}/>
+
                 <input
                     className="Globals_inp SignInForm_inp"
                     value={this.state.userName}
                     placeholder={"Username"}
+                    onKeyDown={DomUtils.handleEnter(formHandler)}
                     onChange={event => this.setState({userName:event.target.value, errorCode:null})}/>
 
                 <input
@@ -96,15 +103,9 @@ export default class SignInForm extends Component {
                     type="password"
                     value={this.state.password}
                     placeholder={"Password"}
+                    onKeyDown={DomUtils.handleEnter(formHandler)}
                     onChange={event => this.setState({password:event.target.value, errorCode:null})}/>
                 {this.state.errorCode==null? null : this.renderErrorMessage(this.state.errorCode)}
-
-                <button
-                    className="Globals_but"
-                    style={{alignSelf:"flex-end"}}
-                    onClick={this.handleFormSubmit.bind(this)}>
-                    Submit
-                </button>
 
                 <div
                     className="SignInForm_noAccount"

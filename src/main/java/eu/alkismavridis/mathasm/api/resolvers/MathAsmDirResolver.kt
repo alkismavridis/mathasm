@@ -1,10 +1,10 @@
 package eu.alkismavridis.mathasm.api.resolvers
 
 import com.coxautodev.graphql.tools.GraphQLResolver
-import eu.alkismavridis.mathasm.db.entities.MathAsmObjectEntity
+import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmStatementEntity
 
-class MathAsmObjectResolver: GraphQLResolver<MathAsmObjectEntity> {
+class MathAsmDirResolver: GraphQLResolver<MathAsmDirEntity> {
     //region FIELDS
     constructor() {
     }
@@ -14,12 +14,12 @@ class MathAsmObjectResolver: GraphQLResolver<MathAsmObjectEntity> {
 
     //region RESOLVERS
     //TODO do we need this?
-    fun objects(sen:MathAsmObjectEntity) : List<MathAsmObjectEntity> {
-        return sen.objects
+    fun subDirs(sen:MathAsmDirEntity) : List<MathAsmDirEntity> {
+        return sen.subDirs
     }
 
     //TODO do we need this?
-    fun statements(sen:MathAsmObjectEntity) : List<MathAsmStatementEntity> {
+    fun statements(sen:MathAsmDirEntity) : List<MathAsmStatementEntity> {
         return sen.statements
     }
     //endregion
