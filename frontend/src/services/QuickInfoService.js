@@ -18,7 +18,7 @@ const DEFAULT_NOTIFICATION_OPTIONS = {
 
 
 export default class QuickInfoService {
-    static makeSuccess(title, message) {
+    static makeSuccess(message, title) {
         const group = App.getNotificationGroup();
         if (!group) return;
 
@@ -26,7 +26,7 @@ export default class QuickInfoService {
         group.addNotification(mergedNotification);
     }
 
-    static makeWarning(title, message) {
+    static makeWarning(message, title) {
         const group = App.getNotificationGroup();
         if (!group) return;
 
@@ -34,7 +34,7 @@ export default class QuickInfoService {
         group.addNotification(mergedNotification);
     }
 
-    static makeError(title, message) {
+    static makeError(message, title) {
         const group = App.getNotificationGroup();
         if (!group) return;
 
@@ -42,7 +42,7 @@ export default class QuickInfoService {
         group.addNotification(mergedNotification);
     }
 
-    static makeInfo(title, message) {
+    static makeInfo(message, title) {
         const group = App.getNotificationGroup();
         if (!group) return;
 
@@ -50,7 +50,7 @@ export default class QuickInfoService {
         group.addNotification(mergedNotification);
     }
 
-    static makeDefault(title, message) {
+    static makeDefault(message, title) {
         const group = App.getNotificationGroup();
         if (!group) return;
 

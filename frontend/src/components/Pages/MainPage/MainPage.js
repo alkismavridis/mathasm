@@ -36,7 +36,7 @@ class MainPage extends Component {
 
         GraphQL.run(qlQuery)
             .then(resp => this.setState({currentDir:resp.rootDir}))
-            .catch(err => QuickInfoService.makeError(null, "Could not fetch init data!"));
+            .catch(err => QuickInfoService.makeError("Could not fetch init data!"));
     }
 
 

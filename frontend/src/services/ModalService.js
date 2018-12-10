@@ -2,7 +2,7 @@ import React from 'react';
 
 import App from "../components/App/App";
 import LoginDialog from "../components/Modals/LoginDialog/LoginDialog";
-import StringInputDialog from "../components/Modals/DirCreatorDialog/StringInputDialog";
+import StringInputDialog from "../components/Modals/StringInputDialog/StringInputDialog";
 
 export default class ModalService {
     //region ADDING WINDOWS

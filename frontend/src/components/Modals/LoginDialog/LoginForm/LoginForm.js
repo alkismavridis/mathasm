@@ -30,10 +30,9 @@ class LoginForm extends Component {
         style: PropTypes.object,
     };
 
-    static defaultProps = {};
-
 
     //region LIFE CYCLE
+    _userNameRef = null;
     constructor(props) {
         super(props);
         this.state = {
@@ -43,7 +42,10 @@ class LoginForm extends Component {
         };
     }
 
-    //componentDidMount() {}
+    componentDidMount() {
+        if (this._userNameRef) this._userNameRef.focus();
+    }
+
     //static getDerivedStateFromProps(nextProps, prevState) {}
     //shouldComponentUpdate(nextProps, nextState) { return true; }
     //getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
@@ -94,6 +96,7 @@ class LoginForm extends Component {
                     title="Login"
                     onConfirm={formHandler}/>
                 <input
+                    ref={el => this._userNameRef = el}
                     className="Globals_inp LoginForm_inp"
                     value={this.state.userName}
                     placeholder={"Username"}

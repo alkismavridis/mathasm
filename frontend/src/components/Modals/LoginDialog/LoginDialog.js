@@ -4,6 +4,7 @@ import "./LoginDialog.css";
 import LoginForm from "./LoginForm/LoginForm";
 import SignInForm from "./SignInForm/SignInForm";
 import App from "../../App/App";
+import QuickInfoService from "../../../services/QuickInfoService";
 
 
 
@@ -36,6 +37,7 @@ export default class LoginDialog extends Component {
 
     //region EVENT HANDLERS
     handleUserLoggedIn(resp) {
+        QuickInfoService.makeSuccess(`Hello ${resp.user.userName}. Welcome to MathAsm.`);
         App.setSessionKey(resp.sessionKey);
         if (this.props.onLogin) this.props.onLogin(resp.user);
     }

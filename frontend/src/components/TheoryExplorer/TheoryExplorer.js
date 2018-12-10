@@ -6,7 +6,7 @@ import GraphQL from "../../services/GraphQL";
 import DomUtils from "../../services/DomUtils";
 import SymbolCreator from "../SymbolCreator/SymbolCreator";
 import ModalService from "../../services/ModalService";
-import StringInputDialog from "../Modals/DirCreatorDialog/StringInputDialog";
+import StringInputDialog from "../Modals/StringInputDialog/StringInputDialog";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 
 
@@ -87,9 +87,9 @@ export default class TheoryExplorer extends Component {
         GraphQL.run(FETCH_DIR, {id:id})
             .then(resp => {
                 if (resp.logicDir) this.props.onChangeDir(resp.logicDir);
-                else QuickInfoService.makeError(null, "Could not navigate to directory with id: "+id);
+                else QuickInfoService.makeError("Could not navigate to directory with id: "+id);
             })
-            .catch(err => QuickInfoService.makeError(null, "Could not navigate to directory with id: "+id));
+            .catch(err => QuickInfoService.makeError("Could not navigate to directory with id: "+id));
     }
 
     handleGoToAction() {
@@ -98,6 +98,7 @@ export default class TheoryExplorer extends Component {
             return;
         }
 
+
         this.navigateTo(parseInt(this.state.goToField));
     }
 
@@ -105,9 +106,9 @@ export default class TheoryExplorer extends Component {
         GraphQL.run(FETCH_PARENT, {id:this.props.currentDir.id})
             .then(resp => {
                 if (resp.dirParent) this.props.onChangeDir(resp.dirParent);
-                else QuickInfoService.makeInfo(null, "This is the root directory.");
+                else QuickInfoService.makeInfo("This is the root directory.");
             })
-            .catch(err => QuickInfoService.makeError(null, "Could not fetch init data!"));
+            .catch(err => QuickInfoService.makeError("Could not fetch init data!"));
     }
 
     toggleSymbolCreator() {
@@ -116,7 +117,7 @@ export default class TheoryExplorer extends Component {
 
     handleDirCreationTextSubmit(modalId, text) {
         if (!text) {
-            QuickInfoService.makeWarning(null, "Please provide a name to submit.");
+            QuickInfoService.makeWarning("Please provide a name to submit.");
             return;
         }
 
@@ -128,7 +129,7 @@ export default class TheoryExplorer extends Component {
                 ModalService.removeModal(modalId);
             })
             .catch(err => {
-                QuickInfoService.makeError(null, "Could not create directory "+this.state.text)
+                QuickInfoService.makeError("Could not create directory "+this.state.text)
             });
     }
 
@@ -143,16 +144,28 @@ export default class TheoryExplorer extends Component {
     renderToolbar() {
         return (
             <div className="Globals_flexStart">
-                <button className="Globals_but" onClick={this.goToParentDir.bind(this)}>Back</button>
-                <div>{this.props.currentDir.name}</div>
+                <button
+                    className="Globals_roundBut"
+                    title="Parent dir"
+                    style={{backgroundColor:"#62676d", width:"32px", height:"32px", fontSize:"16px"}}
+                    onClick={this.goToParentDir.bind(this)}>
+                    <FontAwesomeIcon icon="arrow-up"/>
+                </button>
+                <div style={{margin:"0 16px"}}>{this.props.currentDir.name}</div>
                 <div style={{margin:"0 8px"}}>Id: {this.props.currentDir.id}</div>
                 <input
                     value={this.state.goToField}
                     onChange={e => this.setState({goToField:e.target.value})}
                     className="Globals_inp"
                     placeholder="Navigate to id..."
-                    onKeyPress={DomUtils.handleEnter(this.handleGoToAction.bind(this))} />
-                <button className="Globals_but" onClick={this.toggleSymbolCreator.bind(this)}>Create symbol</button>
+                    onKeyDown={DomUtils.handleEnter(this.handleGoToAction.bind(this))} />
+                <button
+                    className="Globals_roundBut"
+                    title="New symbol"
+                    style={{backgroundColor:"#e61919", width:"32px", height:"32px", fontSize:"16px"}}
+                    onClick={this.toggleSymbolCreator.bind(this)}>
+                    <FontAwesomeIcon icon="hashtag"/>
+                </button>
             </div>
         );
     }
@@ -175,7 +188,11 @@ export default class TheoryExplorer extends Component {
         return (
             <div className="TheoryExplorer_subDirsDiv">
                 {dirs.map(this.renderSubDir.bind(this))}
-                <button className="Globals_roundBut" style={{backgroundColor:"#00ced1"}} onClick={this.createDir.bind(this)}>
+                <button
+                    className="Globals_roundBut"
+                    title="New directory"
+                    style={{backgroundColor:"#00ced1", width:"32px", height:"32px"}}
+                    onClick={this.createDir.bind(this)}>
                     <FontAwesomeIcon icon="plus"/>
                 </button>
             </div>
@@ -243,8 +260,11 @@ export default class TheoryExplorer extends Component {
             <div className={`TheoryExplorer_root ${this.props.className || ""}`} style={this.props.style}>
                 {this.renderToolbar()}
                 {this.state.showSymbolCreator && this.renderSymbolCreator()}
+                <div style={{marginTop:"16px"}}>Directories:</div>
                 {this.renderSubDirs()}
                 {this.renderStatements()}
+
+                <div>Symbols:</div>
                 {this.renderSymbols()}
             </div>
         );

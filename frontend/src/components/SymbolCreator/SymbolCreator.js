@@ -63,7 +63,7 @@ class SymbolCreator extends Component {
 
         GraphQL.run(CREATE_SYMBOL, {parentId:this.props.parentId, text:this.state.text, uid:this.state.uid})
             .then(resp => {
-                QuickInfoService.makeSuccess(null, `Symbol "${this.state.text}" successfully created.`);
+                QuickInfoService.makeSuccess(`Symbol "${this.state.text}" successfully created.`);
 
                 //add the saved symbol in the array
                 SymbolRangeUtils.addToSorted(this.state.savedSymbols, resp.createSymbol);
@@ -85,12 +85,12 @@ class SymbolCreator extends Component {
 
     handleSubmitError(err) {
         if (err.code === ErrorCode.SYMBOL_TEXT_ALREADY_REGISTERED) {
-            QuickInfoService.makeError(null, `Symbol "${this.state.text}" is already registered.`);
+            QuickInfoService.makeError(`Symbol "${this.state.text}" is already registered.`);
         }
         else if (err.code === ErrorCode.SYMBOL_UID_ALREADY_REGISTERED) {
-            QuickInfoService.makeError(null, `Symbol ${this.state.uid} is already registered.`);
+            QuickInfoService.makeError(`Symbol ${this.state.uid} is already registered.`);
         }
-        else QuickInfoService.makeError(null, `Could not create symbol "${this.state.text}".`);
+        else QuickInfoService.makeError(`Could not create symbol "${this.state.text}".`);
     }
     //endregion
 

@@ -6,7 +6,6 @@ import createHistory from "history/createBrowserHistory";
 import NotFoundPage from "../Pages/NotFoundPage/NotFoundPage";
 import Urls from "../../constants/Urls";
 import GraphiqlPage from "../Pages/GraphiqlPage/GraphiqlPage";
-import LoginDialog from "../Modals/LoginDialog/LoginDialog";
 import DbVisualisationPage from "../Pages/DbVisualisationPage/DbVisualisationPage";
 import AboutPage from "../Pages/AboutPage/AboutPage";
 import MainPage from "../Pages/MainPage/MainPage";
@@ -20,6 +19,7 @@ import { fas } from '@fortawesome/free-solid-svg-icons'
 
 import "react-notifications-component/dist/theme.css";
 import ModalGroup from "../Modals/ModalGroup/ModalGroup";
+import GraphQL from "../../services/GraphQL";
 
 library.add(fas);
 
@@ -54,7 +54,7 @@ let instance;
  *
  * 3. We render the universe.
  *    The user sees whatever we render here, and only what we render here.
- *    This means we are the "graphics card" of the application.
+ *    This means that this class is the "graphics card" of the application.
  *
  *    At the moment we render:
  *      - A page object, based on the incoming URL.
@@ -126,6 +126,19 @@ export default class App extends Component {
 
     //4. Load local storage and session storage
     this._localStorageCache.sessionKey =  window.localStorage.getItem("sessionKey");
+
+    //5. Fetch global init data
+      this.fetchInitData();
+  }
+
+
+  fetchInitData() {
+      const initQuery = `{
+        user { id, userName, rights }
+      }`;
+
+      GraphQL.run(initQuery)
+          .then(resp => this.setState({user:resp.user}));
   }
   //endregion
 

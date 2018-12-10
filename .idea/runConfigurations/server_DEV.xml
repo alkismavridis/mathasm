@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="server_DEV" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="mathasm" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="eu.alkismavridis.mathasm.MathAsmApplication" />
+    <option name="VM_PARAMETERS" value="-DmathAsmConfigFile=&quot;$USER_HOME$/data/MathAsm/config1.json&quot;" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <method />
+  </configuration>
+</component>

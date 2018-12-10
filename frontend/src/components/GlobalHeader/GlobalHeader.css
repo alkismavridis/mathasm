@@ -7,7 +7,7 @@
 .GlobalHeader_userDiv {
     font-size: 32px;
     color:#f5f5f5;
-    cursor:pointer;
+    cursor:pointer; 
 }
 
 .GlobalHeader_userName {

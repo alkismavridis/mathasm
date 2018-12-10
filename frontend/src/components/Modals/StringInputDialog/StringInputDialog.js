@@ -20,25 +20,28 @@ export default class StringInputDialog extends Component {
 
         //styling
     };
-
-    //static defaultProps = {};
     //endregion
 
 
 
     //region LIFE CYCLE
+    _inpRef = null;
+
     constructor(props) {
         super(props);
         this.state = {
             text: props.initialText || ""
         }
     }
+
+    componentDidMount() {
+        if (this._inpRef) this._inpRef.focus();
+    }
     //endregion
 
 
     //region EVENT HANDLERS
     onSubmitResult() {
-        console.log("SUBMIT!");
         if (this.props.onSubmit) this.props.onSubmit(this.state.text);
     }
     //endregion
@@ -53,6 +56,7 @@ export default class StringInputDialog extends Component {
                     onConfirm={this.onSubmitResult.bind(this)}/>
 
                 <input
+                    ref={el => this._inpRef = el}
                     className="Globals_inp"
                     placeholder={this.props.placeholder}
                     onKeyDown={DomUtils.handleEnter(this.onSubmitResult.bind(this))}
