@@ -9,6 +9,15 @@ import LoginDialog from "../components/Modals/LoginDialog/LoginDialog";
 
 export default class GraphQL {
     //region HTTP RESPONSE GLOBAL HANDLING
+    /**
+     * Global response handler for the frontend app.
+     * Every response from the server will path though this method.
+     * This method will decide if the response is successful or if an error has happened.
+     *
+     * - If the request was successful, the response.data will be passed on to the caller's then() method.
+     * - If it was an error, an error object will be constructed, passed though our global error handler,
+     *   and then passed on tp the caller's catch() method.
+     * */
     static resolveOrReject(data) {
         //1. Check for errors
         if (data.errors) {
@@ -46,10 +55,12 @@ export default class GraphQL {
         switch(error.code) {
             case ErrorCode.UNAUTHORIZED:
                 ModalService.showLogin();
+                error.handled = true; //this way we inform the caller that this error is already handled. Still, the called may choose to do more things with it.
                 break;
 
             case ErrorCode.CONNECTION_ERROR:
                 QuickInfoService.addWarning(null, "Connection lost.");
+                error.handled = true; //this way we inform the caller that this error is already handled. Still, the called may choose to do more things with it.
                 break;
         }
     }

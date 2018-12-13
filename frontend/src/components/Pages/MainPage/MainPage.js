@@ -8,10 +8,20 @@ import PropTypes from "prop-types";
 
 
 class MainPage extends Component {
+    //region STATIC
+    static propTypes = {
+        //data
+        user:PropTypes.object.isRequired,
+
+        //actions
+        //styling
+    };
+    //endregion
+
+
 
     //region FIELDS
     state = {
-        user: PropTypes.object,
         currentDir: null
     };
     //endregion

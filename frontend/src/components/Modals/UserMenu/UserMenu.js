@@ -42,9 +42,7 @@ export default class UserMenu extends Component {
     render() {
         return (
             <div className="Globals_window UserMenu_root">
-                <ModalHeader
-                    title={this.props.user.userName}/>
-
+                <ModalHeader title={this.props.user.userName}/>
                 <button className="Globals_textBut" onClick={this.handleLogoutClick.bind(this)}>Logout</button>
             </div>
         );

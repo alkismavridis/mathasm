@@ -51,8 +51,8 @@ export default class TheoryExplorer extends Component {
         onChangeDir: PropTypes.func.isRequired,
 
         //styling
-        className: PropTypes.string.isRequired,
-        style: PropTypes.object.isRequired,
+        className: PropTypes.string,
+        style: PropTypes.object,
     };
 
     //static defaultProps = {};
