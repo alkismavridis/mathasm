@@ -10,8 +10,6 @@ import StringInputDialog from "../Modals/StringInputDialog/StringInputDialog";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 
 
-
-
 //region QUERIES
 const FETCH_DIR = `query($id:Long!){
     logicDir(id:$id) {
@@ -46,16 +44,15 @@ export default class TheoryExplorer extends Component {
     //region STATIC
     static propTypes = {
         //data
-        currentDir:PropTypes.object.isRequired,
-
+        currentDir: PropTypes.object.isRequired,
 
 
         //actions
-        onChangeDir:PropTypes.func.isRequired,
+        onChangeDir: PropTypes.func.isRequired,
 
         //styling
-        className:PropTypes.string.isRequired,
-        style:PropTypes.object.isRequired,
+        className: PropTypes.string.isRequired,
+        style: PropTypes.object.isRequired,
     };
 
     //static defaultProps = {};
@@ -64,8 +61,8 @@ export default class TheoryExplorer extends Component {
 
     //region FIELDS
     state = {
-        goToField:"",
-        showSymbolCreator:false
+        goToField: "",
+        showSymbolCreator: false
     };
     //endregion
 
@@ -84,12 +81,12 @@ export default class TheoryExplorer extends Component {
 
     //region EVENT HANDLERS
     navigateTo(id) {
-        GraphQL.run(FETCH_DIR, {id:id})
+        GraphQL.run(FETCH_DIR, {id: id})
             .then(resp => {
                 if (resp.logicDir) this.props.onChangeDir(resp.logicDir);
-                else QuickInfoService.makeError("Could not navigate to directory with id: "+id);
+                else QuickInfoService.makeError("Could not navigate to directory with id: " + id);
             })
-            .catch(err => QuickInfoService.makeError("Could not navigate to directory with id: "+id));
+            .catch(err => QuickInfoService.makeError("Could not navigate to directory with id: " + id));
     }
 
     handleGoToAction() {
@@ -103,7 +100,7 @@ export default class TheoryExplorer extends Component {
     }
 
     goToParentDir() {
-        GraphQL.run(FETCH_PARENT, {id:this.props.currentDir.id})
+        GraphQL.run(FETCH_PARENT, {id: this.props.currentDir.id})
             .then(resp => {
                 if (resp.dirParent) this.props.onChangeDir(resp.dirParent);
                 else QuickInfoService.makeInfo("This is the root directory.");
@@ -121,7 +118,7 @@ export default class TheoryExplorer extends Component {
             return;
         }
 
-        GraphQL.run(CREATE_DIR, {name:text, parentId:this.props.currentDir.id})
+        GraphQL.run(CREATE_DIR, {name: text, parentId: this.props.currentDir.id})
             .then(resp => {
                 const updatedCurrentDir = Object.assign({}, this.props.currentDir);
                 updatedCurrentDir.subDirs.push(resp.createDir);
@@ -129,15 +126,15 @@ export default class TheoryExplorer extends Component {
                 ModalService.removeModal(modalId);
             })
             .catch(err => {
-                QuickInfoService.makeError("Could not create directory "+this.state.text)
+                QuickInfoService.makeError("Could not create directory " + this.state.text)
             });
     }
 
     createDir() {
         ModalService.showTextGetter("New Directory", "Directory name...", this.handleDirCreationTextSubmit.bind(this));
     }
-    //endregion
 
+    //endregion
 
 
     //region RENDERING
@@ -147,22 +144,22 @@ export default class TheoryExplorer extends Component {
                 <button
                     className="Globals_roundBut"
                     title="Parent dir"
-                    style={{backgroundColor:"#62676d", width:"32px", height:"32px", fontSize:"16px"}}
+                    style={{backgroundColor: "#62676d", width: "32px", height: "32px", fontSize: "16px"}}
                     onClick={this.goToParentDir.bind(this)}>
                     <FontAwesomeIcon icon="arrow-up"/>
                 </button>
-                <div style={{margin:"0 16px"}}>{this.props.currentDir.name}</div>
-                <div style={{margin:"0 8px"}}>Id: {this.props.currentDir.id}</div>
+                <div style={{margin: "0 16px"}}>{this.props.currentDir.name}</div>
+                <div style={{margin: "0 8px"}}>Id: {this.props.currentDir.id}</div>
                 <input
                     value={this.state.goToField}
-                    onChange={e => this.setState({goToField:e.target.value})}
+                    onChange={e => this.setState({goToField: e.target.value})}
                     className="Globals_inp"
                     placeholder="Navigate to id..."
-                    onKeyDown={DomUtils.handleEnter(this.handleGoToAction.bind(this))} />
+                    onKeyDown={DomUtils.handleEnter(this.handleGoToAction.bind(this))}/>
                 <button
                     className="Globals_roundBut"
                     title="New symbol"
-                    style={{backgroundColor:"#e61919", width:"32px", height:"32px", fontSize:"16px"}}
+                    style={{backgroundColor: "#e61919", width: "32px", height: "32px", fontSize: "16px"}}
                     onClick={this.toggleSymbolCreator.bind(this)}>
                     <FontAwesomeIcon icon="hashtag"/>
                 </button>
@@ -191,7 +188,7 @@ export default class TheoryExplorer extends Component {
                 <button
                     className="Globals_roundBut"
                     title="New directory"
-                    style={{backgroundColor:"#00ced1", width:"32px", height:"32px"}}
+                    style={{backgroundColor: "#00ced1", width: "32px", height: "32px"}}
                     onClick={this.createDir.bind(this)}>
                     <FontAwesomeIcon icon="plus"/>
                 </button>
@@ -200,11 +197,11 @@ export default class TheoryExplorer extends Component {
     }
 
     renderSubDir(subDir) {
-        return(
+        return (
             <div
                 key={subDir.id}
                 className="TheoryExplorer_subDir"
-                title={"Id: "+subDir.id}
+                title={"Id: " + subDir.id}
                 onClick={this.navigateTo.bind(this, subDir.id)}>
                 {subDir.name}
             </div>
@@ -212,12 +209,10 @@ export default class TheoryExplorer extends Component {
     }
 
 
-
-
     //STATEMENT RENDERING
     renderStatements() {
         const statements = this.props.currentDir.statements;
-        if (!statements || statements.length===0) return null;
+        if (!statements || statements.length === 0) return null;
 
         return (
             <div className="TheoryExplorer_stmtDiv">
@@ -227,8 +222,8 @@ export default class TheoryExplorer extends Component {
     }
 
     renderStatement(stmt) {
-        return(
-            <div key={stmt.id} >
+        return (
+            <div key={stmt.id}>
                 {stmt.name}
             </div>
         );
@@ -238,7 +233,7 @@ export default class TheoryExplorer extends Component {
     //SYMBOL RENDERING
     renderSymbols() {
         const symbols = this.props.currentDir.symbols;
-        if (!symbols || symbols.length===0) return null;
+        if (!symbols || symbols.length === 0) return null;
 
         return (
             <div className="TheoryExplorer_symbolsDiv">
@@ -248,8 +243,8 @@ export default class TheoryExplorer extends Component {
     }
 
     renderSymbol(sym) {
-        return(
-            <div key={sym.uid} title={"Id: "+sym.uid} className="TheoryExplorer_sym">
+        return (
+            <div key={sym.uid} title={"Id: " + sym.uid} className="TheoryExplorer_sym">
                 {sym.text}
             </div>
         );
@@ -260,10 +255,9 @@ export default class TheoryExplorer extends Component {
             <div className={`TheoryExplorer_root ${this.props.className || ""}`} style={this.props.style}>
                 {this.renderToolbar()}
                 {this.state.showSymbolCreator && this.renderSymbolCreator()}
-                <div style={{marginTop:"16px"}}>Directories:</div>
+                <div style={{marginTop: "16px"}}>Directories:</div>
                 {this.renderSubDirs()}
                 {this.renderStatements()}
-
                 <div>Symbols:</div>
                 {this.renderSymbols()}
             </div>

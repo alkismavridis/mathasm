@@ -7,16 +7,14 @@ import GlobalHeader from "../../GlobalHeader/GlobalHeader";
 import PropTypes from "prop-types";
 
 
-
 class MainPage extends Component {
 
     //region FIELDS
     state = {
-        user:PropTypes.object,
-        currentDir:null
+        user: PropTypes.object,
+        currentDir: null
     };
     //endregion
-
 
 
     //region LIFE CYCLE
@@ -35,7 +33,7 @@ class MainPage extends Component {
         }`;
 
         GraphQL.run(qlQuery)
-            .then(resp => this.setState({currentDir:resp.rootDir}))
+            .then(resp => this.setState({currentDir: resp.rootDir}))
             .catch(err => QuickInfoService.makeError("Could not fetch init data!"));
     }
 
@@ -53,15 +51,15 @@ class MainPage extends Component {
     //endregion
 
 
-
     //region PAGE STUFF
     //endregion
 
 
     //region EVENT HANDLERS
     handleCurrentDirChange(newDir) {
-        this.setState({currentDir:newDir});
+        this.setState({currentDir: newDir});
     }
+
     //endregion
 
 
@@ -73,7 +71,7 @@ class MainPage extends Component {
                 {this.state.currentDir && <TheoryExplorer
                     onChangeDir={this.handleCurrentDirChange.bind(this)}
                     currentDir={this.state.currentDir}
-                    style={{marginTop:"10px"}}/>
+                    style={{marginTop: "10px"}}/>
                 }
             </div>
         );

@@ -12,7 +12,9 @@
     "iterall": "^1.2.2",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
-    "react-scripts": "2.0.4"
+    "react-notifications-component": "^1.0.1",
+    "react-scripts": "2.0.4",
+    "vis": "^4.21.0"
   },
   "scripts": {
     "start": "react-scripts start",
