@@ -408,7 +408,7 @@ These are two separate single replacements, each of them valid. So we get:
 Once again, we turned the world up side down.
 
 
-### Ok. What happened this time?
+### What happened this time?
 We failed to create the concept of the variable.
 It is not enough to say that x can become true. We must enforce that all x become true simultaneously.
 We cannot replace one occurrence of x with true and an other one with false.
@@ -432,3 +432,57 @@ that I presented above.
 
 As mentioned before, this may also have its flaws, and might be still improved.
 The goal will be always the same: generate as many valid statements as possible, and only valid ones.
+
+
+### Is that all?
+This is pretty much all. When the application is ready, we will demonstrate specific theories (axioms + theorem proofs).
+This way, the usage of MathAsm will become much more clear, that simply stating its rules.
+Until then, we will be focusing on the development of the web app. This will contain a UI that will offer
+a nice and smooth experience when building your axioms and theorems.
+It would be also view all the proofs of the existing theorems. To see all the cool MathAsm stuff that generated each one of them.
+
+### Any word for the app itself?
+- Our Backend will be a spring-boot application written mostly in kotlin, with some Java parts.
+- Our Database will be neo4j embedded.
+- Our API will be exposed with GraphQL.
+- Our frontend application will be powered by React.
+
+
+### Any usage tips?
+There is one more concept that the web app uses in order to avoid chaos.
+You see, gathering many mathematical theories will inevitably cause the number of statements and symbols to explode.
+To avoid this, we created a structure similar to your file system.
+
+We create MathAsm "directories". Those can have subdirectories etc.
+They can also contain statements and symbols.
+This means that every symbol that is defined and every statement that is persisted, has to belong to a directory.
+
+You can navigate though those directories in the same way you navigate to your file system, and view your statements and symbol
+the same way you see your files.
+
+But this directory concept does not affect the instruction set in any way.
+One can use freely all symbols and all statements on a theory, no matter in which directory they belong to.
+Directories are here only for organizing large numbers of symbols / statements.
+
+
+### Can I use the app without signing in?
+Yes. But you will have a read-only taste. You will be able to explore all the statements and symbols and view their proofs.
+But you will not be able to create theorems, axioms etc.
+
+
+### Can I contribute to MathAsm?
+Yes! If you are a programmer, you could help us with the development of the web app.
+If you are a math/philosophy type of person, you could import existing mathematical /philosophical theories
+in MathAsm, or test the instruction set, even try different instruction sets.
+
+
+### Can I fork the MathAsm webapp?
+Sure you can! MathAsm is licensed under GPL 2.
+As long as you comply to GPL 2 rules, you are totally free to do as you wish.
+
+
+### I want to use the specification of MathAsm, or the ideas behind MathAsm on my work or presentation. Can I do so?
+Sure! No matter if your work is pure hobby, academical, commercial, no matter if it is publicly available or private,
+you may use MathAsm's rules and semantics as desired.
+I will never, ever claim any financial or legal profit from your work.
+The only condition that I ask is giving explicit credit to MathAsm and its creator on your work.
