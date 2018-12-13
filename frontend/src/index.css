@@ -71,6 +71,8 @@ html, body {
     background-color: #ffffff;
     border: solid #ffffff40 2px;
     box-shadow: black 5px 6px 4px;
+    max-height: 80vh;
+    overflow: auto;
 }
 /*endregion*/
 

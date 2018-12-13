@@ -1,0 +1,11 @@
+.AboutDialog_root {
+    padding: 8px;
+}
+
+.AboutDialog_title {
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.AboutDialog_contrib li {
+}

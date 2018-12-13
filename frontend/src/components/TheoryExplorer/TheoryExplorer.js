@@ -126,7 +126,7 @@ export default class TheoryExplorer extends Component {
                 ModalService.removeModal(modalId);
             })
             .catch(err => {
-                QuickInfoService.makeError("Could not create directory " + this.state.text)
+                QuickInfoService.makeError("Could not create directory " + text)
             });
     }
 

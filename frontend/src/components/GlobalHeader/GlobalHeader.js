@@ -4,6 +4,7 @@ import "./GlobalHeader.css";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import ModalService from "../../services/ModalService";
 import UserMenu from "../Modals/UserMenu/UserMenu";
+import AboutDialog from "../Modals/AboutDialog/AboutDialog";
 
 export default class GlobalHeader extends Component {
     //region STATIC
@@ -46,6 +47,14 @@ export default class GlobalHeader extends Component {
             );
         }
     }
+
+    handleAboutClick() {
+        const id = ModalService.getNextId();
+        ModalService.addModal(
+            id,
+            <AboutDialog modalId={id}/>
+        )
+    }
     //endregion
 
 
@@ -61,11 +70,20 @@ export default class GlobalHeader extends Component {
         );
     }
 
+    renderAboutButton() {
+        return (
+            <div className="GlobalHeader_aboutDiv" onClick={this.handleAboutClick.bind(this)}>
+                <FontAwesomeIcon icon="info"/>
+            </div>
+        )
+    }
+
 
     render() {
         return (
             <div className="Globals_flexAway GlobalHeader_root">
                 {this.renderUserMenu()}
+                {this.renderAboutButton()}
             </div>
         );
     }
