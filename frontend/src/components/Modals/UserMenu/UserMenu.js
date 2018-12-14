@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from "prop-types";
-import "./UserMenu.css";
+import "./UserMenu.scss";
 import DomUtils from "../../../services/DomUtils";
 import ModalHeader from "../ModalHeader/ModalHeader";
 import GraphQL from "../../../services/GraphQL";

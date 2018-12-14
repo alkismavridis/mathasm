@@ -174,7 +174,7 @@ Here is how it goes.
 Congrats! You got your first axiom! You are now a theory creator!
 
 
-### Wait... Do you mean that I cad do anything I like?
+### Wait... Do you mean that I can do anything I like?
 Exactly! This is how you build axioms. You do anything you like, as long as it is a valid statement.
 Building axioms is a total anarchy.
 
