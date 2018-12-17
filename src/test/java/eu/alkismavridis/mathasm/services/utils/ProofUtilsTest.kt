@@ -196,19 +196,19 @@ class ProofUtilsTest {
         //5. Save with a name of an existing object
         val state = BasicMathAsmState(app)
         try {
-            val stmt = MathAsmStatementEntity.createAxiom("obj1_1_1!", longArrayOf(1,2,3), longArrayOf(4,5,6), true, 0)
-            ProofUtils.persistTheorem(theoremList, stmt, state.obj1_1.id!!, "obj1_1_1", user, app)
+            val stmt = MathAsmStatementEntity.createAxiom("dir1_1_1!", longArrayOf(1,2,3), longArrayOf(4,5,6), true, 0)
+            ProofUtils.persistTheorem(theoremList, stmt, state.dir1_1.id!!, "dir1_1_1", user, app)
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
             assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
-            assertEquals("Name  \"obj1_1_1\" already exists.", e.message)
+            assertEquals("Name  \"dir1_1_1\" already exists.", e.message)
         }
 
         //6. Save with a name of an existing statement
         try {
             val stmt = MathAsmStatementEntity.createAxiom("stmt1_1a!", longArrayOf(1,2,3), longArrayOf(4,5,6), true, 0)
-            ProofUtils.persistTheorem(theoremList, stmt, state.obj1_1.id!!, "stmt1_1a", user, app)
+            ProofUtils.persistTheorem(theoremList, stmt, state.dir1_1.id!!, "stmt1_1a", user, app)
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {

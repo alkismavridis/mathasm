@@ -11,7 +11,7 @@ class MainPage extends Component {
     //region STATIC
     static propTypes = {
         //data
-        user:PropTypes.object.isRequired,
+        user:PropTypes.object,
 
         //actions
         //styling
@@ -22,29 +22,12 @@ class MainPage extends Component {
 
     //region FIELDS
     state = {
-        currentDir: null
     };
     //endregion
 
 
     //region LIFE CYCLE
     componentDidMount() {
-        this.doInitialFetching();
-    }
-
-    doInitialFetching() {
-        const qlQuery = `{
-            rootDir(depth:1) {
-                id,name
-                statements {id,name,type}
-                subDirs {id,name}
-                symbols {uid, text}
-            }
-        }`;
-
-        GraphQL.run(qlQuery)
-            .then(resp => this.setState({currentDir: resp.rootDir}))
-            .catch(err => QuickInfoService.makeError("Could not fetch init data!"));
     }
 
 
@@ -66,9 +49,7 @@ class MainPage extends Component {
 
 
     //region EVENT HANDLERS
-    handleCurrentDirChange(newDir) {
-        this.setState({currentDir: newDir});
-    }
+    handleCurrentDirChange(newDir) {}
 
     //endregion
 
@@ -78,11 +59,9 @@ class MainPage extends Component {
         return (
             <div className="MainPage_root">
                 <GlobalHeader user={this.props.user}/>
-                {this.state.currentDir && <TheoryExplorer
+                <TheoryExplorer
                     onChangeDir={this.handleCurrentDirChange.bind(this)}
-                    currentDir={this.state.currentDir}
                     style={{marginTop: "10px"}}/>
-                }
             </div>
         );
     }

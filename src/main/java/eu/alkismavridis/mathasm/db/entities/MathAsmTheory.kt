@@ -17,7 +17,7 @@ class MathAsmTheory {
 
     var name:String = ""
 
-    @Relationship(type = "OBJ", direction = Relationship.OUTGOING)
+    @Relationship(type = "FS", direction = Relationship.OUTGOING)
     var rootObj: MathAsmDirEntity? = null
     //endregion
 

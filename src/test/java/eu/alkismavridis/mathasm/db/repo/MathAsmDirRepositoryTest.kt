@@ -58,58 +58,58 @@ class MathAsmDirRepositoryTest {
 
         val state = BasicMathAsmState(app)
 
-        //1. Check name availability from rootObj
-        assertTrue(app.dirRepo.hasChildWithName(state.rootObj.id, "obj1"))
-        assertTrue(app.dirRepo.hasChildWithName(state.rootObj.id, "obj2"))
+        //1. Check name availability from rootDir
+        assertTrue(app.dirRepo.hasChildWithName(state.rootDir.id, "dir1"))
+        assertTrue(app.dirRepo.hasChildWithName(state.rootDir.id, "dir2"))
 
         //checking grandchildren should return false
-        assertFalse(app.dirRepo.hasChildWithName(state.rootObj.id, "obj1_1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.rootObj.id, "obj1_1_1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.rootObj.id, "obj2_1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.rootDir.id, "dir1_1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.rootDir.id, "dir1_1_1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.rootDir.id, "dir2_1"))
 
-        assertFalse(app.dirRepo.hasChildWithName(state.rootObj.id, "stmt1a")) //this is a grand child, not a child
-        assertFalse(app.dirRepo.hasChildWithName(state.rootObj.id, "stmt2a")) //this is a grand child, not a child
-        assertFalse(app.dirRepo.hasChildWithName(state.rootObj.id, "stmt1_1a")) //this is a grand child, not a child
-        assertFalse(app.dirRepo.hasChildWithName(state.rootObj.id, "sdfsfs")) //this does not exists at all
+        assertFalse(app.dirRepo.hasChildWithName(state.rootDir.id, "stmt1a")) //this is a grand child, not a child
+        assertFalse(app.dirRepo.hasChildWithName(state.rootDir.id, "stmt2a")) //this is a grand child, not a child
+        assertFalse(app.dirRepo.hasChildWithName(state.rootDir.id, "stmt1_1a")) //this is a grand child, not a child
+        assertFalse(app.dirRepo.hasChildWithName(state.rootDir.id, "sdfsfs")) //this does not exists at all
 
 
-        //2. Check name availability from obj1
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1.id, "obj1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1.id, "obj2"))
-        assertTrue(app.dirRepo.hasChildWithName(state.obj1.id, "obj1_1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1.id, "obj1_1_1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1.id, "obj2_1"))
-        assertTrue(app.dirRepo.hasChildWithName(state.obj1.id, "stmt1a"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1.id, "stmt2a"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1.id, "stmt1_1a"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1.id, "sdfsfs"))
+        //2. Check name availability from dir1
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1.id, "dir1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1.id, "dir2"))
+        assertTrue(app.dirRepo.hasChildWithName(state.dir1.id, "dir1_1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1.id, "dir1_1_1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1.id, "dir2_1"))
+        assertTrue(app.dirRepo.hasChildWithName(state.dir1.id, "stmt1a"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1.id, "stmt2a"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1.id, "stmt1_1a"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1.id, "sdfsfs"))
 
-        //3. Check name availability from obj1_1
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1.id, "obj1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1.id, "obj2"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1.id, "obj1_1"))
-        assertTrue(app.dirRepo.hasChildWithName(state.obj1_1.id, "obj1_1_1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1.id, "obj2_1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1.id, "stmt1a"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1.id, "stmt2a"))
-        assertTrue(app.dirRepo.hasChildWithName(state.obj1_1.id, "stmt1_1a"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1.id, "sdfsfs"))
+        //3. Check name availability from dir1_1
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1.id, "dir1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1.id, "dir2"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1.id, "dir1_1"))
+        assertTrue(app.dirRepo.hasChildWithName(state.dir1_1.id, "dir1_1_1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1.id, "dir2_1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1.id, "stmt1a"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1.id, "stmt2a"))
+        assertTrue(app.dirRepo.hasChildWithName(state.dir1_1.id, "stmt1_1a"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1.id, "sdfsfs"))
 
-        //4. Check name availability from obj1_1_1
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1_1.id, "obj1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1_1.id, "obj2"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1_1.id, "obj1_1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1_1.id, "obj1_1_1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1_1.id, "obj2_1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1_1.id, "stmt1a"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1_1.id, "stmt2a"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1_1.id, "stmt1_1a"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1_1.id, "sdfsfs"))
+        //4. Check name availability from dir1_1_1
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1_1.id, "dir1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1_1.id, "dir2"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1_1.id, "dir1_1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1_1.id, "dir1_1_1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1_1.id, "dir2_1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1_1.id, "stmt1a"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1_1.id, "stmt2a"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1_1.id, "stmt1_1a"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1_1.id, "sdfsfs"))
 
         //5. Check name case sensitivity
-        assertFalse(app.dirRepo.hasChildWithName(state.rootObj.id, "obJ1"))
-        assertFalse(app.dirRepo.hasChildWithName(state.rootObj.id, "OBj2"))
-        assertFalse(app.dirRepo.hasChildWithName(state.obj1_1.id, "sTMt1_1a"))
+        assertFalse(app.dirRepo.hasChildWithName(state.rootDir.id, "obJ1"))
+        assertFalse(app.dirRepo.hasChildWithName(state.rootDir.id, "OBj2"))
+        assertFalse(app.dirRepo.hasChildWithName(state.dir1_1.id, "sTMt1_1a"))
     }
 
     @Test
@@ -121,10 +121,10 @@ class MathAsmDirRepositoryTest {
         app.userService.deleteAll()
 
         val state = BasicMathAsmState(app)
-        assertEquals(state.obj1_1.id, app.dirRepo.findParentIdOfDir(state.obj1_1_1.id))
-        assertEquals(state.obj1.id, app.dirRepo.findParentIdOfDir(state.obj1_1.id))
-        assertEquals(state.rootObj.id, app.dirRepo.findParentIdOfDir(state.obj1.id))
-        assertEquals(state.obj2.id, app.dirRepo.findParentIdOfDir(state.obj2_1.id))
-        assertNull(app.dirRepo.findParentIdOfDir(state.rootObj.id))
+        assertEquals(state.dir1_1.id, app.dirRepo.findParentIdOfDir(state.dir1_1_1.id))
+        assertEquals(state.dir1.id, app.dirRepo.findParentIdOfDir(state.dir1_1.id))
+        assertEquals(state.rootDir.id, app.dirRepo.findParentIdOfDir(state.dir1.id))
+        assertEquals(state.dir2.id, app.dirRepo.findParentIdOfDir(state.dir2_1.id))
+        assertNull(app.dirRepo.findParentIdOfDir(state.rootDir.id))
     }
 }

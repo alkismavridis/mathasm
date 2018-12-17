@@ -1,0 +1,21 @@
+.Connection_root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding:0 8px;
+  border-radius: 6px;
+  background-color: #8B2BB9;
+  color:white;
+
+  &.Connection_clickable {
+    cursor: pointer;
+  }
+
+  .Connection_grade {
+    font-weight: bold;
+    font-size: 12px;
+    line-height: 0;
+    margin-top:10px;
+  }
+}

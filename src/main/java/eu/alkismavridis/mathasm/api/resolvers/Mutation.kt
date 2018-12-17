@@ -129,6 +129,9 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
         if (requestingUser==null) throw MathAsmException(ErrorCode.UNAUTHORIZED, "No session.")
         if (!requestingUser.canCreateAxioms()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to create axioms.")
 
+        //2. Check that sentences are not empty
+        if (left.isEmpty() || right.isEmpty()) throw MathAsmException(ErrorCode.ILLEGAL_AXIOM, "Sentences of an axiom cannot be empty.")
+
         //2. Get the parent
         val parent: MathAsmDirEntity? = app.dirRepo.findById(parentId, 0).orElse(null)
         if (parent==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Object with uid $parentId not found.")

@@ -11,7 +11,7 @@ import org.neo4j.ogm.annotation.typeconversion.DateLong
 import java.time.Instant
 import java.util.stream.Stream
 
-@NodeEntity(label="obj")
+@NodeEntity(label="dir")
 class MathAsmDirEntity : MathAsmDir {
     //region FIELDS
     @Id
@@ -28,7 +28,7 @@ class MathAsmDirEntity : MathAsmDir {
     @Relationship(type = "SYM", direction = Relationship.OUTGOING)
     var symbols:MutableList<MathAsmSymbol> = ArrayList()
 
-    @Relationship(type = "OBJ", direction = Relationship.OUTGOING)
+    @Relationship(type = "DIR", direction = Relationship.OUTGOING)
     var subDirs = mutableListOf<MathAsmDirEntity>()
 
     //extentions

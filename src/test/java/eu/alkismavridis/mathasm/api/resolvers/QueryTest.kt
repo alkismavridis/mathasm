@@ -286,56 +286,56 @@ class QueryTest {
 
 
         //1. Get root parent (should return null)
-        var result = query.dirParent(state.rootObj.id!!, 0)
+        var result = query.dirParent(state.rootDir.id!!, 0)
         assertNull(result)
 
 
         //2. Get with depth zero
-        result = query.dirParent(state.obj1.id!!, 0)
-        assertEquals(state.rootObj.id, result!!.id)
+        result = query.dirParent(state.dir1.id!!, 0)
+        assertEquals(state.rootDir.id, result!!.id)
         assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
 
-        result = query.dirParent(state.obj2.id!!, 0)!!
-        assertEquals(state.rootObj.id, result.id)
+        result = query.dirParent(state.dir2.id!!, 0)!!
+        assertEquals(state.rootDir.id, result.id)
         assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
 
-        result = query.dirParent(state.obj1_1.id!!, 0)!!
-        assertEquals(state.obj1.id, result.id)
+        result = query.dirParent(state.dir1_1.id!!, 0)!!
+        assertEquals(state.dir1.id, result.id)
         assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
 
-        result = query.dirParent(state.obj1_1_1.id!!, 0)!!
-        assertEquals(state.obj1_1.id, result.id)
+        result = query.dirParent(state.dir1_1_1.id!!, 0)!!
+        assertEquals(state.dir1_1.id, result.id)
         assertEquals(0, result.subDirs.size) //depth 0 should not fetch children
 
 
         //4. Get root with depth 1
-        result = query.dirParent(state.obj1.id!!, 1)!!
-        assertEquals(state.rootObj.id, result.id)
+        result = query.dirParent(state.dir1.id!!, 1)!!
+        assertEquals(state.rootDir.id, result.id)
         assertEquals(2, result.subDirs.size)
 
-        var objectToTest = result.subDirs.find { it.name == "obj1" }
-        assertEquals(state.obj1.id, objectToTest!!.id)
+        var objectToTest = result.subDirs.find { it.name == "dir1" }
+        assertEquals(state.dir1.id, objectToTest!!.id)
         assertEquals(0, objectToTest.subDirs.size) //depth 1 should not fetch grand children
 
-        result = query.dirParent(state.obj1_1.id!!, 1)!!
-        assertEquals(state.obj1.id, result.id)
+        result = query.dirParent(state.dir1_1.id!!, 1)!!
+        assertEquals(state.dir1.id, result.id)
         assertEquals(1, result.subDirs.size)
 
-        objectToTest = result.subDirs.find { it.name == "obj1_1" }
-        assertEquals(state.obj1_1.id, objectToTest!!.id)
+        objectToTest = result.subDirs.find { it.name == "dir1_1" }
+        assertEquals(state.dir1_1.id, objectToTest!!.id)
         assertEquals(0, objectToTest.subDirs.size) //depth 1 should not fetch grand children
 
         //5. Get root with depth 2
-        result = query.dirParent(state.obj1.id!!, 2)!!
-        assertEquals(state.rootObj.id!!, result.id)
+        result = query.dirParent(state.dir1.id!!, 2)!!
+        assertEquals(state.rootDir.id!!, result.id)
         assertEquals(2, result.subDirs.size)
 
-        objectToTest = result.subDirs.find { it.name == "obj1" }
-        assertEquals(state.obj1.id, objectToTest!!.id)
+        objectToTest = result.subDirs.find { it.name == "dir1" }
+        assertEquals(state.dir1.id, objectToTest!!.id)
         assertEquals(1, objectToTest.subDirs.size)
 
-        objectToTest = objectToTest.subDirs.find { it.name == "obj1_1" }
-        assertEquals(state.obj1_1.id, objectToTest!!.id)
+        objectToTest = objectToTest.subDirs.find { it.name == "dir1_1" }
+        assertEquals(state.dir1_1.id, objectToTest!!.id)
         assertEquals(0, objectToTest.subDirs.size) //depth 2 should not fetch grand-grand children
 
         //6. Try getting a non existing object

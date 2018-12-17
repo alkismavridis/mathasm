@@ -1,0 +1,25 @@
+.AxiomCreator_root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  border: solid 2px #39ad82;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #2556c530;
+}
+
+.AxiomCreator_sym {
+  padding: 8px;
+  background-color: cornflowerblue;
+  color: white;
+  border-radius: 5px;
+  margin-right: 4px;
+}
+
+.AxiomCreator_cursor {
+  width:2px;
+  height:24px;
+  background-color: #1c0e90;
+  margin: 0 5px 0 1px;
+}

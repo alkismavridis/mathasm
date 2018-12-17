@@ -6,8 +6,8 @@ import GraphQL from "../../services/GraphQL";
 import DomUtils from "../../services/DomUtils";
 import SymbolCreator from "../SymbolCreator/SymbolCreator";
 import ModalService from "../../services/ModalService";
-import StringInputDialog from "../Modals/StringInputDialog/StringInputDialog";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
+import AxiomCreator from "../AxiomCreator/AxiomCreator";
 
 
 //region QUERIES
@@ -29,6 +29,15 @@ const FETCH_PARENT = `query($id:Long!){
     }
 }`;
 
+const FETCH_ROOT = `{
+    rootDir(depth:1) {
+        id,name
+        statements {id,name,type}
+        subDirs {id,name}
+        symbols {uid, text}
+    }
+}`;
+
 const CREATE_DIR = `mutation($parentId:Long!, $name:String!) {
     createDir(parentId:$parentId, name:$name) {
         id,name
@@ -40,12 +49,18 @@ const CREATE_DIR = `mutation($parentId:Long!, $name:String!) {
 //endregion
 
 
+const Mode = {
+    VIEW:1,
+    CREATE_SYMBOL:2,
+    CREATE_AXIOM:3,
+    //etc
+};
+
+
 export default class TheoryExplorer extends Component {
     //region STATIC
     static propTypes = {
         //data
-        currentDir: PropTypes.object.isRequired,
-
 
         //actions
         onChangeDir: PropTypes.func.isRequired,
@@ -60,16 +75,26 @@ export default class TheoryExplorer extends Component {
 
 
     //region FIELDS
+    _axiomCreator = null;
+
     state = {
+        mode:Mode.VIEW,
+        currentDir:null,
+
+        //axiom creator
+        axiomDir:null,
+
         goToField: "",
-        showSymbolCreator: false
     };
     //endregion
 
 
     //region LIFE CYCLE
+    componentDidMount() { this.navigateToRoot(); }
+
+
+
     // constructor(props) { super(props); }
-    // componentDidMount() {}
     // static getDerivedStateFromProps(nextProps, prevState) {}
     // shouldComponentUpdate(nextProps, nextState) { return true; }
     // getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
@@ -83,10 +108,20 @@ export default class TheoryExplorer extends Component {
     navigateTo(id) {
         GraphQL.run(FETCH_DIR, {id: id})
             .then(resp => {
-                if (resp.logicDir) this.props.onChangeDir(resp.logicDir);
+                if (resp.logicDir) {
+                    this.setState({currentDir: resp.logicDir});
+                    this.props.onChangeDir(resp.logicDir);
+                }
                 else QuickInfoService.makeError("Could not navigate to directory with id: " + id);
             })
             .catch(err => QuickInfoService.makeError("Could not navigate to directory with id: " + id));
+    }
+
+    navigateToRoot() {
+        GraphQL.run(FETCH_ROOT)
+            .then(resp => this.setState({currentDir: resp.rootDir}))
+            .catch(err => QuickInfoService.makeError("Could not fetch init data!"));
+
     }
 
     handleGoToAction() {
@@ -100,16 +135,35 @@ export default class TheoryExplorer extends Component {
     }
 
     goToParentDir() {
-        GraphQL.run(FETCH_PARENT, {id: this.props.currentDir.id})
+        if (!this.state.currentDir) return;
+        GraphQL.run(FETCH_PARENT, {id: this.state.currentDir.id})
             .then(resp => {
-                if (resp.dirParent) this.props.onChangeDir(resp.dirParent);
+                if (resp.dirParent) {
+                    this.setState({currentDir: resp.dirParent});
+                    this.props.onChangeDir(resp.dirParent);
+                }
                 else QuickInfoService.makeInfo("This is the root directory.");
             })
             .catch(err => QuickInfoService.makeError("Could not fetch init data!"));
     }
 
-    toggleSymbolCreator() {
-        this.setState({showSymbolCreator: !this.state.showSymbolCreator});
+    saveAxiom() {
+
+    }
+
+    /** Enters or leaves the given mode. Leaving is always performed towards Mode.VIEW. */
+    toggleMode(mode) {
+        const newMode = this.state.mode===mode? Mode.VIEW : mode;
+        this.setState({mode: newMode});
+    }
+
+    /** Enters or leaves axiom creation mode. Leaving is always performed towards Mode.VIEW. */
+    toggleAxiomCreationMode() {
+        const newState = this.state.mode === Mode.CREATE_AXIOM?
+            {mode:Mode.VIEW} :
+            {mode:Mode.CREATE_AXIOM, axiomDir:this.state.currentDir};
+
+        this.setState(newState);
     }
 
     handleDirCreationTextSubmit(modalId, text) {
@@ -118,11 +172,15 @@ export default class TheoryExplorer extends Component {
             return;
         }
 
-        GraphQL.run(CREATE_DIR, {name: text, parentId: this.props.currentDir.id})
+        GraphQL.run(CREATE_DIR, {name: text, parentId: this.state.currentDir.id})
             .then(resp => {
-                const updatedCurrentDir = Object.assign({}, this.props.currentDir);
+                //setup new directory object
+                const updatedCurrentDir = Object.assign({}, this.state.currentDir);
                 updatedCurrentDir.subDirs.push(resp.createDir);
+                //update components
+                this.setState({currentDir: updatedCurrentDir});
                 this.props.onChangeDir(updatedCurrentDir);
+                //remove the modal
                 ModalService.removeModal(modalId);
             })
             .catch(err => {
@@ -130,10 +188,28 @@ export default class TheoryExplorer extends Component {
             });
     }
 
+    /** callback on symbol click*/
+    handleSymbolClick(sym) {
+        switch(this.state.mode) {
+            case Mode.CREATE_AXIOM:
+                if (this._axiomCreator) this._axiomCreator.addSymbol(sym);
+                break;
+
+        }
+    }
+
+    handleAxiomSaved(axiom) {
+        //update the dir object.
+        const updatedCurrentDir = Object.assign({}, this.state.currentDir);
+        updatedCurrentDir.statements.push(axiom);
+        //update the components
+        this.setState({currentDir: updatedCurrentDir});
+        this.props.onChangeDir(updatedCurrentDir);
+    }
+
     createDir() {
         ModalService.showTextGetter("New Directory", "Directory name...", this.handleDirCreationTextSubmit.bind(this));
     }
-
     //endregion
 
 
@@ -148,8 +224,8 @@ export default class TheoryExplorer extends Component {
                     onClick={this.goToParentDir.bind(this)}>
                     <FontAwesomeIcon icon="arrow-up"/>
                 </button>
-                <div style={{margin: "0 16px"}}>{this.props.currentDir.name}</div>
-                <div style={{margin: "0 8px"}}>Id: {this.props.currentDir.id}</div>
+                <div style={{margin: "0 16px"}}>{this.state.currentDir.name}</div>
+                <div style={{margin: "0 8px"}}>Id: {this.state.currentDir.id}</div>
                 <input
                     value={this.state.goToField}
                     onChange={e => this.setState({goToField: e.target.value})}
@@ -160,31 +236,16 @@ export default class TheoryExplorer extends Component {
                     className="Globals_roundBut"
                     title="New symbol"
                     style={{backgroundColor: "#e61919", width: "32px", height: "32px", fontSize: "16px"}}
-                    onClick={this.toggleSymbolCreator.bind(this)}>
+                    onClick={this.toggleMode.bind(this, Mode.CREATE_SYMBOL)}>
                     <FontAwesomeIcon icon="hashtag"/>
                 </button>
-            </div>
-        );
-    }
-
-    renderSymbolCreator() {
-        return <SymbolCreator
-            parentId={this.props.currentDir.id}
-            showCreatedSymbols={false}
-            onSymbolCreated={s => {
-                const newDir = Object.assign({}, this.props.currentDir);
-                newDir.symbols.push(s);
-                this.props.onChangeDir(newDir);
-            }}/>;
-    }
-
-    //SUB-DIR RENDERING
-    renderSubDirs() {
-        const dirs = this.props.currentDir.subDirs;
-
-        return (
-            <div className="TheoryExplorer_subDirsDiv">
-                {dirs.map(this.renderSubDir.bind(this))}
+                <button
+                    className="Globals_roundBut"
+                    title="New symbol"
+                    style={{backgroundColor: "#76b7e6", width: "32px", height: "32px", fontSize: "16px"}}
+                    onClick={this.toggleAxiomCreationMode.bind(this)}>
+                    <FontAwesomeIcon icon="hashtag"/>
+                </button>
                 <button
                     className="Globals_roundBut"
                     title="New directory"
@@ -192,6 +253,36 @@ export default class TheoryExplorer extends Component {
                     onClick={this.createDir.bind(this)}>
                     <FontAwesomeIcon icon="plus"/>
                 </button>
+            </div>
+        );
+    }
+
+    renderSymbolCreator() {
+        return <SymbolCreator
+            parentId={this.state.currentDir.id}
+            showCreatedSymbols={false}
+            onSymbolCreated={s => {
+                const newDir = Object.assign({}, this.state.currentDir);
+                newDir.symbols.push(s);
+                this.setState({currentDir:newDir});
+                this.props.onChangeDir(newDir);
+            }}/>;
+    }
+
+    renderAxiomCreator() {
+        return <AxiomCreator
+            ref={el => this._axiomCreator = el}
+            parentDir={this.state.axiomDir}
+            onSave={this.handleAxiomSaved.bind(this)}/>;
+    }
+
+    //SUB-DIR RENDERING
+    renderSubDirs() {
+        const dirs = this.state.currentDir.subDirs;
+
+        return (
+            <div className="TheoryExplorer_subDirsDiv">
+                {dirs.map(this.renderSubDir.bind(this))}
             </div>
         );
     }
@@ -211,7 +302,7 @@ export default class TheoryExplorer extends Component {
 
     //STATEMENT RENDERING
     renderStatements() {
-        const statements = this.props.currentDir.statements;
+        const statements = this.state.currentDir.statements;
         if (!statements || statements.length === 0) return null;
 
         return (
@@ -232,7 +323,7 @@ export default class TheoryExplorer extends Component {
 
     //SYMBOL RENDERING
     renderSymbols() {
-        const symbols = this.props.currentDir.symbols;
+        const symbols = this.state.currentDir.symbols;
         if (!symbols || symbols.length === 0) return null;
 
         return (
@@ -244,17 +335,26 @@ export default class TheoryExplorer extends Component {
 
     renderSymbol(sym) {
         return (
-            <div key={sym.uid} title={"Id: " + sym.uid} className="TheoryExplorer_sym">
+            <div
+                key={sym.uid}
+                title={"Id: " + sym.uid}
+                className="TheoryExplorer_sym"
+                onClick={this.handleSymbolClick.bind(this, sym)}>
                 {sym.text}
             </div>
         );
     }
 
     render() {
+        if (!this.state.currentDir) return null;
+
         return (
             <div className={`TheoryExplorer_root ${this.props.className || ""}`} style={this.props.style}>
+                {this.state.mode === Mode.CREATE_SYMBOL && this.renderSymbolCreator()}
+                {this.state.mode === Mode.CREATE_AXIOM && this.renderAxiomCreator()}
+
+
                 {this.renderToolbar()}
-                {this.state.showSymbolCreator && this.renderSymbolCreator()}
                 <div style={{marginTop: "16px"}}>Directories:</div>
                 {this.renderSubDirs()}
                 {this.renderStatements()}

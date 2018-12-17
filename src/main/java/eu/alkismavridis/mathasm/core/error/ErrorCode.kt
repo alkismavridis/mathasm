@@ -19,6 +19,7 @@ enum class ErrorCode {
     NAME_ALREADY_EXISTS(13),
     UNKNOWN_ERROR(14),
     CONNECTION_ERROR(15),
+    ILLEGAL_AXIOM(16),
     //endregion
 
 

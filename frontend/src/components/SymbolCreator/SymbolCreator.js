@@ -6,6 +6,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import GraphQL from "../../services/GraphQL";
 import ErrorCode from "../../constants/ErrorCode";
 import {SymbolRangeUtils} from "../../services/symbol/SymbolRangeUtils";
+import DomUtils from "../../services/DomUtils";
 
 
 const CREATE_SYMBOL = `mutation($text:String!, $uid:Long!, $parentId:Long!) {
@@ -114,12 +115,14 @@ class SymbolCreator extends Component {
             <div className="SymbolCreator_root">
                 <input
                     value={this.state.text}
+                    onKeyDown={DomUtils.handleEnter(this.submitSymbol.bind(this))}
                     onChange={e => this.setState({text:e.target.value})}
                     className="Globals_inp" />
                 <input
                     value={this.state.uid}
                     type="number"
                     onChange={e => this.setState({uid:e.target.value})}
+                    onKeyDown={DomUtils.handleEnter(this.submitSymbol.bind(this))}
                     className="Globals_inp" />
                 {this.state.isLoading?
                     <FontAwesomeIcon icon="spinner" spin={true}/> :

@@ -318,17 +318,17 @@ class MutationTest {
         //5. Save with a name of an existing object
         val state = BasicMathAsmState(app)
         try {
-            mutation.createDir(state.obj1_1.id!!, "obj1_1_1", DummyFetchingEnvironment(user))
+            mutation.createDir(state.dir1_1.id!!, "dir1_1_1", DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
             assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
-            assertEquals("Name  \"obj1_1_1\" already exists.", e.message)
+            assertEquals("Name  \"dir1_1_1\" already exists.", e.message)
         }
 
         //6. Save with a name of an existing statement
         try {
-            mutation.createDir(state.obj1_1.id!!, "stmt1_1a", DummyFetchingEnvironment(user))
+            mutation.createDir(state.dir1_1.id!!, "stmt1_1a", DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -443,22 +443,43 @@ class MutationTest {
         //5. Save with a name of an existing object
         val state = BasicMathAsmState(app)
         try {
-            mutation.createAxiom(state.obj1_1.id!!, "obj1_1_1",  listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+            mutation.createAxiom(state.dir1_1.id!!, "dir1_1_1",  listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
             assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
-            assertEquals("Name  \"obj1_1_1\" already exists.", e.message)
+            assertEquals("Name  \"dir1_1_1\" already exists.", e.message)
         }
 
         //6. Save with a name of an existing statement
         try {
-            mutation.createAxiom(state.obj1_1.id!!, "stmt1_1a",  listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+            mutation.createAxiom(state.dir1_1.id!!, "stmt1_1a",  listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
             assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
             assertEquals("Name  \"stmt1_1a\" already exists.", e.message)
+        }
+
+
+        //7. Try saving empty left sentence
+        try {
+            mutation.createAxiom(state.dir1_1.id!!, "stmt1_1a",  listOf(), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+            fail("Exception was not thrown")
+        }
+        catch (e: MathAsmException) {
+            assertEquals(ErrorCode.ILLEGAL_AXIOM, e.code)
+            assertEquals("Sentences of an axiom cannot be empty.", e.message)
+        }
+
+        //8. Try saving empty left sentence
+        try {
+            mutation.createAxiom(state.dir1_1.id!!, "stmt1_1a",  listOf(1L, 2L), 55, true, listOf(), DummyFetchingEnvironment(user))
+            fail("Exception was not thrown")
+        }
+        catch (e: MathAsmException) {
+            assertEquals(ErrorCode.ILLEGAL_AXIOM, e.code)
+            assertEquals("Sentences of an axiom cannot be empty.", e.message)
         }
     }
     //endregion
@@ -629,22 +650,22 @@ class MutationTest {
         val state = BasicMathAsmState(app)
         try {
             moves.find{ e -> e.moveType == LOGIC_MOVE_SAVE}!!.apply {
-                name = "obj1_1_1"
-                parentId = state.obj1_1.id!!
+                name = "dir1_1_1"
+                parentId = state.dir1_1.id!!
             }
             mutation.createTheorem(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
             assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)
-            assertEquals("Name  \"obj1_1_1\" already exists.", e.message)
+            assertEquals("Name  \"dir1_1_1\" already exists.", e.message)
         }
 
         //6. Save with a name of an existing statement
         try {
             moves.find{ e -> e.moveType == LOGIC_MOVE_SAVE}!!.apply {
                 name = "stmt1_1a"
-                parentId = state.obj1_1.id!!
+                parentId = state.dir1_1.id!!
             }
             mutation.createTheorem(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown")        }
