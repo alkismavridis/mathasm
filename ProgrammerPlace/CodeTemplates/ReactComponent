@@ -1,0 +1,57 @@
+import React, { Component } from 'react';
+import PropTypes from "prop-types";
+import cx from 'classnames';
+import "./${NAME}.scss";
+
+export default class ${NAME} extends Component {
+    //region STATIC
+    static propTypes = {
+      //data
+
+      //actions
+      //onFooBar:PropTypes.func,
+
+      //styling
+      style:PropTypes.object,
+      className:PropTypes.string,
+    };
+
+    //static defaultProps = {};
+    //endregion
+
+
+    //region FIELDS
+    state = {};
+    //endregion
+
+
+    //region LIFE CYCLE
+    // constructor(props) { super(props); }
+    // componentDidMount() {}
+    // static getDerivedStateFromProps(nextProps, prevState) {}
+    // shouldComponentUpdate(nextProps, nextState) { return true; }
+    // getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
+    // componentDidUpdate(prevProps, prevState, snapshot) {}
+    // componentWillUnmount() {}
+    // componentDidCatch(error, info) { console.error("Exception caught"); }
+    //endregion
+
+
+
+
+    //region EVENT HANDLERS
+    //endregion
+
+
+
+
+    //region RENDERING
+    render() {
+        return (
+            <div className={cx("${NAME}_root", this.props.className)} style={this.props.style}>
+                hello from ${NAME}
+            </div>
+        );
+    }
+    //endregion
+}

@@ -1,4 +1,5 @@
 {
+	"defaultLanguage":"en",
 	"dbUri":"file:///home/alkis/data/MathAsm/db",
 	"rootUserPassword":"hello12345"
 }

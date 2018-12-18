@@ -44,5 +44,42 @@ If you run the application though intellij, you can edit this configuration by o
 and add the VM options field.
 
 The configuration file has at the moment the following properties:
-- dbUri: the directory where the database lies. Yes, DB is just a directory for our application. You can choose this directory being wherever you whish.
+- **dbUri**: the directory where the database lies. Yes, DB is just a directory for our application. You can choose this directory being wherever you wish.
    It is just has to exists. MathAsm will create a ton of files inside it. Deleting this directories
+- **rootUserPassword**: When the application finds an empty database, a root user will be created. This will be its password.
+- **defaultLanguage**: the code of the default app's language, such as "en" or "de".
+
+
+### 3.2 The DB directory.
+This is the directory URI specified by the configuration's dbUri.
+There is no naming convention of location for that. Use any dir you like.
+But in order to keep things neat and clean, we strongly suggest that the DB directory lies under the **APP_ROOT**
+that we talked about before.
+
+The directory has to exists. For the first time that you will run the application, an empty directory is enough.
+After running the app, you will see a ton of files being created there. Those hold all the information for the database.
+
+- If you want to "drop" your whole DB, stop the app, empty out this directory and start again.
+- If you want to start the app with a second database, but leave the "original" on intact, stop the app,
+    create a second directory and update the json configuration file to point to the second DB dir. Run the app, and
+    the second will be used. The original one will not be affected in any way. Revert to the original using the same steps.
+    
+### 4. Unit Tests files:
+It is a good idea that unit tests will have their own configuration file and their own DB directory.
+Fell free to create a testConfig.json and a test_db directory for it. This way, your real DB will never be affected
+by running unit tests. Evil stuff will happen if you try to use the same DB directory for unit tests and production.
+
+
+### 5. Summary:
+My file system looks like that:
+APP_ROOT
+- config.json
+- testConfig.json
+- db/
+  - (empty in the begining, a lot of stuff once the app runs)
+- test_db/
+  - (empty in the begining, a lot of stuff once the unit tests run)
+
+
+Please note that config.json has **dbUri:APP_ROOT/db**,
+but the testConfig.json has **dbUri:APP_ROOT/test_db**
