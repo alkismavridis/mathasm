@@ -6,7 +6,7 @@ export default class Checkbox extends Component {
     //region STATIC
     static propTypes = {
         //data
-        label:PropTypes.node,
+        label: PropTypes.node,
         checked:PropTypes.bool.isRequired,
 
         //actions

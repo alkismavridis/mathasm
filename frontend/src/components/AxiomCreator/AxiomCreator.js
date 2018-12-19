@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import PropTypes from "prop-types";
 import "./AxiomCreator.scss";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
-import Connection from "../Connection/Connection";
+import Connection from "../ReusableComponents/Connection/Connection";
 import ModalService from "../../services/ModalService";
 import ModalHeader from "../Modals/ModalHeader/ModalHeader";
 import ConnectionEditDialog from "../Modals/ConnectionEditDialog/ConnectionEditDialog";

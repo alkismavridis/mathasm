@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import "./ConnectionEditDialog.scss";
 import ModalHeader from "../ModalHeader/ModalHeader";
 import DomUtils from "../../../services/DomUtils";
-import Checkbox from "../../Inputs/Checkbox/Checkbox";
+import Checkbox from "../../ReusableComponents/Inputs/Checkbox/Checkbox";
 
 export default class ConnectionEditDialog extends Component {
     //region STATIC
