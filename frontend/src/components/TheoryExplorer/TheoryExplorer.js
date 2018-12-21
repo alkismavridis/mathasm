@@ -8,6 +8,7 @@ import SymbolCreator from "../SymbolCreator/SymbolCreator";
 import ModalService from "../../services/ModalService";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import AxiomCreator from "../AxiomCreator/AxiomCreator";
+import Dropdown from "../ReusableComponents/Inputs/Dropdown/Dropdown";
 
 
 //region QUERIES
@@ -50,9 +51,9 @@ const CREATE_DIR = `mutation($parentId:Long!, $name:String!) {
 
 
 const Mode = {
-    VIEW:1,
-    CREATE_SYMBOL:2,
-    CREATE_AXIOM:3,
+    VIEW: 1,
+    CREATE_SYMBOL: 2,
+    CREATE_AXIOM: 3,
     //etc
 };
 
@@ -78,11 +79,11 @@ export default class TheoryExplorer extends Component {
     _axiomCreator = null;
 
     state = {
-        mode:Mode.VIEW,
-        currentDir:null,
+        mode: Mode.VIEW,
+        currentDir: null,
 
         //axiom creator
-        axiomDir:null,
+        axiomDir: null,
 
         goToField: "",
     };
@@ -90,8 +91,9 @@ export default class TheoryExplorer extends Component {
 
 
     //region LIFE CYCLE
-    componentDidMount() { this.navigateToRoot(); }
-
+    componentDidMount() {
+        this.navigateToRoot();
+    }
 
 
     // constructor(props) { super(props); }
@@ -153,15 +155,15 @@ export default class TheoryExplorer extends Component {
 
     /** Enters or leaves the given mode. Leaving is always performed towards Mode.VIEW. */
     toggleMode(mode) {
-        const newMode = this.state.mode===mode? Mode.VIEW : mode;
+        const newMode = this.state.mode === mode ? Mode.VIEW : mode;
         this.setState({mode: newMode});
     }
 
     /** Enters or leaves axiom creation mode. Leaving is always performed towards Mode.VIEW. */
     toggleAxiomCreationMode() {
-        const newState = this.state.mode === Mode.CREATE_AXIOM?
-            {mode:Mode.VIEW} :
-            {mode:Mode.CREATE_AXIOM, axiomDir:this.state.currentDir};
+        const newState = this.state.mode === Mode.CREATE_AXIOM ?
+            {mode: Mode.VIEW} :
+            {mode: Mode.CREATE_AXIOM, axiomDir: this.state.currentDir};
 
         this.setState(newState);
     }
@@ -190,7 +192,7 @@ export default class TheoryExplorer extends Component {
 
     /** callback on symbol click*/
     handleSymbolClick(sym) {
-        switch(this.state.mode) {
+        switch (this.state.mode) {
             case Mode.CREATE_AXIOM:
                 if (this._axiomCreator) this._axiomCreator.addSymbol(sym);
                 break;
@@ -210,6 +212,7 @@ export default class TheoryExplorer extends Component {
     createDir() {
         ModalService.showTextGetter("New Directory", "Directory name...", this.handleDirCreationTextSubmit.bind(this));
     }
+
     //endregion
 
 
@@ -264,7 +267,7 @@ export default class TheoryExplorer extends Component {
             onSymbolCreated={s => {
                 const newDir = Object.assign({}, this.state.currentDir);
                 newDir.symbols.push(s);
-                this.setState({currentDir:newDir});
+                this.setState({currentDir: newDir});
                 this.props.onChangeDir(newDir);
             }}/>;
     }
@@ -333,6 +336,22 @@ export default class TheoryExplorer extends Component {
         );
     }
 
+    renderDropdown() {
+
+        const options = [
+            {value: 1, label: "Opt1"},
+            {value: 2, label: "Opt2"},
+            {value: 3, label: "Opt3"}
+        ];
+        
+        return (
+            <Dropdown options={options}
+                      toLabelFunc={o => { return o.label} }
+                      toValueFunc={o => { return o.value}}
+                      onChange={c => console.log(c)}/>
+        )
+    }
+
     renderSymbol(sym) {
         return (
             <div
@@ -348,21 +367,22 @@ export default class TheoryExplorer extends Component {
     render() {
         if (!this.state.currentDir) return null;
 
-        return (
-            <div className={`TheoryExplorer_root ${this.props.className || ""}`} style={this.props.style}>
-                {this.state.mode === Mode.CREATE_SYMBOL && this.renderSymbolCreator()}
-                {this.state.mode === Mode.CREATE_AXIOM && this.renderAxiomCreator()}
+    return (
+        <div className={`TheoryExplorer_root ${this.props.className || ""}`} style={this.props.style}>
+            {this.state.mode === Mode.CREATE_SYMBOL && this.renderSymbolCreator()}
+            {this.state.mode === Mode.CREATE_AXIOM && this.renderAxiomCreator()}
 
 
-                {this.renderToolbar()}
-                <div style={{marginTop: "16px"}}>Directories:</div>
-                {this.renderSubDirs()}
-                {this.renderStatements()}
-                <div>Symbols:</div>
-                {this.renderSymbols()}
-            </div>
-        );
-    }
+            {this.renderToolbar()}
+            <div style={{marginTop: "16px"}}>Directories:</div>
+            {this.renderSubDirs()}
+            {this.renderStatements()}
+            <div>Symbols:</div>
+            {this.renderSymbols()}
+            {this.renderDropdown()}
+        </div>
+    );
+}
 
-    //endregion
+//endregion
 }

@@ -11,8 +11,9 @@ export default class Dropdown extends Component {
         value: PropTypes.number,
 
         //actions
-        toLabelFunc: PropTypes.func.isRequired,
-        toValueFunc: PropTypes.func.isRequired,
+        toLabelFunc: PropTypes.func(PropTypes.any).isRequired,
+        toValueFunc: PropTypes.func(PropTypes.any).isRequired,
+        onChange:PropTypes.func.isRequired,
 
         disabled: PropTypes.bool,
 
@@ -32,7 +33,10 @@ export default class Dropdown extends Component {
 
 
     //region LIFE CYCLE
-    // constructor(props) { super(props); }
+    constructor(props) {
+        super(props);
+    }
+
     // componentDidMount() {}
     // static getDerivedStateFromProps(nextProps, prevState) {}
     // shouldComponentUpdate(nextProps, nextState) { return true; }
@@ -56,10 +60,10 @@ export default class Dropdown extends Component {
                 this.props.options.forEach(function (option) {
 
                         options.push(
-                            <option value={option.value}>{option.label}</option>
+                            <option value={this.props.toValueFunc(option)}>{this.props.toLabelFunc(option)}</option>
                         );
                     }
-                )
+                );
 
                 return options;
             });
@@ -69,7 +73,7 @@ export default class Dropdown extends Component {
     render() {
         return (
             <div className={cx("Dropdown_root", this.props.className)} style={this.props.style}>
-                <select value={this.props.value}>
+                <select value={this.props.value} onChange={this.props.onChange} disabled={this.props.disabled}>
                     {this.renderOptions()}
                 </select>
             </div>
