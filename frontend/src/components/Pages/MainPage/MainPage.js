@@ -57,11 +57,11 @@ class MainPage extends Component {
     //region RENDERING
     render() {
         return (
-            <div className="MainPage_root">
+            <div className="Globals_page MainPage_root">
                 <GlobalHeader user={this.props.user}/>
                 <TheoryExplorer
                     onChangeDir={this.handleCurrentDirChange.bind(this)}
-                    style={{marginTop: "10px"}}/>
+                    style={{marginTop: "10px", flex:1}}/>
             </div>
         );
     }

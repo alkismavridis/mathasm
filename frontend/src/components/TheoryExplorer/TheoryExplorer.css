@@ -1,3 +1,8 @@
+.TheoryExplorer_root {
+    display: flex;
+    flex-direction: column;
+}
+
 
 .TheoryExplorer_subDirsDiv {
     display: flex;

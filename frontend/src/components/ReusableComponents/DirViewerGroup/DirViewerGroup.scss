@@ -1,3 +1,13 @@
 .DirViewerGroup_root {
+  display: flex;
+  flex-direction: column;
+}
 
+.DirViewerGroup_tabDiv {
+  background-color: #8B2BB9;
+}
+
+.DirViewerGroup_main {
+  flex:1;
+  overflow: auto;
 }

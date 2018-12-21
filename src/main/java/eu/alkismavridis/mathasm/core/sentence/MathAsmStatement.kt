@@ -11,10 +11,20 @@ const val MathAsmStatement_RIGHT_SIDE:Byte = 2
 const val MathAsmStatement_BOTH_SIDES:Byte = 3
 
 //Sentence Types
+/**
+ * CONVENTIONS:
+ * 1. Statement types that are allowed to be used as bases are ODD.
+ *    Even ones shall not be used as bases
+ *
+ * 2. Proven statements have values over 64
+ *    Freely created statements have values under 64
+ * */
 const val MathAsmStatement_AXIOM:Byte = 1
-const val MathAsmStatement_THEOREM:Byte = 2
-const val MathAsmStatement_AXIOM_TEMPLATE:Byte = 3
-const val MathAsmStatement_THEOREM_TEMPLATE:Byte = 4
+const val MathAsmStatement_AXIOM_TEMPLATE:Byte = 2
+const val MathAsmStatement_HYPOTHESIS:Byte = 4
+
+const val MathAsmStatement_THEOREM:Byte = 65
+const val MathAsmStatement_THEOREM_TEMPLATE:Byte = 67
 
 open class MathAsmStatement {
     //region FIELDS
@@ -74,6 +84,7 @@ open class MathAsmStatement {
 
     //region LEGALITY RULES
     fun assertReplaceAllLegality(move:ReplaceAllMove, base: MathAsmStatement) {
+        if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
         if (move.dir == LogicMove_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
 
         if (!this.bidirectionalFlag && base.grade <= this.grade) {
@@ -82,6 +93,7 @@ open class MathAsmStatement {
     }
 
     fun assertReplaceSentenceLegality(move:ReplaceSentenceMove, base: MathAsmStatement) {
+        if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
         if (move.dir == LogicMove_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
 
         if (move.side== MathAsmStatement_LEFT_SIDE) {
@@ -94,6 +106,7 @@ open class MathAsmStatement {
     }
 
     fun assertReplaceOneLegality(move:ReplaceOneMove, base: MathAsmStatement) {
+        if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
         if (move.dir == LogicMove_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
 
         if (move.side== MathAsmStatement_LEFT_SIDE) {
@@ -306,6 +319,7 @@ open class MathAsmStatement {
 
     companion object {
         fun assertStartLegality(base: MathAsmStatement, side:Byte) {
+            if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
             if (side == MathAsmStatement_RIGHT_SIDE && !base.bidirectionalFlag) {
                 throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
             }

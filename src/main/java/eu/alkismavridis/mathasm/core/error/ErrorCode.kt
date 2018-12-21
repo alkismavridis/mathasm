@@ -20,6 +20,7 @@ enum class ErrorCode {
     UNKNOWN_ERROR(14),
     CONNECTION_ERROR(15),
     ILLEGAL_AXIOM(16),
+    ILLEGAL_BASE(17),
     //endregion
 
 

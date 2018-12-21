@@ -80,6 +80,13 @@ class MathAsmStatementTest {
         //two way plasi (base grade greater)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 6)
         plasi.assertReplaceAllLegality(move, base)
+
+
+        //illegal base type
+        base.type = MathAsmStatement_HYPOTHESIS
+        try { plasi.assertReplaceAllLegality(move, base) }
+        catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_BASE, e.code) }
+        base.type = MathAsmStatement_AXIOM
     }
 
 
@@ -173,6 +180,13 @@ class MathAsmStatementTest {
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 6)
         try { plasi.assertReplaceSentenceLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.BASE_GRADE_TO_BIG, e.code) }
+
+
+        //illegal base type
+        base.type = MathAsmStatement_HYPOTHESIS
+        try { plasi.assertReplaceSentenceLegality(move, base) }
+        catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_BASE, e.code) }
+        base.type = MathAsmStatement_AXIOM
     }
 
 
@@ -251,6 +265,13 @@ class MathAsmStatementTest {
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 2)
         try { plasi.assertReplaceOneLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.BASE_GRADE_NOT_ZERO, e.code) }
+
+
+        //illegal base type
+        base.type = MathAsmStatement_HYPOTHESIS
+        try { plasi.assertReplaceOneLegality(move, base) }
+        catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_BASE, e.code) }
+        base.type = MathAsmStatement_AXIOM
     }
 
     @Test
@@ -264,9 +285,14 @@ class MathAsmStatementTest {
 
         try { MathAsmStatement.assertStartLegality(base, MathAsmStatement_RIGHT_SIDE) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_DIRECTION, e.code) }
-
         MathAsmStatement.assertStartLegality(base, MathAsmStatement_BOTH_SIDES)
 
+
+        //test illegal base type
+        base.type = MathAsmStatement_HYPOTHESIS
+        try { MathAsmStatement.assertStartLegality(base, MathAsmStatement_RIGHT_SIDE) }
+        catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_BASE, e.code) }
+        base.type = MathAsmStatement_AXIOM
 
         //2. Test bidirectional base
         base.setBridge(true, 1, false)
