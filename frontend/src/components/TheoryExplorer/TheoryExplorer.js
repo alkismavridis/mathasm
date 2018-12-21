@@ -85,13 +85,10 @@ export default class TheoryExplorer extends Component {
 
     /** Enters or leaves axiom creation mode. Leaving is always performed towards Mode.VIEW. */
     toggleAxiomCreationMode(parentDirId) {
-        console.log(parentDirId);
-
         const newState = this.state.mode === Mode.CREATE_AXIOM?
             {mode:Mode.VIEW} :
             {mode:Mode.CREATE_AXIOM, axiomDir:parentDirId};
 
-        console.log(newState);
         this.setState(newState);
     }
 

@@ -52,12 +52,8 @@ export default class DirViewerGroup extends Component {
     //region API
     /** Integrates a new statement into the group. */
     addStatement(stmt, directory) {
-        console.log(stmt);
-        console.log(this._tabRefs);
         this._tabRefs.forEach(tabRef => {
             //TODO if directory matches
-            console.log(tabRef);
-
             tabRef.addStatement(stmt);
         });
     }
