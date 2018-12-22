@@ -8,13 +8,54 @@ import SymbolCreator from "../SymbolCreator/SymbolCreator";
 import ModalService from "../../services/ModalService";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import AxiomCreator from "../AxiomCreator/AxiomCreator";
+import Dropdown from "../ReusableComponents/Inputs/Dropdown/Dropdown";
+import DirViewerGroup from "../ReusableComponents/DirViewerGroup/DirViewerGroup";
+
+
+//region QUERIES
+const FETCH_DIR = `query($id:Long!){
+    logicDir(id:$id) {
+        id,name
+        statements {id,name,type}
+        subDirs {id,name}
+        symbols {uid, text}
+    }
+}`;
+
+const FETCH_PARENT = `query($id:Long!){
+    dirParent(id:$id) {
+        id,name
+        statements {id,name,type}
+        subDirs {id,name}
+        symbols {uid, text}
+    }
+}`;
+
+const FETCH_ROOT = `{
+    rootDir(depth:1) {
+        id,name
+        statements {id,name,type}
+        subDirs {id,name}
+        symbols {uid, text}
+    }
+}`;
+
+const CREATE_DIR = `mutation($parentId:Long!, $name:String!) {
+    createDir(parentId:$parentId, name:$name) {
+        id,name
+        statements {id,name,type}
+        subDirs {id,name}
+        symbols {uid, text}
+    }
+}`;
+//endregion
 import DirViewerGroup from "../ReusableComponents/DirViewerGroup/DirViewerGroup";
 
 
 const Mode = {
-    VIEW:1,
-    CREATE_SYMBOL:2,
-    CREATE_AXIOM:3,
+    VIEW: 1,
+    CREATE_SYMBOL: 2,
+    CREATE_AXIOM: 3,
     //etc
 };
 
@@ -52,6 +93,7 @@ export default class TheoryExplorer extends Component {
 
 
     //region LIFE CYCLE
+    componentDidMount() { this.navigateToRoot(); }
 
 
 
@@ -96,7 +138,7 @@ export default class TheoryExplorer extends Component {
 
     /** callback on symbol click*/
     handleSymbolClick(sym) {
-        switch(this.state.mode) {
+        switch (this.state.mode) {
             case Mode.CREATE_AXIOM:
                 if (this._axiomCreator) this._axiomCreator.addSymbol(sym);
                 break;
@@ -107,6 +149,7 @@ export default class TheoryExplorer extends Component {
     handleAxiomSaved(axiom) {
         if (this._dirViewerGroup) this._dirViewerGroup.addStatement(axiom, this.state.axiomDir);
     }
+
     //endregion
 
 
