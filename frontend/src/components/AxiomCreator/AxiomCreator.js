@@ -14,7 +14,7 @@ import QuickInfoService from "../../services/QuickInfoService";
 const q = {
     MAKE_AXIOM : `mutation($parentId:Long!, $name:String!, $left:[Long!]!, $grade:Int, $isBidirectional: Boolean, $right:[Long!]!){
         createAxiom(parentId:$parentId, name:$name, left:$left, grade:$grade, isBidirectional:$isBidirectional, right:$right) {
-	        id,name,type
+	        id,name,type,left,right,grade,isBidirectional
         }
     }`
 };
@@ -150,7 +150,9 @@ export default class AxiomCreator extends Component {
             this.props.onSave(resp.createAxiom);
             ModalService.removeModal(modalId);
         })
-        .catch(err => QuickInfoService.makeError("Error while creating axiom..."));
+        .catch(err => {
+            QuickInfoService.makeError("Error while creating axiom...")
+        });
     }
 
     /** Fired when the save button is clicked. Will open a dialog to get the new axiom's name. */
@@ -188,29 +190,55 @@ export default class AxiomCreator extends Component {
 
 
     //region RENDERING
-    renderCursor() {
-        return <div key="c" className="AxiomCreator_cursor"/>;
+    /**
+     * Renders the div between symbols.
+     * The isLeft parameter refers to the sentence to be rendered, NOT to the currently selected one.
+     * */
+    renderMidSymbolDiv(cursorPos, currentIndex, isLeft) {
+        return <div
+            key={"c"+currentIndex}
+            className="AxiomCreator_midDiv"
+            onClick={e => {
+                e.stopPropagation();
+                this.setState({cursor:currentIndex, isCursorLeft:isLeft});
+            }}>
+            {cursorPos===currentIndex && <div className="AxiomCreator_cursor"/>}
+        </div>;
     }
 
-    renderSentence(sentence, cursor) {
+    /**
+     * Renders a sentence.
+     * The isLeft parameter refers to the sentence to be rendered, NOT to the currently selected one.
+     * */
+    renderSentence(sentence, cursorPos, isLeft) {
         const symbolDivs = [];
         sentence.forEach((s,index) => {
-            if (cursor===index) symbolDivs.push(this.renderCursor());
-            symbolDivs.push(<div key={index} className="AxiomCreator_sym">{s.text}</div>);
+            symbolDivs.push(this.renderMidSymbolDiv(cursorPos, index, isLeft));
+            symbolDivs.push(
+                <div
+                    key={index}
+                    className="AxiomCreator_sym"
+                    onClick={e => {
+                        e.stopPropagation();
+                        this.addSymbol(s);
+                    }}>
+                    {s.text}
+                </div>
+            );
         });
-        if(cursor===symbolDivs.length) symbolDivs.push(this.renderCursor());
+        symbolDivs.push(this.renderMidSymbolDiv(cursorPos, sentence.length, isLeft));
 
 
-        return <div className="Globals_flexStart">
+        return <div
+            onClick={e => this.setState({cursor:sentence.length, isCursorLeft:isLeft})}
+            className="Globals_flexStart AxiomCreator_sen">
             {symbolDivs}
-            <button className="Globals_roundBut" style={{backgroundColor:"#d37833", width:"32px", height:"32px"}}>
-                <FontAwesomeIcon icon="times"/>
-            </button>
         </div>;
     }
 
     renderConnection() {
         return <Connection
+            style={{margin:"8px"}}
             grade={this.state.grade}
             isBidirectional={this.state.isBidirectional}
             onClick={this.handleConnectionClick.bind(this)}/>
@@ -219,18 +247,18 @@ export default class AxiomCreator extends Component {
     render() {
         return (
             <div className="AxiomCreator_root" onKeyDown={this.handleKeyPress.bind(this)} tabIndex="0">
+                {this.renderSentence(this.state.left, this.state.isCursorLeft? this.state.cursor : null, true)}
+                {this.renderConnection()}
+                {this.renderSentence(this.state.right, this.state.isCursorLeft? null : this.state.cursor, false)}
                 <div>
-                    Axiom for {this.props.parentDir.name}
                     <button
                         className="Globals_roundBut"
-                        style={{width:"32px", height:"32px"}}
+                        style={{width:"32px", height:"32px", marginLeft:"16px"}}
                         onClick={this.handleSaveClicked.bind(this)}>
                         <FontAwesomeIcon icon="save"/>
                     </button>
+                    Axiom will be saved under {this.props.parentDir.name}
                 </div>
-                {this.renderSentence(this.state.left, this.state.isCursorLeft? this.state.cursor : null)}
-                {this.renderConnection()}
-                {this.renderSentence(this.state.right, this.state.isCursorLeft? null : this.state.cursor)}
             </div>
         );
     }

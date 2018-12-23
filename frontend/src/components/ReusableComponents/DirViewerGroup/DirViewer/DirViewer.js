@@ -7,12 +7,15 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import GraphQL from "../../../../services/GraphQL";
 import QuickInfoService from "../../../../services/QuickInfoService";
 import ModalService from "../../../../services/ModalService";
+import {SymbolRangeUtils} from "../../../../services/symbol/SymbolRangeUtils";
+import Connection from "../../Connection/Connection";
+import Statement from "../../Statement/Statement";
 
 const q = {
     FETCH_PARENT: `query($id:Long!){
         dirParent(id:$id) {
             id,name
-            statements {id,name,type}
+            statements {id,name,type, left, right, isBidirectional, grade}
             subDirs {id,name}
             symbols {uid, text}
         }
@@ -21,7 +24,7 @@ const q = {
     FETCH_DIR: `query($id:Long!){
         logicDir(id:$id) {
             id,name
-            statements {id,name,type}
+            statements {id,name,type, left, right, isBidirectional, grade}
             subDirs {id,name}
             symbols {uid, text}
         }
@@ -30,7 +33,7 @@ const q = {
     FETCH_ROOT: `{
         rootDir(depth:1) {
             id,name
-            statements {id,name,type}
+            statements {id,name,type, left, right, isBidirectional, grade}
             subDirs {id,name}
             symbols {uid, text}
         }
@@ -39,11 +42,15 @@ const q = {
     CREATE_DIR: `mutation($parentId:Long!, $name:String!) {
         createDir(parentId:$parentId, name:$name) {
             id,name
-            statements {id,name,type}
+            statements {id,name,type, left, right, isBidirectional, grade}
             subDirs {id,name}
             symbols {uid, text}
         }
-    }`
+    }`,
+
+    FETCH_SYMBOLS: `query($ids:[Long!]!) {
+        symbols(ids:$ids) { uid, text }
+    }`,
 };
 
 export default class DirViewer extends Component {
@@ -52,12 +59,18 @@ export default class DirViewer extends Component {
         //data
         /** The initial directory to load. If null, the root directory will be loaded. */
         initDirId:PropTypes.number,
+        /** Determines whether the component should render anything or not. If null, render will return null. Useful for using in groups with tabs */
+        isOpen:PropTypes.bool,
+        /** A cache of all loaded symbols. Used to display statements. */
+        symbolMap:PropTypes.object.isRequired,
 
         //actions
+        onUpdateSymbolMap: PropTypes.func.isRequired, //accepts a map of symbols. This must be called every time new, unknown symbols have been loaded from the server.
         onCreateAxiomStart: PropTypes.func, //accepts the parent dir of the new axiom. This will popup the axiom creator.
         onCreateSymbolStart: PropTypes.func, //accepts the parent dir of the new symbol. This will popup the symbol creator.
         onDirChanged: PropTypes.func.isRequired, //accepts the new directory.
         onSymbolClicked: PropTypes.func, //accepts the clicked symbol.
+        onStatementClicked: PropTypes.func, //accepts the clicked statement.
 
 
         //styling
@@ -71,8 +84,7 @@ export default class DirViewer extends Component {
 
     //region FIELDS
     state = {
-        currentDir:null,
-        goToField: "",
+        currentDir:null
     };
     //endregion
 
@@ -93,14 +105,41 @@ export default class DirViewer extends Component {
 
 
 
+    //region UTILS
+    /**
+     * Scans the given directory for unknown symbols. I any are found, they will be added to this.props.symbolMap,
+     * and the parent component will be notified for the change.
+     * */
+    checkForNewSymbols(dir) {
+        //1. Detect new symbols
+        const newIds = SymbolRangeUtils.getMissingIdsFromDirectory(dir, this.props.symbolMap);
+        if (newIds.size === 0) return;
+
+        //2. If unknown symbols exist, get them from the server.
+        GraphQL.run(q.FETCH_SYMBOLS, {ids:Array.from(newIds)}).then(resp => {
+            SymbolRangeUtils.addSymbolsToMap(this.props.symbolMap, resp.symbols);
+            this.props.onUpdateSymbolMap(this.props.symbolMap);
+        });
+    }
+    //endregion
+
+
+
     //region API
-    addStatement(stmt) {
-        //update the dir object.
+    statementCreated(stmt, directory) {
+        //1. Check if the new statement affect us in any way...
+        if (this.state.currentDir==null || directory==null || (directory.id !== this.state.currentDir.id)) return;
+
+        //2. update the dir object.
         const updatedCurrentDir = Object.assign({}, this.state.currentDir);
         updatedCurrentDir.statements.push(stmt);
-        //update the components
+
+        //3. update the components
         this.setState({currentDir: updatedCurrentDir});
         this.props.onDirChanged(updatedCurrentDir);
+
+        //4. Fetch new symbols, if needed
+        this.checkForNewSymbols(updatedCurrentDir);
     }
     //endregion
 
@@ -111,7 +150,11 @@ export default class DirViewer extends Component {
     /** Navigates to the root directory. Data will be fetched from the server. */
     navigateToRoot() {
         GraphQL.run(q.FETCH_ROOT)
-            .then(resp => this.setState({currentDir: resp.rootDir}))
+            .then(resp => {
+                this.setState({currentDir: resp.rootDir});
+                this.props.onDirChanged(resp.rootDir);
+                this.checkForNewSymbols(resp.rootDir);
+            })
             .catch(err => QuickInfoService.makeError("Could not fetch init data!"));
 
     }
@@ -124,6 +167,7 @@ export default class DirViewer extends Component {
                 if (resp.dirParent) {
                     this.setState({currentDir: resp.dirParent});
                     this.props.onDirChanged(resp.dirParent);
+                    this.checkForNewSymbols(resp.dirParent);
                 }
                 else QuickInfoService.makeInfo("This is the root directory.");
             })
@@ -137,6 +181,7 @@ export default class DirViewer extends Component {
                 if (resp.logicDir) {
                     this.setState({currentDir: resp.logicDir});
                     this.props.onDirChanged(resp.logicDir);
+                    this.checkForNewSymbols(resp.logicDir);
                 }
                 else QuickInfoService.makeError("Could not navigate to directory with id: " + id);
             })
@@ -144,16 +189,22 @@ export default class DirViewer extends Component {
     }
 
     /** Is triggered when the go To action is being hit.. */
-    handleGoToAction() {
-        if (!DomUtils.isInt(this.state.goToField)) {
+    handleGoToAction(modalId, idToGo) {
+        if (!DomUtils.isInt(idToGo)) {
             QuickInfoService.makeError("Please provide an integer as id to navigate to.");
             return;
         }
-        this.navigateTo(parseInt(this.state.goToField));
+
+        ModalService.removeModal(modalId);
+        this.navigateTo(parseInt(idToGo));
     }
 
     handleCreateDirClick() {
         ModalService.showTextGetter("New Directory", "Directory name...", this.handleDirCreationTextSubmit.bind(this));
+    }
+
+    handleGoToDirClick() {
+        ModalService.showTextGetter("Go to...", "Directory id", this.handleGoToAction.bind(this));
     }
 
     handleCreateSymbolClick() {
@@ -166,6 +217,10 @@ export default class DirViewer extends Component {
 
     handleSymbolClick(sym) {
         if (this.props.onSymbolClicked) this.props.onSymbolClicked(sym);
+    }
+
+    handleStatementClick(stmt) {
+        if (this.props.onStatementClicked) this.props.onStatementClicked(stmt);
     }
 
     handleDirCreationTextSubmit(modalId, text) {
@@ -182,6 +237,7 @@ export default class DirViewer extends Component {
                 //update components
                 this.setState({currentDir: updatedCurrentDir});
                 this.props.onDirChanged(updatedCurrentDir);
+                this.checkForNewSymbols(updatedCurrentDir);
                 //remove the modal
                 ModalService.removeModal(modalId);
             })
@@ -200,7 +256,7 @@ export default class DirViewer extends Component {
         return (
             <div
                 key={subDir.id}
-                className="TheoryExplorer_subDir"
+                className="DirViewer_subDir"
                 title={"Id: " + subDir.id}
                 onClick={this.navigateTo.bind(this, subDir.id)}>
                 {subDir.name}
@@ -210,8 +266,9 @@ export default class DirViewer extends Component {
 
     renderStatement(stmt) {
         return (
-            <div key={stmt.id}>
-                {stmt.name}
+            <div key={stmt.id} className="DirViewer_stmtDiv" onClick={this.handleStatementClick.bind(this, stmt)}>
+                <div className="DirViewer_stmtName">{stmt.name}</div>
+                <Statement statement={stmt} symbolMap={this.props.symbolMap}/>
             </div>
         );
     }
@@ -221,7 +278,7 @@ export default class DirViewer extends Component {
             <div
                 key={sym.uid}
                 title={"Id: " + sym.uid}
-                className="TheoryExplorer_sym"
+                className="DirViewer_sym"
                 onClick={this.handleSymbolClick.bind(this, sym)}>
                 {sym.text}
             </div>
@@ -231,43 +288,45 @@ export default class DirViewer extends Component {
     //SECTIONS RENDERING
     renderToolbar() {
         return (
-            <div className="Globals_flexStart">
+            <div className="Globals_flexStart" style={{marginTop:"16px"}}>
                 <button
                     className="Globals_roundBut"
-                    title="Parent dir"
-                    style={{backgroundColor: "#62676d", width: "32px", height: "32px", fontSize: "16px"}}
+                    title="Go to parent dir"
+                    style={{backgroundColor: "#62676d", width: "32px", height: "32px", fontSize: "16px", margin:"0 4px"}}
                     onClick={this.goToParentDir.bind(this)}>
                     <FontAwesomeIcon icon="arrow-up"/>
                 </button>
-                <div style={{margin: "0 16px"}}>{this.state.currentDir.name}</div>
-                <div style={{margin: "0 8px"}}>Id: {this.state.currentDir.id}</div>
-                <input
-                    value={this.state.goToField}
-                    onChange={e => this.setState({goToField: e.target.value})}
-                    className="Globals_inp"
-                    placeholder="Navigate to id..."
-                    onKeyDown={DomUtils.handleEnter(this.handleGoToAction.bind(this))}/>
                 <button
                     className="Globals_roundBut"
-                    title="New symbol"
-                    style={{backgroundColor: "#e61919", width: "32px", height: "32px", fontSize: "16px"}}
-                    onClick={this.handleCreateSymbolClick.bind(this)}>
-                    <FontAwesomeIcon icon="hashtag"/>
-                </button>
-                <button
-                    className="Globals_roundBut"
-                    title="New axiom"
-                    style={{backgroundColor: "#76b7e6", width: "32px", height: "32px", fontSize: "16px"}}
-                    onClick={this.handleCreateAxiomClick.bind(this)}>
-                    <FontAwesomeIcon icon="hashtag"/>
+                    title="Go to..."
+                    style={{backgroundColor: "#3e49d1", width: "32px", height: "32px", margin:"0 4px"}}
+                    onClick={this.handleGoToDirClick.bind(this)}>
+                    <FontAwesomeIcon icon="plane"/>
                 </button>
                 <button
                     className="Globals_roundBut"
                     title="New directory"
-                    style={{backgroundColor: "#00ced1", width: "32px", height: "32px"}}
+                    style={{backgroundColor: "orange", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
                     onClick={this.handleCreateDirClick.bind(this)}>
-                    <FontAwesomeIcon icon="plus"/>
+                    <FontAwesomeIcon icon="folder-plus"/>
                 </button>
+                <button
+                    className="Globals_roundBut"
+                    title="New symbol"
+                    style={{backgroundColor: "cornflowerblue", width: "32px", height: "32px", fontSize: "16px", fontWeight:"bold", margin:"0 4px"}}
+                    onClick={this.handleCreateSymbolClick.bind(this)}>
+                    Ω
+                </button>
+                <button
+                    className="Globals_roundBut"
+                    title="New axiom"
+                    style={{backgroundColor: "red", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                    onClick={this.handleCreateAxiomClick.bind(this)}>
+                    <FontAwesomeIcon icon="atom"/>
+                </button>
+                <div className="DirViewer_dirTitle" title={"Id: "+this.state.currentDir.id}>
+                    {this.state.currentDir.name}
+                </div>
             </div>
         );
     }
@@ -277,7 +336,7 @@ export default class DirViewer extends Component {
         if (!statements || statements.length === 0) return null;
 
         return (
-            <div className="TheoryExplorer_stmtDiv">
+            <div className="Globals_flexWrapDown" style={{marginTop:"8px"}}>
                 {statements.map(this.renderStatement.bind(this))}
             </div>
         );
@@ -287,7 +346,7 @@ export default class DirViewer extends Component {
         const dirs = this.state.currentDir.subDirs;
 
         return (
-            <div className="TheoryExplorer_subDirsDiv">
+            <div className="Globals_flexWrapDown" style={{marginTop:"24px"}}>
                 {dirs.map(this.renderSubDir.bind(this))}
             </div>
         );
@@ -298,7 +357,7 @@ export default class DirViewer extends Component {
         if (!symbols || symbols.length === 0) return null;
 
         return (
-            <div className="TheoryExplorer_symbolsDiv">
+            <div className="DirViewer_symbolsDiv">
                 {symbols.map(this.renderSymbol.bind(this))}
             </div>
         );
@@ -306,15 +365,13 @@ export default class DirViewer extends Component {
 
 
     render() {
-        if (!this.state.currentDir) return null;
+        if (!this.props.isOpen || !this.state.currentDir) return null;
 
         return (
             <div className={cx("DirViewer_root", this.props.className)} style={this.props.style}>
                 {this.renderToolbar()}
-                <div style={{marginTop: "16px"}}>Directories:</div>
                 {this.renderSubDirs()}
                 {this.renderStatements()}
-                <div>Symbols:</div>
                 {this.renderSymbols()}
             </div>
         );

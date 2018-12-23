@@ -53,27 +53,27 @@ export class SymbolRangeUtils {
 
     //region RANGES CREATION
     /** Creates an empty range. */
-    static makeEmptyRange() {
-        return {
-            min:null,
-            max:null,
-            symbols:[]
-        };
-    }
+    // static makeEmptyRange() {
+    //     return {
+    //         min:null,
+    //         max:null,
+    //         symbols:[]
+    //     };
+    // }
 
     /**
      * Creates a range from the given symbol array.
      * if needSorting is set, the symbols array will be sorted!
      * */
-    static makeRangeFrom(symbols, needSorting) {
-        if (needSorting) SymbolRangeUtils.sort(symbols);
-
-        return SymbolRangeUtils.fitRangeToContent({
-            min:null,
-            max:null,
-            symbols:symbols
-        });
-    }
+    // static makeRangeFrom(symbols, needSorting) {
+    //     if (needSorting) SymbolRangeUtils.sort(symbols);
+    //
+    //     return SymbolRangeUtils.fitRangeToContent({
+    //         min:null,
+    //         max:null,
+    //         symbols:symbols
+    //     });
+    // }
     //endregion
 
 
@@ -82,18 +82,81 @@ export class SymbolRangeUtils {
      * Sets up the min and max of the given range, based on its symbols.
      * NOTE: symbols must be sorted!
      * */
-    static fitRangeToContent(range) {
-        const len = range.symbols.length;
-        if (len===0) {
-            range.min = null;
-            range.max = null;
-        }
-        else {
-            range.min = range.symbols[0].uid;
-            range.max = range.symbols[len-1].uid;
-        }
+    // static fitRangeToContent(range) {
+    //     const len = range.symbols.length;
+    //     if (len===0) {
+    //         range.min = null;
+    //         range.max = null;
+    //     }
+    //     else {
+    //         range.min = range.symbols[0].uid;
+    //         range.max = range.symbols[len-1].uid;
+    //     }
+    //
+    //     return range;
+    // }
+    //endregion
 
-        return range;
+
+    //region MAP UTILS
+    /**
+     * Adds all symbols in the given symbol array to the given map.
+     * The key of the map is assumed to be the uid of the symbols
+     * */
+    static addSymbolsToMap(symbolMap, symbols) {
+        if (!symbols || !symbolMap) return;
+        symbols.forEach(s => {
+            symbolMap[s.uid] = s;
+        });
+    }
+
+    /**
+     * Adds into targetIdList all the symbol ids from symbolIds parameter,
+     * if those are that are missing from the symbolMap.
+     *
+     * The idea is to detect which symbol need to be fetched, and fetch them in one request to the server.
+     * */
+    static addMissingIdsToList(targetIdSet, symbolMap, symbolIds) {
+        symbolIds.forEach(id => {
+            if (!symbolMap.hasOwnProperty(id)) targetIdSet.add(id);
+        });
+    }
+
+    /**
+     * Adds into targetIdList all the uid from symbols parameter,
+     * if those are that are missing from the symbolMap.
+     *
+     * The idea is to detect which symbol need to be fetched, and fetch them in one request to the server.
+     * */
+    static addMissingIdsFromSymbolsToList(targetIdSet, symbolMap, symbols) {
+        symbols.forEach(sym => {
+            const id = sym.uid;
+            if (!symbolMap.hasOwnProperty(id)) targetIdSet.add(id);
+        });
+    }
+
+    /**
+     * return a Set of symbol ids from the given directory, that are not present in symbolMap.
+     * Both the statements and the symbols of the directory will be scanned.
+     * */
+    static getMissingIdsFromDirectory(directory, symbolMap) {
+        //1. Initialize a set.
+        const ret = new Set();
+
+        //2. Add all missing symbols from the left and right part of every statement
+        directory.statements.forEach(stmt => {
+           SymbolRangeUtils.addMissingIdsToList(ret, symbolMap, stmt.left);
+           SymbolRangeUtils.addMissingIdsToList(ret, symbolMap, stmt.right);
+        });
+
+        //3. Add the directory's symbols, too.
+        SymbolRangeUtils.addMissingIdsFromSymbolsToList(ret, symbolMap, directory.symbols);
+
+        //4. Done
+        return ret;
     }
     //endregion
+
+
+
 }

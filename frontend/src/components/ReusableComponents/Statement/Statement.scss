@@ -1,0 +1,24 @@
+.Statement_root {
+  display: flex;
+  align-items: flex-end;
+}
+
+.Statement_sym {
+  margin: 0 4px;
+  color:black;
+}
+
+.Statement_conn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  color:#cc4545;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.Statement_grade {
+  line-height: 0;
+  font-size: 14px;
+}

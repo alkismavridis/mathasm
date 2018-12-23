@@ -5,21 +5,38 @@
 
   border: solid 2px #39ad82;
   border-radius: 8px;
-  padding: 16px;
+  padding: 8px 16px;
   background-color: #2556c530;
 }
 
+.AxiomCreator_sen {
+  min-height: 32px;
+  background-color: white;
+  padding: 0 4px;
+  border-radius: 8px;
+  border: solid 1px gray;
+  min-width: 100px;
+  cursor: text;
+}
+
 .AxiomCreator_sym {
-  padding: 8px;
+  padding: 4px 8px;
   background-color: cornflowerblue;
   color: white;
   border-radius: 5px;
-  margin-right: 4px;
+  cursor: pointer;
 }
 
 .AxiomCreator_cursor {
   width:2px;
-  height:24px;
+  height:18px;
   background-color: #1c0e90;
-  margin: 0 5px 0 1px;
+}
+
+.AxiomCreator_midDiv {
+  width:10px;
+  height:24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

@@ -24,7 +24,7 @@ html, body {
 
 
 /*region LAYOUT*/
-.Globals_centerFlex {
+.Globals_flexCenter {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -47,6 +47,12 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.Globals_flexWrapDown {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
 }
 /*endregion*/
 
@@ -104,8 +110,10 @@ html, body {
 }
 
 .Globals_roundBut {
+    line-height: 1;
     border-radius: 50%;
     border:none;
+    padding:0;
 
     /* default values for some round button. use styles to override them with every usage of this class. */
     background-color: #00ced1;

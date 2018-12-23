@@ -12,7 +12,9 @@ export default class Connection extends Component {
 
         //actions
         onClick: PropTypes.func,
+
         //styling
+        style:PropTypes.object,
     };
 
     //static defaultProps = {};
@@ -43,7 +45,10 @@ export default class Connection extends Component {
     //region RENDERING
     render() {
         return (
-            <div className={cx("Connection_root", this.props.onClick? "Connection_clickable":null)} onClick={this.props.onClick}>
+            <div
+                className={cx("Connection_root", this.props.onClick? "Connection_clickable":null)}
+                style={this.props.style}
+                onClick={this.props.onClick}>
                 {this.props.grade>0 && <div className="Connection_grade">{this.props.grade}</div>}
                 <div className="Connection_arrow">
                     {this.props.isBidirectional? "<---->" : "---->"}

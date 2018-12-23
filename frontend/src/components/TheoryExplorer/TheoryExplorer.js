@@ -1,56 +1,9 @@
 import React, {Component} from 'react';
 import PropTypes from "prop-types";
 import "./TheoryExplorer.css";
-import QuickInfoService from "../../services/QuickInfoService";
-import GraphQL from "../../services/GraphQL";
-import DomUtils from "../../services/DomUtils";
 import SymbolCreator from "../SymbolCreator/SymbolCreator";
-import ModalService from "../../services/ModalService";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import AxiomCreator from "../AxiomCreator/AxiomCreator";
-import Dropdown from "../ReusableComponents/Inputs/Dropdown/Dropdown";
 import DirViewerGroup from "../ReusableComponents/DirViewerGroup/DirViewerGroup";
-
-
-//region QUERIES
-const FETCH_DIR = `query($id:Long!){
-    logicDir(id:$id) {
-        id,name
-        statements {id,name,type}
-        subDirs {id,name}
-        symbols {uid, text}
-    }
-}`;
-
-const FETCH_PARENT = `query($id:Long!){
-    dirParent(id:$id) {
-        id,name
-        statements {id,name,type}
-        subDirs {id,name}
-        symbols {uid, text}
-    }
-}`;
-
-const FETCH_ROOT = `{
-    rootDir(depth:1) {
-        id,name
-        statements {id,name,type}
-        subDirs {id,name}
-        symbols {uid, text}
-    }
-}`;
-
-const CREATE_DIR = `mutation($parentId:Long!, $name:String!) {
-    createDir(parentId:$parentId, name:$name) {
-        id,name
-        statements {id,name,type}
-        subDirs {id,name}
-        symbols {uid, text}
-    }
-}`;
-//endregion
-import DirViewerGroup from "../ReusableComponents/DirViewerGroup/DirViewerGroup";
-
 
 const Mode = {
     VIEW: 1,
@@ -82,6 +35,7 @@ export default class TheoryExplorer extends Component {
     _dirViewerGroup = null;
 
     state = {
+        symbolMap:{},
         mode:Mode.VIEW,
 
         //axiom creator
@@ -93,10 +47,6 @@ export default class TheoryExplorer extends Component {
 
 
     //region LIFE CYCLE
-    componentDidMount() { this.navigateToRoot(); }
-
-
-
     // constructor(props) { super(props); }
     // static getDerivedStateFromProps(nextProps, prevState) {}
     // shouldComponentUpdate(nextProps, nextState) { return true; }
@@ -110,12 +60,6 @@ export default class TheoryExplorer extends Component {
 
 
     //region EVENT HANDLERS
-
-
-    saveAxiom() {
-
-    }
-
     /** Enters or leaves the symbol creation mode. Leaving is always performed towards Mode.VIEW. */
     toggleSymbolCreationMode(parentDirId) {
         const newState = this.state.mode === Mode.CREATE_SYMBOL?
@@ -146,8 +90,16 @@ export default class TheoryExplorer extends Component {
         }
     }
 
+    handleStatementClick(stmt) {
+        console.log("Statement was clicked!", stmt);
+    }
+
     handleAxiomSaved(axiom) {
-        if (this._dirViewerGroup) this._dirViewerGroup.addStatement(axiom, this.state.axiomDir);
+        if (this._dirViewerGroup) this._dirViewerGroup.statementCreated(axiom, this.state.axiomDir);
+    }
+
+    handleSymbolMapUpdated(newMap) {
+        this.setState({symbolMap:newMap});
     }
 
     //endregion
@@ -182,9 +134,12 @@ export default class TheoryExplorer extends Component {
 
                 <DirViewerGroup
                     ref={el => this._dirViewerGroup = el}
+                    symbolMap={this.state.symbolMap}
+                    onUpdateSymbolMap={this.handleSymbolMapUpdated.bind(this)}
                     onCreateAxiomStart={this.toggleAxiomCreationMode.bind(this)}
                     onCreateSymbolStart={this.toggleSymbolCreationMode.bind(this)}
                     onSymbolClicked={this.handleSymbolClick.bind(this)}
+                    onStatementClicked={this.handleStatementClick.bind(this)}
                     style={{flex:1}}/>
             </div>
         );

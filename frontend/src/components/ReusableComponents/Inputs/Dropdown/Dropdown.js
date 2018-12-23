@@ -11,8 +11,8 @@ export default class Dropdown extends Component {
         value: PropTypes.number,
 
         //actions
-        toLabelFunc: PropTypes.func(PropTypes.any).isRequired,
-        toValueFunc: PropTypes.func(PropTypes.any).isRequired,
+        toLabelFunc: PropTypes.func.isRequired,
+        toValueFunc: PropTypes.func.isRequired,
         onChange:PropTypes.func.isRequired,
 
         disabled: PropTypes.bool,

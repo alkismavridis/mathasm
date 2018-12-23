@@ -1,0 +1,48 @@
+.DirViewer_subDir {
+  padding:8px;
+  background-color:orange;
+  color:white;
+  border-radius: 5px;
+  margin-right: 4px;
+  cursor: pointer;
+}
+
+.DirViewer_symbolsDiv {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+
+.DirViewer_sym {
+  padding:8px;
+  background-color:cornflowerblue;
+  color:white;
+  border-radius: 5px;
+  margin-right: 4px;
+}
+
+.DirViewer_dirTitle {
+  margin: 0 16px;
+  font-size: 22px;
+  background-color: #f33f3f;
+  color: white;
+  padding: 4px 16px;
+  border-radius: 8px;
+}
+
+
+/*region STATEMENT*/
+.DirViewer_stmtDiv {
+  padding:8px;
+  background-color: #2fbdc3;
+  color:gray;
+  border-radius: 5px;
+  margin: 8px 4px 0 0;
+}
+
+.DirViewer_stmtName {
+  font-size: 12px;
+  color:White;
+}
+/*endregion*/

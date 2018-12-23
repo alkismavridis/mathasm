@@ -2,33 +2,3 @@
     display: flex;
     flex-direction: column;
 }
-
-
-.TheoryExplorer_subDirsDiv {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.TheoryExplorer_subDir {
-    padding:8px;
-    background-color:orange;
-    color:white;
-    border-radius: 5px;
-    margin-right: 4px;
-    cursor: pointer;
-}
-
-.TheoryExplorer_symbolsDiv {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-
-.TheoryExplorer_sym {
-    padding:8px;
-    background-color:cornflowerblue;
-    color:white;
-    border-radius: 5px;
-    margin-right: 4px;
-}
