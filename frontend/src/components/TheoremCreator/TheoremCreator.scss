@@ -1,0 +1,19 @@
+.TheoremCreator_root {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  border: solid 2px #ad6c1b;
+  border-radius: 8px;
+  padding: 8px 16px;
+  background-color: #2556c530;
+  overflow: auto;
+
+  > * { flex-shrink: 0; }
+}
+
+.TheoremCreator_tempAsBase {
+  color:green;
+  cursor: pointer;
+  margin-right: 16px;
+}

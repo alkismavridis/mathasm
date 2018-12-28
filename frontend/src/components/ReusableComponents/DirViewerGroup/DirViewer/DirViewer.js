@@ -67,6 +67,7 @@ export default class DirViewer extends Component {
         //actions
         onUpdateSymbolMap: PropTypes.func.isRequired, //accepts a map of symbols. This must be called every time new, unknown symbols have been loaded from the server.
         onCreateAxiomStart: PropTypes.func, //accepts the parent dir of the new axiom. This will popup the axiom creator.
+        onCreateTheoremStart: PropTypes.func, //accepts the parent dir of the new theorem. This will popup the axiom creator.
         onCreateSymbolStart: PropTypes.func, //accepts the parent dir of the new symbol. This will popup the symbol creator.
         onDirChanged: PropTypes.func.isRequired, //accepts the new directory.
         onSymbolClicked: PropTypes.func, //accepts the clicked symbol.
@@ -215,6 +216,10 @@ export default class DirViewer extends Component {
         if (this.props.onCreateAxiomStart) this.props.onCreateAxiomStart(this.state.currentDir);
     }
 
+    handleCreateTheoremClick() {
+        if (this.props.onCreateTheoremStart) this.props.onCreateTheoremStart(this.state.currentDir);
+    }
+
     handleSymbolClick(sym) {
         if (this.props.onSymbolClicked) this.props.onSymbolClicked(sym);
     }
@@ -313,16 +318,23 @@ export default class DirViewer extends Component {
                 <button
                     className="Globals_roundBut"
                     title="New symbol"
-                    style={{backgroundColor: "cornflowerblue", width: "32px", height: "32px", fontSize: "16px", fontWeight:"bold", margin:"0 4px"}}
+                    style={{backgroundColor: "cornflowerblue", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
                     onClick={this.handleCreateSymbolClick.bind(this)}>
-                    Ω
+                    <FontAwesomeIcon icon="atom"/>
                 </button>
                 <button
                     className="Globals_roundBut"
                     title="New axiom"
                     style={{backgroundColor: "red", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
                     onClick={this.handleCreateAxiomClick.bind(this)}>
-                    <FontAwesomeIcon icon="atom"/>
+                    <FontAwesomeIcon icon="pencil-alt"/>
+                </button>
+                <button
+                    className="Globals_roundBut"
+                    title="New Theorem"
+                    style={{backgroundColor: "orange", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                    onClick={this.handleCreateTheoremClick.bind(this)}>
+                    <FontAwesomeIcon icon="cogs"/>
                 </button>
                 <div className="DirViewer_dirTitle" title={"Id: "+this.state.currentDir.id}>
                     {this.state.currentDir.name}

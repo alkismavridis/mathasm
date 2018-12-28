@@ -13,10 +13,12 @@ export default class DirViewerGroup extends Component {
 
         //actions
         onCreateAxiomStart: PropTypes.func, //accepts the parent dir of the new axiom. This will popup the axiom creator.
+        onCreateTheoremStart: PropTypes.func, //accepts the parent dir of the new theorem. This will popup the axiom creator.
         onCreateSymbolStart: PropTypes.func, //accepts the parent dir of the new symbol. This will popup the symbol creator.
         onUpdateSymbolMap: PropTypes.func.isRequired, //accepts a map of symbols. This must be called every time new, unknown symbols have been loaded from the server.
         onSymbolClicked: PropTypes.func, //accepts the clicked symbol.
         onStatementClicked: PropTypes.func, //accepts the clicked statement.
+        onShowDir: PropTypes.func, //accepts the directory. This function is called every time the displayed directory changes.
 
         //styling
         style: PropTypes.object,
@@ -85,6 +87,9 @@ export default class DirViewerGroup extends Component {
 
         //3. Update the state
         this.setState({tabs:newTabs});
+
+        //4. Notify the parent
+        if (this.props.onShowDir) this.props.onShowDir(newDirectory);
     }
 
     appendTab(initDirId) {
@@ -116,7 +121,10 @@ export default class DirViewerGroup extends Component {
     /** To be called when a tab is being clicked. If shift key was down, the tab will be deleted, otherwise selected*/
     handleTabClick(tabData, event) {
         if(event.shiftKey) this.removeTab(tabData.tabId);
-        else this.setState({selectedTabId:tabData.tabId})
+        else {
+            this.setState({selectedTabId:tabData.tabId});
+            if (this.props.onShowDir) this.props.onShowDir(tabData.currentDir);
+        }
     }
     //endregion
 
@@ -158,6 +166,7 @@ export default class DirViewerGroup extends Component {
                             onDirChanged={this.handleDirChange.bind(this, t.tabId)}
                             onSymbolClicked={this.props.onSymbolClicked}
                             onCreateAxiomStart={this.props.onCreateAxiomStart}
+                            onCreateTheoremStart={this.props.onCreateTheoremStart}
                             onCreateSymbolStart={this.props.onCreateSymbolStart}
                             onStatementClicked={this.props.onStatementClicked}/>
                     )}
@@ -165,6 +174,5 @@ export default class DirViewerGroup extends Component {
             </div>
         );
     }
-
     //endregion
 }

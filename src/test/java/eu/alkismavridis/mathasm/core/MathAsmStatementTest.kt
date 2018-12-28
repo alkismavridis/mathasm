@@ -52,7 +52,7 @@ class MathAsmStatementTest {
         val words4 = longArrayOf(1,2,7)
 
         //one way plasi (base grade smaller)
-        val move = ReplaceAllMove(0, 0, LogicMove_LTR)
+        val move = ReplaceAllMove(0, 0, BaseDirection_LTR)
         var plasi = MathAsmStatement.createAxiom("someName", words1, words2, false, 5)
         var base = MathAsmStatement.createAxiom("someName", words3, words4, true, 4)
 
@@ -101,7 +101,7 @@ class MathAsmStatementTest {
         //Start with an illegal direction
         var plasi = MathAsmStatement.createAxiom("someName", words1, words2, false, 0)
         var base = MathAsmStatement.createAxiom("someName", words3, words4, true, 0)
-        var move = ReplaceSentenceMove(0, 0, LogicMove_LTR, MathAsmStatement_LEFT_SIDE)
+        var move = ReplaceSentenceMove(0, 0, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE)
 
         try { plasi.assertReplaceSentenceLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT, e.code) }
@@ -146,7 +146,7 @@ class MathAsmStatementTest {
         //SECOND SIDE TESTS
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, false, 0)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 0)
-        move = ReplaceSentenceMove(0, 0, LogicMove_LTR, MathAsmStatement_RIGHT_SIDE)
+        move = ReplaceSentenceMove(0, 0, BaseDirection_LTR, MathAsmStatement_RIGHT_SIDE)
         plasi.assertReplaceSentenceLegality(move, base)
 
         //Make plasi two way. It should be allowed too
@@ -200,7 +200,7 @@ class MathAsmStatementTest {
 
         var plasi = MathAsmStatement.createAxiom("someName", words1, words2, true, 0)
         var base = MathAsmStatement.createAxiom("someName", words3, words4, false, 0)
-        var move = ReplaceOneMove(0, 0, LogicMove_LTR, MathAsmStatement_LEFT_SIDE, 1)
+        var move = ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 1)
         plasi.assertReplaceOneLegality(move, base)
 
         //grade not zero
@@ -210,20 +210,20 @@ class MathAsmStatementTest {
 
 
         //match failure
-        move = ReplaceOneMove(0, 0, LogicMove_LTR, MathAsmStatement_LEFT_SIDE, 3)
+        move = ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 3)
         base = MathAsmStatement.createAxiom("someName", words3, words4, false, 0)
         try { plasi.assertReplaceOneLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.MATCH_FAILED, e.code) }
 
         //illegal right to left
-        move = ReplaceOneMove(0, 0, LogicMove_RTL, MathAsmStatement_LEFT_SIDE, 0)
+        move = ReplaceOneMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE, 0)
         try { plasi.assertReplaceOneLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.ILLEGAL_DIRECTION, e.code) }
 
 
         //But it should be allowed with TWO_WAY base
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 0)
-        move = ReplaceOneMove(0, 0, LogicMove_RTL, MathAsmStatement_LEFT_SIDE, 5)
+        move = ReplaceOneMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE, 5)
         plasi.assertReplaceOneLegality(move, base)
 
         //if plasi is one way, editing the first phrase is forbidden
@@ -235,24 +235,24 @@ class MathAsmStatementTest {
         //but trying it on the second phrase should be legal, no matter what the plasi direction is
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, false, 0)
         base = MathAsmStatement.createAxiom("someName", words3, words4, true, 0)
-        move = ReplaceOneMove(0, 0, LogicMove_LTR, MathAsmStatement_RIGHT_SIDE, 3)
+        move = ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_RIGHT_SIDE, 3)
         plasi.assertReplaceOneLegality(move, base)
 
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, true, 0)
         plasi.assertReplaceOneLegality(move, base)
 
         //still, matching failures should be detected
-        move = ReplaceOneMove(0, 0, LogicMove_LTR, MathAsmStatement_RIGHT_SIDE, 3)
+        move = ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_RIGHT_SIDE, 3)
         try { plasi.assertReplaceOneLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.MATCH_FAILED, e.code) }
 
 
-        move = ReplaceOneMove(0, 0, LogicMove_RTL, MathAsmStatement_RIGHT_SIDE, 99)
+        move = ReplaceOneMove(0, 0, BaseDirection_RTL, MathAsmStatement_RIGHT_SIDE, 99)
         try { plasi.assertReplaceOneLegality(move, base) }
         catch (e:MathAsmException) { assertEquals(ErrorCode.MATCH_FAILED, e.code) }
 
 
-        move = ReplaceOneMove(0, 0, LogicMove_RTL, MathAsmStatement_RIGHT_SIDE, 1)
+        move = ReplaceOneMove(0, 0, BaseDirection_RTL, MathAsmStatement_RIGHT_SIDE, 1)
         plasi.assertReplaceOneLegality(move, base)
 
         //and base direction rules too
@@ -323,7 +323,7 @@ class MathAsmStatementTest {
 
 
         //select in whole sentense
-        var move = ReplaceAllMove(0, 0, LogicMove_LTR)
+        var move = ReplaceAllMove(0, 0, BaseDirection_LTR)
         plasi.selectAll(move, base, sel, true)
         assertEquals(2, sel.side1.length)
         assertEquals(0, sel.side1.positions[0])
@@ -334,7 +334,7 @@ class MathAsmStatementTest {
         assertEquals(6, sel.side2.positions[1])
 
 
-        move = ReplaceAllMove(0, 0, LogicMove_RTL)
+        move = ReplaceAllMove(0, 0, BaseDirection_RTL)
         plasi.selectAll(move, base, sel, true)
         assertEquals(1, sel.side1.length)
         assertEquals(4, sel.side1.positions[0])
@@ -358,14 +358,14 @@ class MathAsmStatementTest {
 
 
         //select in first phrase
-        var move = ReplaceSentenceMove(0,0, LogicMove_LTR, MathAsmStatement_LEFT_SIDE)
+        var move = ReplaceSentenceMove(0,0, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE)
         plasi.selectPhrase(move, base, sel, true)
         assertEquals(2, sel.side1.length)
         assertEquals(0, sel.side1.positions[0])
         assertEquals(2, sel.side1.positions[1])
         assertEquals(0, sel.side2.length)
 
-        move = ReplaceSentenceMove(0, 0, LogicMove_RTL, MathAsmStatement_LEFT_SIDE)
+        move = ReplaceSentenceMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE)
         plasi.selectPhrase(move, base, sel, true)
         assertEquals(1, sel.side1.length)
         assertEquals(4, sel.side1.positions[0])
@@ -373,14 +373,14 @@ class MathAsmStatementTest {
 
 
         //select in second phrase
-        move = ReplaceSentenceMove(0, 0, LogicMove_LTR, MathAsmStatement_RIGHT_SIDE)
+        move = ReplaceSentenceMove(0, 0, BaseDirection_LTR, MathAsmStatement_RIGHT_SIDE)
         plasi.selectPhrase(move, base, sel, true)
         assertEquals(0, sel.side1.length)
         assertEquals(2, sel.side2.length)
         assertEquals(2, sel.side2.positions[0])
         assertEquals(6, sel.side2.positions[1])
 
-        move = ReplaceSentenceMove(0, 0, LogicMove_RTL, MathAsmStatement_RIGHT_SIDE)
+        move = ReplaceSentenceMove(0, 0, BaseDirection_RTL, MathAsmStatement_RIGHT_SIDE)
         plasi.selectPhrase(move, base, sel, true)
         assertEquals(0, sel.side1.length)
         assertEquals(1, sel.side2.length)
@@ -402,7 +402,7 @@ class MathAsmStatementTest {
         val base = MathAsmStatement.createAxiom("someName", words3, words4, true, 0)
 
 
-        var move = ReplaceOneMove(0, 0, LogicMove_LTR, MathAsmStatement_LEFT_SIDE, 2)
+        var move = ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 2)
         plasi.selectSingle(move, base, sel, true)
         assertEquals(1, sel.side1.length)
         assertEquals(2, sel.side1.positions[0])
@@ -410,7 +410,7 @@ class MathAsmStatementTest {
 
 
         //select in second
-        move = ReplaceOneMove(0, 0, LogicMove_LTR, MathAsmStatement_RIGHT_SIDE, 6)
+        move = ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_RIGHT_SIDE, 6)
         plasi.selectSingle(move, base, sel, true)
         assertEquals(0, sel.side1.length)
         assertEquals(1, sel.side2.length)
@@ -480,7 +480,7 @@ class MathAsmStatementTest {
 
 
         //test an illegal move
-        var move = ReplaceOneMove(0, 0, LogicMove_LTR, MathAsmStatement_LEFT_SIDE, 2)
+        var move = ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 2)
 
         plasi.selectSingle(move, base, sel, true).replace(MathAsmStatement_LEFT_SIDE, base, sel)
         assertEquals("\"1 2 3 1 3 1 __0__ 4 4 1 2 1 3 1 4 \"", plasi.toString())
@@ -488,7 +488,7 @@ class MathAsmStatementTest {
         //test select andReplace in the whole sentece
         plasi = MathAsmStatement.createAxiom("someName", words1, words2, true, 0)
         plasi.type = MathAsmStatement_THEOREM_TEMPLATE
-        var move2 = ReplaceAllMove(0, 0, LogicMove_LTR)
+        var move2 = ReplaceAllMove(0, 0, BaseDirection_LTR)
 
         plasi.selectAll(move2, base, sel, true).replace(MathAsmStatement_LEFT_SIDE, base, sel)
         assertEquals("\"3 1 3 1 3 1 __0__ 4 4 3 1 1 3 1 4 \"", plasi.toString())

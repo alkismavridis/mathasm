@@ -4,6 +4,7 @@ import "./DbVisualisationPage.css";
 import GraphQL from "../../../services/GraphQL";
 import Urls from "../../../constants/Urls";
 import vis from "vis";
+import Dropdown from "../../ReusableComponents/Inputs/Dropdown/Dropdown";
 
 
 const GraphTypes = {
@@ -15,6 +16,15 @@ const GraphTypes = {
     MOVE:6,
     PROOF:7
 };
+
+
+const SAVED_COMMANDS = [
+    {id:"1", name:"Watch Node", query:"match (o)-[r]-(f) where ID(o)=3 return o,r,f;"},
+    {id:"2", name:"All users", query:"match (o:user) return o;"},
+    {id:"3", name:"Watch all users", query:"match (o:user)-[r]-(f) return o,r,f;"},
+    {id:"4", name:"File system", query:"match (o:dir)-[r]-(f:dir) return o,r,f;"},
+    {id:"5", name:"Whole DB", query:"match (o)-[r]-(f) return o,r,f;"},
+];
 
 class DbVisualisationPage extends Component {
     //region PROPS AND STATE
@@ -28,7 +38,7 @@ class DbVisualisationPage extends Component {
 
 
     state = {
-        cypherCommand:"match (o)-[r]-(f) return o,r,f;",
+        cypherCommand: SAVED_COMMANDS[0].query,
         selectedNode:null,
         isLoading:false,
     };
@@ -36,20 +46,8 @@ class DbVisualisationPage extends Component {
     _canvasRoot = null;
     _network = null;
     _visData = {
-        nodes: [
-            {id: 1, label: 'Node 1'},
-            {id: 2, label: 'Node 2'},
-            {id: 3, label: 'Node 3'},
-            {id: 4, label: 'Node 4'},
-            {id: 5, label: 'Node 5'}
-        ],
-        edges: [
-            {from: 1, to: 3},
-            {from: 1, to: 2},
-            {from: 2, to: 4},
-            {from: 2, to: 5},
-            {from: 3, to: 3}
-        ]
+        nodes: [],
+        edges: []
     };
     //endregion
 
@@ -147,6 +145,12 @@ class DbVisualisationPage extends Component {
         //3. Undo loading
         this.setState({isLoading:false});
     }
+
+    setSavedQuery(queryId) {
+        const queryObj = SAVED_COMMANDS.find(c => c.id == queryId);
+        if (!queryObj) return;
+        this.setState({cypherCommand:queryObj.query});
+    }
     //endregion
 
 
@@ -213,6 +217,11 @@ class DbVisualisationPage extends Component {
                         padding:"16px"
                     }}>
                 </textarea>
+                <Dropdown
+                    options={SAVED_COMMANDS}
+                    toLabelFunc={v => v.name}
+                    toValueFunc={v => v.id}
+                    onChange={id => this.setSavedQuery(id)}/>
                 <div className="Globals_pageMainContent" style={{position:"relative"}}>
                     <div className="DbVisualisationPage_canvasRoot" ref={el => this._canvasRoot=el}/>
                     {this.renderSelectedElement()}

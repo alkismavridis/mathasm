@@ -3,8 +3,8 @@ package eu.alkismavridis.mathasm.core.proof
 
 
 //directions
-const val LogicMove_LTR:Byte = 1
-const val LogicMove_RTL:Byte = 2
+const val BaseDirection_LTR:Byte = 1
+const val BaseDirection_RTL:Byte = 2
 
 
 //region MOVE CODES

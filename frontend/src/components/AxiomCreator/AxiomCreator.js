@@ -28,6 +28,7 @@ export default class AxiomCreator extends Component {
 
         //actions
         onSave:PropTypes.func.isRequired,               //accepts: statement
+        onSetCurrentDir:PropTypes.func.isRequired,      //accepts: nothing
 
 
         //styling
@@ -257,7 +258,10 @@ export default class AxiomCreator extends Component {
                         onClick={this.handleSaveClicked.bind(this)}>
                         <FontAwesomeIcon icon="save"/>
                     </button>
-                    Axiom will be saved under {this.props.parentDir.name}
+                    <span style={{margin:"0 16px"}}>Axiom will be saved under <b>{this.props.parentDir.name}</b></span>
+                    <button
+                        className="Globals_textBut"
+                        onClick={this.props.onSetCurrentDir}>Set current</button>
                 </div>
             </div>
         );

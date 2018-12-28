@@ -6,6 +6,16 @@
 .Statement_sym {
   margin: 0 4px;
   color:black;
+
+  &.Statement_matched {
+    color:blue;
+    font-weight: bold;
+  }
+
+  &.Statement_selected {
+    color:green;
+    font-weight: bold;
+  }
 }
 
 .Statement_conn {

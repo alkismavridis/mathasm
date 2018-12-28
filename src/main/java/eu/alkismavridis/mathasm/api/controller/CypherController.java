@@ -2,9 +2,7 @@ package eu.alkismavridis.mathasm.api.controller;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.*;
 import eu.alkismavridis.mathasm.api.GraphqlService;
 import eu.alkismavridis.mathasm.core.error.MathAsmException;
 import eu.alkismavridis.mathasm.db.entities.*;
@@ -37,7 +35,10 @@ public class CypherController {
         OBJECT(4),
         STATEMENT(5),
         MOVE(6),
-        PROOF(7);
+        PROOF(7),
+
+        //primitive types
+        PRIMITIVE(8);
 
         private int value;
         GraphNodeType(int v) { this.value = v; }
@@ -133,6 +134,12 @@ public class CypherController {
             else if (val instanceof MathAsmProof) addNode(nodes, ((MathAsmProof) val).getId(), "Proof", GraphNodeType.PROOF, ((MathAsmProof) val).toNodeJson());
             else if (val instanceof MathAsmDirEntity) addNode(nodes, ((MathAsmDirEntity) val).getId(), ((MathAsmDirEntity) val).getName(), GraphNodeType.OBJECT, ((MathAsmDirEntity) val).toNodeJson());
             else if (val instanceof LogicMoveEntity) addNode(nodes, ((LogicMoveEntity) val).getId(), "move", GraphNodeType.MOVE, ((LogicMoveEntity) val).toNodeJson());
+            else if (val instanceof String) addNode(nodes, (long)val.hashCode(), (String)val, GraphNodeType.PRIMITIVE, new TextNode((String)val));
+            else if (val instanceof Number) {
+                final String asString = val.toString();
+                addNode(nodes, (long)val.hashCode(), asString, GraphNodeType.PRIMITIVE, new TextNode(asString));
+            }
+            else if (val instanceof Boolean) addNode(nodes, (long)val.hashCode(), val.toString(), GraphNodeType.PRIMITIVE, new TextNode(val.toString()));
 
             else if (val instanceof Edge) {
                 final Long id = ((Edge) val).getId();

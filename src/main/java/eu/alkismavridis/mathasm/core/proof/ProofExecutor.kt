@@ -60,7 +60,7 @@ class ProofExecutor {
 
     fun getSourceSide(dir:Byte) : Byte {
         return (
-            if (dir == LogicMove_LTR) MathAsmStatement_LEFT_SIDE
+            if (dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE
             else MathAsmStatement_RIGHT_SIDE
         )
     }

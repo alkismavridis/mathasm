@@ -18,6 +18,8 @@ const val MathAsmStatement_BOTH_SIDES:Byte = 3
  *
  * 2. Proven statements have values over 64
  *    Freely created statements have values under 64
+ *
+ * NOTE: PLEASE UPDATE StatementType.js if this is changed!
  * */
 const val MathAsmStatement_AXIOM:Byte = 1
 const val MathAsmStatement_AXIOM_TEMPLATE:Byte = 2
@@ -85,7 +87,7 @@ open class MathAsmStatement {
     //region LEGALITY RULES
     fun assertReplaceAllLegality(move:ReplaceAllMove, base: MathAsmStatement) {
         if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
-        if (move.dir == LogicMove_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
+        if (move.dir == BaseDirection_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
 
         if (!this.bidirectionalFlag && base.grade <= this.grade) {
             throw MathAsmException(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT)
@@ -94,7 +96,7 @@ open class MathAsmStatement {
 
     fun assertReplaceSentenceLegality(move:ReplaceSentenceMove, base: MathAsmStatement) {
         if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
-        if (move.dir == LogicMove_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
+        if (move.dir == BaseDirection_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
 
         if (move.side== MathAsmStatement_LEFT_SIDE) {
             if (!this.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT)
@@ -107,17 +109,17 @@ open class MathAsmStatement {
 
     fun assertReplaceOneLegality(move:ReplaceOneMove, base: MathAsmStatement) {
         if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
-        if (move.dir == LogicMove_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
+        if (move.dir == BaseDirection_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
 
         if (move.side== MathAsmStatement_LEFT_SIDE) {
             if (!this.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT)
 
-            val side:Byte = if (move.dir == LogicMove_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
+            val side:Byte = if (move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
             if (base.grade != 0.toShort()) throw MathAsmException(ErrorCode.BASE_GRADE_NOT_ZERO)
             if(!sen1.match(base.getPhrase(side), move.position)) throw MathAsmException(ErrorCode.MATCH_FAILED)
         }
         else {
-            val side:Byte = if(move.dir == LogicMove_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
+            val side:Byte = if(move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
             if (base.grade != 0.toShort()) throw MathAsmException(ErrorCode.BASE_GRADE_NOT_ZERO)
             if (!sen2.match(base.getPhrase(side), move.position)) throw MathAsmException(ErrorCode.MATCH_FAILED)
         }
@@ -131,7 +133,7 @@ open class MathAsmStatement {
     fun selectAll(move:ReplaceAllMove, base: MathAsmStatement, sel: LogicSelection, check:Boolean) : MathAsmStatement {
         if (check) this.assertReplaceAllLegality(move, base)
 
-        val side:Byte = if(move.dir == LogicMove_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
+        val side:Byte = if(move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
         sen1.select(base.getPhrase(side), sel.side1)
         sen2.select(base.getPhrase(side), sel.side2)
 
@@ -143,12 +145,12 @@ open class MathAsmStatement {
 
         if (move.side == MathAsmStatement_LEFT_SIDE) {
             sel.side2.clear()
-            val side:Byte = if(move.dir == LogicMove_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
+            val side:Byte = if(move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
             sen1.select(base.getPhrase(side), sel.side1)
         }
         else {
             sel.side1.clear()
-            val side:Byte = if(move.dir == LogicMove_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
+            val side:Byte = if(move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
             sen2.select(base.getPhrase(side), sel.side2)
         }
 
@@ -233,7 +235,7 @@ open class MathAsmStatement {
     /*fun selectAndReplace(base: MathAsmStatement, move: LogicMove, sel: LogicSelection, check:Boolean) : Byte {
         val s:Byte = select_OLD(base, move, sel, check)
 
-        val side:Byte = if (move.dir == LogicMove_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
+        val side:Byte = if (move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
         if (s == LogicMove_LEGAL) replace(side, base, sel)
         return s
     }*/

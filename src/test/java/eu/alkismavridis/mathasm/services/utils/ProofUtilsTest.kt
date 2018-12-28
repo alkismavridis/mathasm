@@ -82,23 +82,23 @@ class ProofUtilsTest {
         assertEquals(MathAsmStatement_BOTH_SIDES, move.side)
 
         //4. Test replace all move
-        move = ProofUtils.toLogicMove(LogicMoveEntity(0, LOGIC_MOVE_REPLACE_ALL, 777, 0, 0, LogicMove_RTL, 0, 0, ""))
+        move = ProofUtils.toLogicMove(LogicMoveEntity(0, LOGIC_MOVE_REPLACE_ALL, 777, 0, 0, BaseDirection_RTL, 0, 0, ""))
         assertTrue(move is ReplaceAllMove)
         assertEquals(777, (move as ReplaceAllMove).templateIndex)
-        assertEquals(LogicMove_RTL, move.dir)
+        assertEquals(BaseDirection_RTL, move.dir)
 
         //5. Test replace sentence move
-        move = ProofUtils.toLogicMove(LogicMoveEntity(0, LOGIC_MOVE_REPLACE_PHRASE, 2362, 0, MathAsmStatement_RIGHT_SIDE, LogicMove_LTR, 0, 0, ""))
+        move = ProofUtils.toLogicMove(LogicMoveEntity(0, LOGIC_MOVE_REPLACE_PHRASE, 2362, 0, MathAsmStatement_RIGHT_SIDE, BaseDirection_LTR, 0, 0, ""))
         assertTrue(move is ReplaceSentenceMove)
         assertEquals(2362, (move as ReplaceSentenceMove).templateIndex)
-        assertEquals(LogicMove_LTR, move.dir)
+        assertEquals(BaseDirection_LTR, move.dir)
         assertEquals(MathAsmStatement_RIGHT_SIDE, move.side)
 
         //6. Test replace one move
-        move = ProofUtils.toLogicMove(LogicMoveEntity(0, LOGIC_MOVE_REPLACE_ONE, 333, 0, MathAsmStatement_LEFT_SIDE, LogicMove_RTL, 9979, 0, ""))
+        move = ProofUtils.toLogicMove(LogicMoveEntity(0, LOGIC_MOVE_REPLACE_ONE, 333, 0, MathAsmStatement_LEFT_SIDE, BaseDirection_RTL, 9979, 0, ""))
         assertTrue(move is ReplaceOneMove)
         assertEquals(333, (move as ReplaceOneMove).templateIndex)
-        assertEquals(LogicMove_RTL, move.dir)
+        assertEquals(BaseDirection_RTL, move.dir)
         assertEquals(MathAsmStatement_LEFT_SIDE, move.side)
         assertEquals(9979, move.position)
 

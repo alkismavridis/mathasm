@@ -13,7 +13,7 @@ export default class Dropdown extends Component {
         //actions
         toLabelFunc: PropTypes.func.isRequired,
         toValueFunc: PropTypes.func.isRequired,
-        onChange:PropTypes.func.isRequired,
+        onChange:PropTypes.func,         //It may accept two parameters: the selected option, and the change event
 
         disabled: PropTypes.bool,
 
@@ -48,32 +48,25 @@ export default class Dropdown extends Component {
 
 
     //region EVENT HANDLERS
+    handleChange(e) {
+        if(this.props.onChange) this.props.onChange(e.target.value);
+    }
     //endregion
 
 
     //region RENDERING
     renderOptions() {
-        return (
-            function () {
-                var options = [];
-
-                this.props.options.forEach(function (option) {
-
-                        options.push(
-                            <option value={this.props.toValueFunc(option)}>{this.props.toLabelFunc(option)}</option>
-                        );
-                    }
-                );
-
-                return options;
-            });
+        return this.props.options.map(opt => {
+            const key = this.props.toValueFunc(opt);
+            return <option key={key} value={key}>{this.props.toLabelFunc(opt)}</option>;
+        });
     }
 
 
     render() {
         return (
             <div className={cx("Dropdown_root", this.props.className)} style={this.props.style}>
-                <select value={this.props.value} onChange={this.props.onChange} disabled={this.props.disabled}>
+                <select value={this.props.value} onChange={e => this.handleChange(e)} disabled={this.props.disabled}>
                     {this.renderOptions()}
                 </select>
             </div>

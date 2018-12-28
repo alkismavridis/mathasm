@@ -9,7 +9,6 @@ import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
-import java.util.function.Consumer
 import java.util.function.Function
 
 @RunWith(SpringRunner::class)
@@ -95,8 +94,8 @@ class ProofExecutorTest {
         val executor = ProofExecutor(senProv, onSave, onGenerateTheorem)
 
         //2. assert source side
-        assertEquals(MathAsmStatement_LEFT_SIDE ,executor.getSourceSide(LogicMove_LTR))
-        assertEquals(MathAsmStatement_RIGHT_SIDE ,executor.getSourceSide(LogicMove_RTL))
+        assertEquals(MathAsmStatement_LEFT_SIDE ,executor.getSourceSide(BaseDirection_LTR))
+        assertEquals(MathAsmStatement_RIGHT_SIDE ,executor.getSourceSide(BaseDirection_RTL))
     }
     //endregion
 
@@ -251,11 +250,11 @@ class ProofExecutorTest {
 
         //3. Replace all "2"
         executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeReplaceAllMove(ReplaceAllMove(0, 0, LogicMove_LTR))
+        executor.executeReplaceAllMove(ReplaceAllMove(0, 0, BaseDirection_LTR))
         assertEquals("\"8 8 4 8 8 __2__ 123 456 \"", executor.getTemplate(0).toString())
 
         //Replace them back
-        executor.executeReplaceAllMove(ReplaceAllMove(0, 0, LogicMove_RTL))
+        executor.executeReplaceAllMove(ReplaceAllMove(0, 0, BaseDirection_RTL))
         assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
     }
 
@@ -272,7 +271,7 @@ class ProofExecutorTest {
 
         //2.Test with null base
         try {
-            executor.executeReplaceAllMove(ReplaceAllMove(0, 1, LogicMove_LTR))
+            executor.executeReplaceAllMove(ReplaceAllMove(0, 1, BaseDirection_LTR))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.NULL_BASE, e.code)
@@ -282,7 +281,7 @@ class ProofExecutorTest {
         //3. Test out of bounds index: negative
         executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom1"]!!.id!!))
         try {
-            executor.executeReplaceAllMove(ReplaceAllMove(0, -1, LogicMove_LTR))
+            executor.executeReplaceAllMove(ReplaceAllMove(0, -1, BaseDirection_LTR))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
@@ -290,7 +289,7 @@ class ProofExecutorTest {
 
         //4. Test out of bounds index: positive
         try {
-            executor.executeReplaceAllMove(ReplaceAllMove(0, 99, LogicMove_LTR))
+            executor.executeReplaceAllMove(ReplaceAllMove(0, 99, BaseDirection_LTR))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
@@ -301,7 +300,7 @@ class ProofExecutorTest {
         assertEquals("\"2 4 2 __2-- 2 3 6 2 \"", executor.getTemplate(0).toString())
 
         try {
-            executor.executeReplaceAllMove(ReplaceAllMove(0, 0, LogicMove_RTL))
+            executor.executeReplaceAllMove(ReplaceAllMove(0, 0, BaseDirection_RTL))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_DIRECTION, e.code)
@@ -327,11 +326,11 @@ class ProofExecutorTest {
 
         //3. Replace all "2"
         executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, LogicMove_LTR, MathAsmStatement_LEFT_SIDE))
+        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE))
         assertEquals("\"8 8 4 8 8 __2__ 123 456 \"", executor.getTemplate(0).toString())
 
         //Replace them back
-        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, LogicMove_RTL, MathAsmStatement_LEFT_SIDE))
+        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE))
         assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
 
         //4. Replace right Sentence
@@ -340,11 +339,11 @@ class ProofExecutorTest {
         assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTemplate(0).toString())
 
         executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, LogicMove_LTR, MathAsmStatement_RIGHT_SIDE))
+        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, BaseDirection_LTR, MathAsmStatement_RIGHT_SIDE))
         assertEquals("\"2 4 2 __2__ 8 8 4 8 8 \"", executor.getTemplate(0).toString())
 
         //Replace them back
-        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, LogicMove_RTL, MathAsmStatement_RIGHT_SIDE))
+        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, BaseDirection_RTL, MathAsmStatement_RIGHT_SIDE))
         assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTemplate(0).toString())
     }
 
@@ -361,7 +360,7 @@ class ProofExecutorTest {
 
         //2.Test with null base
         try {
-            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 1, LogicMove_LTR, MathAsmStatement_LEFT_SIDE))
+            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 1, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.NULL_BASE, e.code)
@@ -371,7 +370,7 @@ class ProofExecutorTest {
         //3. Test out of bounds index: negative
         executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom1"]!!.id!!))
         try {
-            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, -1, LogicMove_LTR, MathAsmStatement_LEFT_SIDE))
+            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, -1, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
@@ -379,7 +378,7 @@ class ProofExecutorTest {
 
         //4. Test out of bounds index: positive
         try {
-            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 99, LogicMove_LTR, MathAsmStatement_LEFT_SIDE))
+            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 99, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
@@ -390,7 +389,7 @@ class ProofExecutorTest {
         assertEquals("\"2 4 2 __2-- 2 3 6 2 \"", executor.getTemplate(0).toString())
 
         try {
-            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, LogicMove_RTL, MathAsmStatement_LEFT_SIDE))
+            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_DIRECTION, e.code)
@@ -415,11 +414,11 @@ class ProofExecutorTest {
 
         //3. Replace all "2"
         executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, LogicMove_LTR, MathAsmStatement_LEFT_SIDE, 2))
+        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 2))
         assertEquals("\"2 4 8 8 __2__ 123 456 \"", executor.getTemplate(0).toString())
 
         //Replace them back
-        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, LogicMove_RTL, MathAsmStatement_LEFT_SIDE, 2))
+        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE, 2))
         assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
 
         //4. Replace right Sentence
@@ -428,11 +427,11 @@ class ProofExecutorTest {
         assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTemplate(0).toString())
 
         executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, LogicMove_LTR, MathAsmStatement_RIGHT_SIDE, 0))
+        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_RIGHT_SIDE, 0))
         assertEquals("\"2 4 2 __2__ 8 8 4 2 \"", executor.getTemplate(0).toString())
 
         //Replace them back
-        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, LogicMove_RTL, MathAsmStatement_RIGHT_SIDE, 0))
+        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, BaseDirection_RTL, MathAsmStatement_RIGHT_SIDE, 0))
         assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTemplate(0).toString())
     }
 
@@ -449,7 +448,7 @@ class ProofExecutorTest {
 
         //2.Test with null base
         try {
-            executor.executeReplaceOneMove(ReplaceOneMove(0, 1, LogicMove_LTR, MathAsmStatement_LEFT_SIDE, 0))
+            executor.executeReplaceOneMove(ReplaceOneMove(0, 1, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 0))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.NULL_BASE, e.code)
@@ -459,7 +458,7 @@ class ProofExecutorTest {
         //3. Test out of bounds index: negative
         executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom1"]!!.id!!))
         try {
-            executor.executeReplaceOneMove(ReplaceOneMove(0, -1, LogicMove_LTR, MathAsmStatement_LEFT_SIDE, 0))
+            executor.executeReplaceOneMove(ReplaceOneMove(0, -1, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 0))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
@@ -467,7 +466,7 @@ class ProofExecutorTest {
 
         //4. Test out of bounds index: positive
         try {
-            executor.executeReplaceOneMove(ReplaceOneMove(0, 99, LogicMove_LTR, MathAsmStatement_LEFT_SIDE, 0))
+            executor.executeReplaceOneMove(ReplaceOneMove(0, 99, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 0))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
@@ -478,7 +477,7 @@ class ProofExecutorTest {
         assertEquals("\"2 4 2 __2-- 2 3 6 2 \"", executor.getTemplate(0).toString())
 
         try {
-            executor.executeReplaceOneMove(ReplaceOneMove(0, 0, LogicMove_RTL, MathAsmStatement_LEFT_SIDE, 0))
+            executor.executeReplaceOneMove(ReplaceOneMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE, 0))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_DIRECTION, e.code)

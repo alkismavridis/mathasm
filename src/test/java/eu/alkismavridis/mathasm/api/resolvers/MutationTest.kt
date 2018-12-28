@@ -517,11 +517,11 @@ class MutationTest {
 
         //replace with stmt2:      99 101 3 __0__ 4
         moves.add(LogicMoveEntity.makeExtSelect(stmt2.id!!))
-        moves.add(LogicMoveEntity.makeReplaceAll(0, LogicMove_LTR))
+        moves.add(LogicMoveEntity.makeReplaceAll(0, BaseDirection_LTR))
 
         //replace with stmt3:      99 101 3 __0__ 500, 501, 502
         moves.add(LogicMoveEntity.makeExtSelect(stmt3.id!!))
-        moves.add(LogicMoveEntity.makeReplaceAll(0, LogicMove_RTL))
+        moves.add(LogicMoveEntity.makeReplaceAll(0, BaseDirection_RTL))
 
         //save
         moves.add(LogicMoveEntity.makeSave(0, theory.rootObj!!.id!!, "dummyTheorem"))
@@ -590,11 +590,11 @@ class MutationTest {
 
         //replace with stmt2:      99 101 3 __0__ 4
         moves.add(LogicMoveEntity.makeExtSelect(stmt2.id!!))
-        moves.add(LogicMoveEntity.makeReplaceAll(0, LogicMove_LTR))
+        moves.add(LogicMoveEntity.makeReplaceAll(0, BaseDirection_LTR))
 
         //replace with stmt3:      99 101 3 __0__ 500, 501, 502
         moves.add(LogicMoveEntity.makeExtSelect(stmt3.id!!))
-        moves.add(LogicMoveEntity.makeReplaceAll(0, LogicMove_RTL))
+        moves.add(LogicMoveEntity.makeReplaceAll(0, BaseDirection_RTL))
 
         //save
         moves.add(LogicMoveEntity.makeSave(0, theory.rootObj!!.id!!, "dummyTheorem"))
@@ -636,7 +636,7 @@ class MutationTest {
         moves.find{ e -> e.moveType == LOGIC_MOVE_SAVE}!!.parentId = theory.rootObj!!.id!!
 
         //7. Test invalid move
-        moves[3] = LogicMoveEntity.makeReplaceOne(0, MathAsmStatement_LEFT_SIDE, LogicMove_LTR, 999)
+        moves[3] = LogicMoveEntity.makeReplaceOne(0, MathAsmStatement_LEFT_SIDE, BaseDirection_LTR, 999)
         try {
             mutation.createTheorem(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
@@ -644,7 +644,7 @@ class MutationTest {
         catch (e:MathAsmException) {
             assertEquals(ErrorCode.MATCH_FAILED, e.code)
         }
-        moves[3] = LogicMoveEntity.makeReplaceAll(0, LogicMove_RTL)
+        moves[3] = LogicMoveEntity.makeReplaceAll(0, BaseDirection_RTL)
 
         //5. Save with a name of an existing object
         val state = BasicMathAsmState(app)
