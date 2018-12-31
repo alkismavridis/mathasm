@@ -10,6 +10,7 @@ import ModalService from "../../../../services/ModalService";
 import {SymbolRangeUtils} from "../../../../services/symbol/SymbolRangeUtils";
 import Connection from "../../Connection/Connection";
 import Statement from "../../Statement/Statement";
+import StatementType from "../../../../constants/StatementType";
 
 const q = {
     FETCH_PARENT: `query($id:Long!){
@@ -122,14 +123,22 @@ export default class DirViewer extends Component {
             this.props.onUpdateSymbolMap(this.props.symbolMap);
         });
     }
+
+    getColorForStatement(stmt) {
+        switch(stmt.type) {
+            case StatementType.THEOREM: return "#23d289";
+            case StatementType.AXIOM: return "#2fbdc3";
+            default: return "#c7bb23";
+        }
+    }
     //endregion
 
 
 
     //region API
-    statementCreated(stmt, directory) {
+    statementCreated(stmt, directoryId) {
         //1. Check if the new statement affect us in any way...
-        if (this.state.currentDir==null || directory==null || (directory.id !== this.state.currentDir.id)) return;
+        if (this.state.currentDir==null || (directoryId !== this.state.currentDir.id)) return;
 
         //2. update the dir object.
         const updatedCurrentDir = Object.assign({}, this.state.currentDir);
@@ -238,7 +247,7 @@ export default class DirViewer extends Component {
             .then(resp => {
                 //setup new directory object
                 const updatedCurrentDir = Object.assign({}, this.state.currentDir);
-                updatedCurrentDir.subDirs.push(resp.handleCreateDirClick);
+                updatedCurrentDir.subDirs.push(resp.createDir);
                 //update components
                 this.setState({currentDir: updatedCurrentDir});
                 this.props.onDirChanged(updatedCurrentDir);
@@ -271,7 +280,12 @@ export default class DirViewer extends Component {
 
     renderStatement(stmt) {
         return (
-            <div key={stmt.id} className="DirViewer_stmtDiv" onClick={this.handleStatementClick.bind(this, stmt)}>
+            <div
+                key={stmt.id}
+                className="DirViewer_stmtDiv"
+                style={{backgroundColor:this.getColorForStatement(stmt)}}
+                onClick={this.handleStatementClick.bind(this, stmt)}
+                title={"Id: "+stmt.id}>
                 <div className="DirViewer_stmtName">{stmt.name}</div>
                 <Statement statement={stmt} symbolMap={this.props.symbolMap}/>
             </div>

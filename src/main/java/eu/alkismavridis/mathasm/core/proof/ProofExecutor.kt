@@ -1,4 +1,5 @@
 package eu.alkismavridis.mathasm.core.proof
+import eu.alkismavridis.mathasm.core.enums.*
 import java.util.function.Function
 
 
@@ -15,8 +16,7 @@ class ProofExecutor {
 
     //state
     private val statementCache = mutableMapOf<Long, MathAsmStatement>()
-    private val theoremTemplates = mutableListOf<MathAsmStatement>()
-    var selectedBase: MathAsmStatement? = null; private set
+    private val targets = mutableMapOf<Long, MathAsmStatement>()
     private val selection: LogicSelection = LogicSelection(64)
     //endregion
 
@@ -31,7 +31,8 @@ class ProofExecutor {
 
 
     //region GETTERS
-    fun getTemplate(index:Int) : MathAsmStatement? { return this.theoremTemplates[index] }
+    fun getTarget(index:Long) : MathAsmStatement? { return this.targets[index] }
+    fun getBaseCache() : Map<Long, MathAsmStatement> { return this.statementCache }
     //endregion
 
 
@@ -51,23 +52,23 @@ class ProofExecutor {
         return ret
     }
 
-    fun getInternal(index:Int) : MathAsmStatement {
-        try { return this.theoremTemplates[index] }
+    fun getInternal(index:Long) : MathAsmStatement {
+        try { return this.targets[index]!! }
         catch (e:Exception) {
             throw MathAsmException(ErrorCode.ILLEGAL_INTERNAL_SELECT)
         }
     }
 
-    fun getSourceSide(dir:Byte) : Byte {
-        return (
-            if (dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE
-            else MathAsmStatement_RIGHT_SIDE
-        )
+    fun assertBaseNotNull(base:MathAsmStatement?) {
+        if (base!=null) return
+        throw MathAsmException(ErrorCode.NULL_BASE)
     }
 
-    fun assertBaseNotNull() {
-        if (this.selectedBase!=null) return
-        throw MathAsmException(ErrorCode.NULL_BASE)
+    /** Returns a base, either from within (internal), or from outside the proof (external). */
+    fun getBase(intBaseId:Long?, extBaseId:Long?) : MathAsmStatement? {
+        if (intBaseId!=null) return this.getInternal(intBaseId)
+        else if(extBaseId!=null) return this.getExternal(extBaseId)
+        else throw MathAsmException(ErrorCode.NULL_BASE)
     }
     //endregion
 
@@ -76,82 +77,71 @@ class ProofExecutor {
 
     //region MOVE EXECUTION
     fun executeMove(move:LogicMove) {
-        when (move.getType()) {
-            LOGIC_MOVE_INT_SELECT -> this.executeInternalSelectMove(move as InternalSelectMove)
-            LOGIC_MOVE_EXT_SELECT -> this.executeExternalSelectMove(move as ExternalSelectMove)
+        when (move.moveType) {
+            MoveType_START -> this.executeStartMove(move)
+            MoveType_SAVE -> this.executeSaveMove(move)
 
-            LOGIC_MOVE_START -> this.executeStartMove(move as StartMove)
-            LOGIC_MOVE_REPLACE_ALL -> this.executeReplaceAllMove(move as ReplaceAllMove)
-            LOGIC_MOVE_REPLACE_PHRASE -> this.executeReplaceSentenceMove(move as ReplaceSentenceMove)
-            LOGIC_MOVE_REPLACE_ONE -> this.executeReplaceOneMove(move as ReplaceOneMove)
+            MoveType_REPLACE_ALL -> this.executeReplaceAllMove(move)
 
-            LOGIC_MOVE_SAVE -> this.executeSaveMove(move as SaveMove)
+            MoveType_REPLACE_LEFT -> this.executeReplaceSentenceMove(move)
+            MoveType_REPLACE_RIGHT -> this.executeReplaceSentenceMove(move)
+
+            MoveType_ONE_IN_LEFT -> this.executeReplaceOneMove(move)
+            MoveType_ONE_IN_RIGHT -> this.executeReplaceOneMove(move)
         }
     }
 
-
-    //selects
-    fun executeInternalSelectMove(move:InternalSelectMove) {
-        this.selectedBase = this.getInternal(move.templateIndex)
-    }
-
-    fun executeExternalSelectMove(move:ExternalSelectMove) {
-        this.selectedBase = this.getExternal(move.id)
-    }
 
 
     //theorem building
-    fun executeStartMove(move:StartMove) {
-        this.assertBaseNotNull()
+    fun executeStartMove(move:LogicMove) {
+        val base = this.getBase(move.intBaseId, move.extBaseId)
+        this.assertBaseNotNull(base)
 
         //our action is based on the index given. We will re-initialize an existing template, or create a new one
-        val currentSize = this.theoremTemplates.size
-        if (move.templateIndex>=0 && move.templateIndex<currentSize) {
+        if (this.targets.containsKey(move.targetId)) {
             //perform start on an already initialized template
-            this.theoremTemplates[move.templateIndex].start(this.selectedBase!!, move.side, true, 0, 0)
+            this.targets[move.targetId]!!.start(base!!, move.side, true, 0, 0)
 
         }
-        else if (move.templateIndex==currentSize) {
+        else  {
             //initialize new Sentence and push it into the template list
-            val newTemplate = this.onGenerateTheorem.generate(this.selectedBase!!, move.side, true)
-            this.theoremTemplates.add(newTemplate)
-        }
-
-        //out of bounds
-        else {
-            throw MathAsmException(ErrorCode.ILLEGAL_INDEX_FOR_THEOREM_START, "Out of bounds. Could not start theorem template at index ${move.templateIndex}")
+            val newTemplate = this.onGenerateTheorem.generate(base, move.side, true)
+            this.targets[move.targetId] = newTemplate
         }
     }
 
-    fun executeReplaceAllMove(move:ReplaceAllMove) {
-        this.assertBaseNotNull()
+    fun executeReplaceAllMove(move:LogicMove) {
+        val base = this.getBase(move.intBaseId, move.extBaseId)
+        this.assertBaseNotNull(base)
 
-        this.getInternal(move.templateIndex)
-                .selectAll(move, this.selectedBase!!, this.selection, true)
-                .replace(this.getSourceSide(move.dir), this.selectedBase!!, this.selection)
+        this.getInternal(move.targetId)
+                .selectAll(move, base!!, this.selection, true)
+                .replace(move.side, base, this.selection)
     }
 
-    fun executeReplaceSentenceMove(move:ReplaceSentenceMove) {
-        this.assertBaseNotNull()
+    fun executeReplaceSentenceMove(move:LogicMove) {
+        val base = this.getBase(move.intBaseId, move.extBaseId)
+        this.assertBaseNotNull(base)
 
-        this.getInternal(move.templateIndex)
-                .selectPhrase(move, this.selectedBase!!, this.selection, true)
-                .replace(this.getSourceSide(move.dir), this.selectedBase!!, this.selection)
+        this.getInternal(move.targetId)
+                .selectPhrase(move, base!!, this.selection, true)
+                .replace(move.side, base, this.selection)
     }
 
-    fun executeReplaceOneMove(move:ReplaceOneMove) {
-        this.assertBaseNotNull()
+    fun executeReplaceOneMove(move:LogicMove) {
+        val base = this.getBase(move.intBaseId, move.extBaseId)
+        this.assertBaseNotNull(base)
 
-        this.getInternal(move.templateIndex)
-                .selectSingle(move, this.selectedBase!!, this.selection, true)
-                .replace(this.getSourceSide(move.dir), this.selectedBase!!, this.selection)
+        this.getInternal(move.targetId)
+                .selectSingle(move, base!!, this.selection, true)
+                .replace(move.side, base, this.selection)
     }
 
     //saving
-    fun executeSaveMove(move:SaveMove) {
+    fun executeSaveMove(move:LogicMove) {
         //1. Clone the MathAsmStatement
-        val theoremToSave = this.getInternal(move.templateIndex)
-        theoremToSave.type = MathAsmStatement_THEOREM
+        val theoremToSave = this.getInternal(move.targetId)
 
         //2. Persist it and add it into out saved list
         this.onSaveTheorem.save(theoremToSave, move.parentId, move.name)

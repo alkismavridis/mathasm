@@ -7,17 +7,16 @@ import org.junit.Assert.assertEquals
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.data.neo4j.util.IterableUtils
 import org.springframework.test.context.junit4.SpringRunner
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
-class SentenceResolverTest {
+class StatementResolverTest {
     //region INJECTIONS
     @Autowired
     lateinit var app: App
 
-    val resolver = SentenceResolver()
+    lateinit var resolver:StatementResolver
     //endregion
 
 
@@ -25,6 +24,7 @@ class SentenceResolverTest {
     @Before
     @Throws(Exception::class)
     fun beforeEvery() {
+        resolver = StatementResolver(app)
     }
 
     @After

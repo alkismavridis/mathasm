@@ -1,11 +1,19 @@
 package eu.alkismavridis.mathasm.api.resolvers
 
 import com.coxautodev.graphql.tools.GraphQLResolver
+import eu.alkismavridis.mathasm.core.proof.LogicMove
+import eu.alkismavridis.mathasm.db.entities.LogicMoveEntity
+import eu.alkismavridis.mathasm.db.entities.MathAsmProof
 import eu.alkismavridis.mathasm.db.entities.MathAsmStatementEntity
+import eu.alkismavridis.mathasm.services.App
 
-class SentenceResolver: GraphQLResolver<MathAsmStatementEntity> {
+class StatementResolver: GraphQLResolver<MathAsmStatementEntity> {
     //region FIELDS
-    constructor() {
+    val app:App
+
+
+    constructor(app: App) {
+        this.app = app;
     }
     //endregion
 
@@ -28,6 +36,11 @@ class SentenceResolver: GraphQLResolver<MathAsmStatementEntity> {
 
         for (i in 0 until rightPhrase.getLength()) ret.add(words[i])
         return ret
+    }
+
+    fun proof(stmt:MathAsmStatementEntity) : List<LogicMoveEntity>? {
+        val proof = app.proofRepo.findProofForTheoremId(stmt.id)
+        return if(proof==null) null else proof.moves
     }
     //endregion
 }

@@ -67,9 +67,9 @@ export default class DirViewerGroup extends Component {
 
     //region API
     /** Integrates a new statement into the group. */
-    statementCreated(stmt, directory) {
+    statementCreated(stmt, directoryId) {
         this._tabRefs.forEach(tabRef => {
-            tabRef.statementCreated(stmt, directory);
+            tabRef.statementCreated(stmt, directoryId);
         });
     }
     //endregion

@@ -1,32 +1,12 @@
 package eu.alkismavridis.mathasm.core.sentence
 
+import eu.alkismavridis.mathasm.core.enums.*
 import eu.alkismavridis.mathasm.core.error.ErrorCode
 import eu.alkismavridis.mathasm.core.error.MathAsmException
 import eu.alkismavridis.mathasm.core.proof.*
 import eu.alkismavridis.mathasm.core.env.SymbolProvider
 
-//Sentence Sides
-const val MathAsmStatement_LEFT_SIDE:Byte = 1
-const val MathAsmStatement_RIGHT_SIDE:Byte = 2
-const val MathAsmStatement_BOTH_SIDES:Byte = 3
 
-//Sentence Types
-/**
- * CONVENTIONS:
- * 1. Statement types that are allowed to be used as bases are ODD.
- *    Even ones shall not be used as bases
- *
- * 2. Proven statements have values over 64
- *    Freely created statements have values under 64
- *
- * NOTE: PLEASE UPDATE StatementType.js if this is changed!
- * */
-const val MathAsmStatement_AXIOM:Byte = 1
-const val MathAsmStatement_AXIOM_TEMPLATE:Byte = 2
-const val MathAsmStatement_HYPOTHESIS:Byte = 4
-
-const val MathAsmStatement_THEOREM:Byte = 65
-const val MathAsmStatement_THEOREM_TEMPLATE:Byte = 67
 
 open class MathAsmStatement {
     //region FIELDS
@@ -57,7 +37,7 @@ open class MathAsmStatement {
 
     //region GETTERS AND SETTERS
     fun getPhrase(side:Byte) : MathAsmSentence {
-        if (side== MathAsmStatement_LEFT_SIDE) return sen1
+        if (side== StatementSide_LEFT) return sen1
         return sen2
     }
 
@@ -70,7 +50,7 @@ open class MathAsmStatement {
     }
 
     fun getTheOther(side:Byte) : MathAsmSentence {
-        if (side== MathAsmStatement_LEFT_SIDE) return sen2
+        if (side== StatementSide_LEFT) return sen2
         return sen1
     }
 
@@ -85,20 +65,22 @@ open class MathAsmStatement {
 
 
     //region LEGALITY RULES
-    fun assertReplaceAllLegality(move:ReplaceAllMove, base: MathAsmStatement) {
+    /** Asserts the legality of move types MoveType_REPLACE_ALL */
+    fun assertReplaceAllLegality(move:LogicMove, base: MathAsmStatement) {
         if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
-        if (move.dir == BaseDirection_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
+        if (move.side == StatementSide_RIGHT && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
 
         if (!this.bidirectionalFlag && base.grade <= this.grade) {
             throw MathAsmException(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT)
         }
     }
 
-    fun assertReplaceSentenceLegality(move:ReplaceSentenceMove, base: MathAsmStatement) {
+    /** Asserts the legality of move types MoveType_REPLACE_LEFT and MoveType_REPLACE_RIGHT */
+    fun assertReplaceSentenceLegality(move:LogicMove, base: MathAsmStatement) {
         if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
-        if (move.dir == BaseDirection_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
+        if (move.side == StatementSide_RIGHT && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
 
-        if (move.side== MathAsmStatement_LEFT_SIDE) {
+        if (move.moveType == MoveType_REPLACE_LEFT) {
             if (!this.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT)
             if(base.grade > this.grade) throw MathAsmException(ErrorCode.BASE_GRADE_TO_BIG)
         }
@@ -107,21 +89,20 @@ open class MathAsmStatement {
         }
     }
 
-    fun assertReplaceOneLegality(move:ReplaceOneMove, base: MathAsmStatement) {
+    /** Asserts the legality of move types MoveType_ONE_IN_LEFT and MoveType_ONE_IN_RIGHT */
+    fun assertReplaceOneLegality(move:LogicMove, base: MathAsmStatement) {
         if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
-        if (move.dir == BaseDirection_RTL && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
+        if (move.side == StatementSide_RIGHT && !base.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
 
-        if (move.side== MathAsmStatement_LEFT_SIDE) {
+        if (move.moveType== MoveType_ONE_IN_LEFT) {
             if (!this.bidirectionalFlag) throw MathAsmException(ErrorCode.ILLEGAL_FIRST_PHRASE_EDIT)
 
-            val side:Byte = if (move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
             if (base.grade != 0.toShort()) throw MathAsmException(ErrorCode.BASE_GRADE_NOT_ZERO)
-            if(!sen1.match(base.getPhrase(side), move.position)) throw MathAsmException(ErrorCode.MATCH_FAILED)
+            if(!sen1.match(base.getPhrase(move.side), move.pos)) throw MathAsmException(ErrorCode.MATCH_FAILED)
         }
         else {
-            val side:Byte = if(move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
             if (base.grade != 0.toShort()) throw MathAsmException(ErrorCode.BASE_GRADE_NOT_ZERO)
-            if (!sen2.match(base.getPhrase(side), move.position)) throw MathAsmException(ErrorCode.MATCH_FAILED)
+            if (!sen2.match(base.getPhrase(move.side), move.pos)) throw MathAsmException(ErrorCode.MATCH_FAILED)
         }
     }
     //endregion
@@ -130,45 +111,42 @@ open class MathAsmStatement {
 
 
     //region SELECTION
-    fun selectAll(move:ReplaceAllMove, base: MathAsmStatement, sel: LogicSelection, check:Boolean) : MathAsmStatement {
+    fun selectAll(move:LogicMove, base: MathAsmStatement, sel: LogicSelection, check:Boolean) : MathAsmStatement {
         if (check) this.assertReplaceAllLegality(move, base)
 
-        val side:Byte = if(move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
-        sen1.select(base.getPhrase(side), sel.side1)
-        sen2.select(base.getPhrase(side), sel.side2)
+        sen1.select(base.getPhrase(move.side), sel.side1)
+        sen2.select(base.getPhrase(move.side), sel.side2)
 
         return this
     }
 
-    fun selectPhrase(move:ReplaceSentenceMove, base: MathAsmStatement, sel: LogicSelection, check:Boolean) : MathAsmStatement {
+    fun selectPhrase(move:LogicMove, base: MathAsmStatement, sel: LogicSelection, check:Boolean) : MathAsmStatement {
         if (check) this.assertReplaceSentenceLegality(move, base)
 
-        if (move.side == MathAsmStatement_LEFT_SIDE) {
+        if (move.moveType == MoveType_REPLACE_LEFT) {
             sel.side2.clear()
-            val side:Byte = if(move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
-            sen1.select(base.getPhrase(side), sel.side1)
+            sen1.select(base.getPhrase(move.side), sel.side1)
         }
         else {
             sel.side1.clear()
-            val side:Byte = if(move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
-            sen2.select(base.getPhrase(side), sel.side2)
+            sen2.select(base.getPhrase(move.side), sel.side2)
         }
 
         return this
     }
 
-    fun selectSingle(move:ReplaceOneMove, base: MathAsmStatement, sel: LogicSelection, check:Boolean) : MathAsmStatement {
+    fun selectSingle(move:LogicMove, base: MathAsmStatement, sel: LogicSelection, check:Boolean) : MathAsmStatement {
         if (check) this.assertReplaceOneLegality(move, base)
 
-        if (move.side == MathAsmStatement_LEFT_SIDE) {
+        if (move.moveType == MoveType_ONE_IN_LEFT) {
             sel.side1.clear()
             sel.side2.clear()
-            sel.side1.add(move.position)
+            sel.side1.add(move.pos)
         }
         else {
             sel.side1.clear()
             sel.side2.clear()
-            sel.side2.add(move.position)
+            sel.side2.add(move.pos)
         }
 
         return this
@@ -185,30 +163,30 @@ open class MathAsmStatement {
      *
      * It updates:
      * - both sentences sen1, sen2
-     * - bridge(both grade and dicetion)
+     * - bridge(both grade and direction)
      * - type will be set to THEOREM_TEMPLATE
      *
      * */
     fun start(base: MathAsmStatement, side:Byte, check:Boolean, plus1:Int, plus2:Int) {
         //check legality of the move
         if (check) {
-            if (type != MathAsmStatement_THEOREM_TEMPLATE && type != MathAsmStatement_AXIOM_TEMPLATE) throw MathAsmException(ErrorCode.NOT_A_THEOREM_TEMPLATE)
+            if (type != StatementType_THEOREM_TEMPLATE && type != StatementType_AXIOM_TEMPLATE) throw MathAsmException(ErrorCode.NOT_A_THEOREM_TEMPLATE)
             assertStartLegality(base, side)
         }
 
         //do it
         when (side) {
-            MathAsmStatement_BOTH_SIDES -> {
+            StatementSide_BOTH -> {
                 sen1.copy(base.sen1, plus1)
                 sen2.copy(base.sen2, plus2)
             }
 
-            MathAsmStatement_LEFT_SIDE -> {
+            StatementSide_LEFT -> {
                 sen2.copy(base.sen1, plus2)
                 sen1.copy(base.sen1, plus1)
             }
 
-            MathAsmStatement_RIGHT_SIDE -> {
+            StatementSide_RIGHT -> {
                 sen1.copy(base.sen2, plus1)
                 sen2.copy(base.sen2, plus2)
             }
@@ -219,11 +197,11 @@ open class MathAsmStatement {
         this.grade= base.grade
         this.bidirectionalFlag = base.bidirectionalFlag
 
-        this.type = MathAsmStatement_THEOREM_TEMPLATE
+        this.type = StatementType_THEOREM_TEMPLATE
     }
 
     fun replace(side:Byte, base: MathAsmStatement, sel: LogicSelection) {
-        if (type != MathAsmStatement_THEOREM_TEMPLATE) throw MathAsmException(ErrorCode.NOT_A_THEOREM_TEMPLATE)
+        if (type != StatementType_THEOREM_TEMPLATE) throw MathAsmException(ErrorCode.NOT_A_THEOREM_TEMPLATE)
         val old: MathAsmSentence = base.getPhrase(side)
         val newPh: MathAsmSentence = base.getTheOther(side)
         val oldLen:Int = old.getLength()
@@ -235,7 +213,7 @@ open class MathAsmStatement {
     /*fun selectAndReplace(base: MathAsmStatement, move: LogicMove, sel: LogicSelection, check:Boolean) : Byte {
         val s:Byte = select_OLD(base, move, sel, check)
 
-        val side:Byte = if (move.dir == BaseDirection_LTR) MathAsmStatement_LEFT_SIDE else MathAsmStatement_RIGHT_SIDE
+        val side:Byte = if (move.dir == BaseDirection_LTR) StatementSide_LEFT else MathAsmStatement_RIGHT_SIDE
         if (s == LogicMove_LEGAL) replace(side, base, sel)
         return s
     }*/
@@ -245,29 +223,29 @@ open class MathAsmStatement {
 
     //region AXIOM CREATION
     fun setBridge(isBidirectional: Boolean, grade:Short, check:Boolean)  {
-        if (check && type != MathAsmStatement_AXIOM_TEMPLATE) throw MathAsmException(ErrorCode.NOT_AN_AXIOM_TEMPLATE)
+        if (check && type != StatementType_AXIOM_TEMPLATE) throw MathAsmException(ErrorCode.NOT_AN_AXIOM_TEMPLATE)
         this.bidirectionalFlag = isBidirectional
         this.grade = grade
     }
 
     /** Throws an exception if the sentence is not an axiom template. */
     fun addToFirst(w:Long) {
-        if (type != MathAsmStatement_AXIOM_TEMPLATE) {
+        if (type != StatementType_AXIOM_TEMPLATE) {
             throw MathAsmException(ErrorCode.NOT_AN_AXIOM_TEMPLATE, "Cannot add word to a sentence that is not an axtiom template.")
         }
         sen1.add(w)
     }
 
     fun addToSecond(w:Long) {
-        if (type != MathAsmStatement_AXIOM_TEMPLATE) {
+        if (type != StatementType_AXIOM_TEMPLATE) {
             throw MathAsmException(ErrorCode.NOT_AN_AXIOM_TEMPLATE, "Cannot add word to a sentence that is not an axtiom template.")
         }
         sen2.add(w)
     }
 
     fun stabilizeAxiom() : Boolean {
-        if (type != MathAsmStatement_AXIOM_TEMPLATE) return false
-        this.type = MathAsmStatement_AXIOM
+        if (type != StatementType_AXIOM_TEMPLATE) return false
+        this.type = StatementType_AXIOM
         return true
     }
     //endregion
@@ -322,7 +300,7 @@ open class MathAsmStatement {
     companion object {
         fun assertStartLegality(base: MathAsmStatement, side:Byte) {
             if ((base.type % 2) == 0) throw MathAsmException(ErrorCode.ILLEGAL_BASE)
-            if (side == MathAsmStatement_RIGHT_SIDE && !base.bidirectionalFlag) {
+            if (side == StatementSide_RIGHT && !base.bidirectionalFlag) {
                 throw MathAsmException(ErrorCode.ILLEGAL_DIRECTION)
             }
         }
@@ -340,7 +318,7 @@ open class MathAsmStatement {
         }
 
         fun setTheoremTemp(ret:MathAsmStatement, base: MathAsmStatement, side:Byte, check:Boolean) {
-            ret.type = MathAsmStatement_THEOREM_TEMPLATE
+            ret.type = StatementType_THEOREM_TEMPLATE
             ret.sen1 = MathAsmSentence(0)
             ret.sen2 = MathAsmSentence(0)
             ret.start(base, side, check, 0, 0)
@@ -349,7 +327,7 @@ open class MathAsmStatement {
         fun setupAxiom(target: MathAsmStatement, name:String, left: LongArray, right: LongArray, isBidirectional:Boolean, grade:Short) {
             //1. Setup metadata
             target.name = name
-            target.type = MathAsmStatement_AXIOM
+            target.type = StatementType_AXIOM
 
             //2. Setup sentences
             target.sen1 = MathAsmSentence(left, true)

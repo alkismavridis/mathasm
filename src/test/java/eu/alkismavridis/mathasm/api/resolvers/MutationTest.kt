@@ -2,11 +2,13 @@ package eu.alkismavridis.mathasm.api.resolvers
 
 import eu.alkismavridis.mathasm.api.controller.security.SecurityService
 import eu.alkismavridis.mathasm.api.test_utils.DummyFetchingEnvironment
+import eu.alkismavridis.mathasm.core.enums.MoveType_SAVE
+import eu.alkismavridis.mathasm.core.enums.StatementSide_BOTH
+import eu.alkismavridis.mathasm.core.enums.StatementSide_LEFT
+import eu.alkismavridis.mathasm.core.enums.StatementSide_RIGHT
 import eu.alkismavridis.mathasm.core.error.ErrorCode
 import eu.alkismavridis.mathasm.core.error.MathAsmException
-import eu.alkismavridis.mathasm.core.proof.*
-import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement_BOTH_SIDES
-import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement_LEFT_SIDE
+import eu.alkismavridis.mathasm.core.proof.LogicMove
 import eu.alkismavridis.mathasm.db.entities.*
 import eu.alkismavridis.mathasm.db.util_entities.BasicMathAsmState
 import eu.alkismavridis.mathasm.services.App
@@ -510,28 +512,28 @@ class MutationTest {
         )
 
         //3. Prepare a theorem proof
-        val moves = mutableListOf<LogicMoveEntity>()
+        val moves = mutableListOf<LogicMove>()
         //start with stmt1:      1 2 3 __0__ 4
-        moves.add(LogicMoveEntity.makeExtSelect(stmt1.id!!))
-        moves.add(LogicMoveEntity.makeStart(0, MathAsmStatement_BOTH_SIDES))
+        moves.add(LogicMove.makeStart(0, stmt1.id!!, null, StatementSide_BOTH))
 
         //replace with stmt2:      99 101 3 __0__ 4
-        moves.add(LogicMoveEntity.makeExtSelect(stmt2.id!!))
-        moves.add(LogicMoveEntity.makeReplaceAll(0, BaseDirection_LTR))
+        moves.add(LogicMove.makeReplaceAll(0, stmt2.id!!, null, StatementSide_LEFT))
 
         //replace with stmt3:      99 101 3 __0__ 500, 501, 502
-        moves.add(LogicMoveEntity.makeExtSelect(stmt3.id!!))
-        moves.add(LogicMoveEntity.makeReplaceAll(0, BaseDirection_RTL))
+        moves.add(LogicMove.makeReplaceAll(0, stmt3.id!!, null, StatementSide_RIGHT))
 
-        //save
-        moves.add(LogicMoveEntity.makeSave(0, theory.rootObj!!.id!!, "dummyTheorem"))
+        //save proofFromDb.moves
+        moves.add(LogicMove.makeSave(0, theory.rootObj!!.id!!, "dummyTheorem"))
 
         //4. Make the request
-        val result = mutation.createTheorem(moves, DummyFetchingEnvironment(user))
+        val result = mutation.uploadProof(moves, DummyFetchingEnvironment(user))
 
 
         //5. Assert result
-        //TODO assert result
+        assertEquals(1, result.size)
+        assertEquals(theory.rootObj!!.id!!, result[0].parentId)
+        assertArrayEquals(longArrayOf(99L, 101L, 3L), result[0].theorem.sen1.getWords())
+        assertArrayEquals(longArrayOf(500L, 501L, 502L), result[0].theorem.sen2.getWords())
 
         //6. Assert statement
         val obj = app.dirRepo.findById(theory.rootObj!!.id!!, 3).orElse(null)
@@ -546,11 +548,116 @@ class MutationTest {
         assertArrayEquals(longArrayOf(500L, 501L, 502L), obj.statements[0].sen2.getWords())
 
         //7. Assert proof
-        val proofFromDb = obj.statements[0].proof!!
+        val proofFromDb = app.proofRepo.findById(obj.statements[0].proof!!.id, 2).orElse(null)
         assertNotNull(proofFromDb)
         assertNotNull(proofFromDb.id)
         assertEquals(moves.size, proofFromDb.moves.size)
         for (mv in proofFromDb.moves) assertNotNull(mv.id)
+
+        //7b. Assert move relationships
+        proofFromDb.moves.sortBy { it.index }
+        assertEquals(stmt1.id!!, proofFromDb.moves[0].extBase!!.id)
+        assertEquals(stmt2.id!!, proofFromDb.moves[1].extBase!!.id)
+        assertEquals(stmt3.id!!, proofFromDb.moves[2].extBase!!.id)
+    }
+
+    /** On this test, we will attempt to save two theorems at once (same targetId) */
+    @Test
+    fun createTheorem2Test() {
+        //1. Make sure that a clean theory exists
+        app.dirRepo.deleteAll()
+        app.statementRepo.deleteAll()
+        app.theoryRepo.deleteAll()
+        app.symbolRepo.deleteAll()
+        app.postConstruct()
+
+        val theory = app.theoryRepo.findAll().iterator().next()!!
+
+
+        //2. Create a couple of axioms
+        val stmt1 = app.statementRepo.save(
+                MathAsmStatementEntity.createAxiom("name1", longArrayOf(1,2,3), longArrayOf(4), true, 0).withAuthor(user)
+        )
+        val stmt2 = app.statementRepo.save(
+                MathAsmStatementEntity.createAxiom("name2", longArrayOf(1,2), longArrayOf(99, 101), true, 0).withAuthor(user)
+        )
+        val stmt3 = app.statementRepo.save(
+                MathAsmStatementEntity.createAxiom("name3", longArrayOf(500, 501, 502), longArrayOf(4), true, 0).withAuthor(user)
+        )
+
+        //3. Prepare a theorem proof
+        val moves = mutableListOf<LogicMove>()
+        //start with stmt1:      1 2 3 __0__ 4
+        moves.add(LogicMove.makeStart(0, stmt1.id!!, null, StatementSide_BOTH))
+
+        //replace with stmt2:      99 101 3 __0__ 4
+        moves.add(LogicMove.makeReplaceAll(0, stmt2.id!!, null, StatementSide_LEFT))
+
+        //replace with stmt3:      99 101 3 __0__ 500, 501, 502
+        moves.add(LogicMove.makeReplaceAll(0, stmt3.id!!, null, StatementSide_RIGHT))
+
+        //save proofFromDb.moves
+        moves.add(LogicMove.makeSave(0, theory.rootObj!!.id!!, "dummyTheorem"))
+
+
+        //start with stmt3:      500 501 502 __0__ 4
+        moves.add(LogicMove.makeStart(0, stmt3.id!!, null, StatementSide_BOTH))
+        //replace with stmt1:      500 501 502 __0__ 1 2 3
+        moves.add(LogicMove.makeReplaceAll(0, stmt1.id!!, null, StatementSide_RIGHT))
+
+        //save
+        moves.add(LogicMove.makeSave(0, theory.rootObj!!.id!!, "dummyTheorem2"))
+
+        //4. Make the request
+        val result = mutation.uploadProof(moves, DummyFetchingEnvironment(user))
+
+
+        //5. Assert result
+        assertEquals(2, result.size)
+        assertEquals(theory.rootObj!!.id!!, result[0].parentId)
+        assertArrayEquals(longArrayOf(99L, 101L, 3L), result[0].theorem.sen1.getWords())
+        assertArrayEquals(longArrayOf(500L, 501L, 502L), result[0].theorem.sen2.getWords())
+        assertEquals("dummyTheorem", result[0].theorem.name)
+
+        assertEquals(theory.rootObj!!.id!!, result[1].parentId)
+        assertArrayEquals(longArrayOf(500L, 501L, 502L), result[1].theorem.sen1.getWords())
+        assertArrayEquals(longArrayOf(1L, 2L, 3L), result[1].theorem.sen2.getWords())
+        assertEquals("dummyTheorem2", result[1].theorem.name)
+
+        //6. Assert generated statement
+        val obj = app.dirRepo.findById(theory.rootObj!!.id!!, 3).orElse(null)
+        assertEquals(2, obj.statements.size)
+
+        var stmtToAssert = obj.statements.find { it.name == "dummyTheorem" }
+        assertNotNull(stmtToAssert!!.id)
+        assertEquals(user, stmtToAssert.author)
+        assertTrue(Instant.now().epochSecond - stmtToAssert.createdAt!!.epochSecond < 5)
+        assertEquals(0.toShort(), stmtToAssert.grade)
+        assertTrue(stmtToAssert.bidirectionalFlag)
+        assertArrayEquals(longArrayOf(99L, 101L, 3L), stmtToAssert.sen1.getWords())
+        assertArrayEquals(longArrayOf(500L, 501L, 502L), stmtToAssert.sen2.getWords())
+
+        stmtToAssert = obj.statements.find { it.name == "dummyTheorem2" }
+        assertNotNull(stmtToAssert!!.id)
+        assertEquals(user, stmtToAssert.author)
+        assertTrue(Instant.now().epochSecond - stmtToAssert.createdAt!!.epochSecond < 5)
+        assertEquals(0.toShort(), stmtToAssert.grade)
+        assertTrue(stmtToAssert.bidirectionalFlag)
+        assertArrayEquals(longArrayOf(500L, 501L, 502L), stmtToAssert.sen1.getWords())
+        assertArrayEquals(longArrayOf(1L, 2L, 3L), stmtToAssert.sen2.getWords())
+
+        //7. Assert proof
+        val proofFromDb = app.proofRepo.findById(obj.statements[0].proof!!.id, 2).orElse(null)
+        assertNotNull(proofFromDb)
+        assertNotNull(proofFromDb.id)
+        assertEquals(moves.size, proofFromDb.moves.size)
+        for (mv in proofFromDb.moves) assertNotNull(mv.id)
+
+        //7b. Assert move relationships
+        proofFromDb.moves.sortBy { it.index }
+        assertEquals(stmt1.id!!, proofFromDb.moves[0].extBase!!.id)
+        assertEquals(stmt2.id!!, proofFromDb.moves[1].extBase!!.id)
+        assertEquals(stmt3.id!!, proofFromDb.moves[2].extBase!!.id)
     }
 
 
@@ -583,26 +690,23 @@ class MutationTest {
         )
 
         //3. Prepare a theorem proof
-        val moves = mutableListOf<LogicMoveEntity>()
+        val moves = mutableListOf<LogicMove>()
         //start with stmt1:      1 2 3 __0__ 4
-        moves.add(LogicMoveEntity.makeExtSelect(stmt1.id!!))
-        moves.add(LogicMoveEntity.makeStart(0, MathAsmStatement_BOTH_SIDES))
+        moves.add(LogicMove.makeStart(0, stmt1.id!!, null, StatementSide_BOTH))
 
         //replace with stmt2:      99 101 3 __0__ 4
-        moves.add(LogicMoveEntity.makeExtSelect(stmt2.id!!))
-        moves.add(LogicMoveEntity.makeReplaceAll(0, BaseDirection_LTR))
+        moves.add(LogicMove.makeReplaceAll(0, stmt2.id!!, null, StatementSide_LEFT))
 
         //replace with stmt3:      99 101 3 __0__ 500, 501, 502
-        moves.add(LogicMoveEntity.makeExtSelect(stmt3.id!!))
-        moves.add(LogicMoveEntity.makeReplaceAll(0, BaseDirection_RTL))
+        moves.add(LogicMove.makeReplaceAll(0, stmt3.id!!, null, StatementSide_RIGHT))
 
         //save
-        moves.add(LogicMoveEntity.makeSave(0, theory.rootObj!!.id!!, "dummyTheorem"))
+        moves.add(LogicMove.makeSave(0, theory.rootObj!!.id!!, "dummyTheorem"))
 
 
         //4. Null user
         try {
-            mutation.createTheorem(moves, DummyFetchingEnvironment(null))
+            mutation.uploadProof(moves, DummyFetchingEnvironment(null))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -613,7 +717,7 @@ class MutationTest {
         //5. User without permission to create dirs
         user.rights = UserRights_MIN
         try {
-            mutation.createTheorem(moves, DummyFetchingEnvironment(user))
+            mutation.uploadProof(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -624,36 +728,36 @@ class MutationTest {
 
 
         //6. Test invalid move (non existing parent id on save)
-        moves.find{ e -> e.moveType == LOGIC_MOVE_SAVE}!!.parentId = 9999L
+        moves.find{ e -> e.moveType == MoveType_SAVE}!!.parentId = 9999L
         try {
-            mutation.createTheorem(moves, DummyFetchingEnvironment(user))
+            mutation.uploadProof(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
             assertEquals(ErrorCode.OBJECT_NOT_FOUND, e.code)
             assertEquals("Object with id 9999 not found.", e.message)
         }
-        moves.find{ e -> e.moveType == LOGIC_MOVE_SAVE}!!.parentId = theory.rootObj!!.id!!
+        moves.find{ e -> e.moveType == MoveType_SAVE}!!.parentId = theory.rootObj!!.id!!
 
         //7. Test invalid move
-        moves[3] = LogicMoveEntity.makeReplaceOne(0, MathAsmStatement_LEFT_SIDE, BaseDirection_LTR, 999)
+        moves[2] = LogicMove.makeReplaceOneInLeft(0, stmt3.id!!, null, StatementSide_LEFT, 999)
         try {
-            mutation.createTheorem(moves, DummyFetchingEnvironment(user))
+            mutation.uploadProof(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
             assertEquals(ErrorCode.MATCH_FAILED, e.code)
         }
-        moves[3] = LogicMoveEntity.makeReplaceAll(0, BaseDirection_RTL)
+        moves[2] = LogicMove.makeReplaceAll(0, stmt3.id!!, null, StatementSide_RIGHT)
 
         //5. Save with a name of an existing object
         val state = BasicMathAsmState(app)
         try {
-            moves.find{ e -> e.moveType == LOGIC_MOVE_SAVE}!!.apply {
+            moves.find{ e -> e.moveType == MoveType_SAVE}!!.apply {
                 name = "dir1_1_1"
                 parentId = state.dir1_1.id!!
             }
-            mutation.createTheorem(moves, DummyFetchingEnvironment(user))
+            mutation.uploadProof(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -663,11 +767,11 @@ class MutationTest {
 
         //6. Save with a name of an existing statement
         try {
-            moves.find{ e -> e.moveType == LOGIC_MOVE_SAVE}!!.apply {
+            moves.find{ e -> e.moveType == MoveType_SAVE}!!.apply {
                 name = "stmt1_1a"
                 parentId = state.dir1_1.id!!
             }
-            mutation.createTheorem(moves, DummyFetchingEnvironment(user))
+            mutation.uploadProof(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown")        }
         catch (e: MathAsmException) {
             assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)

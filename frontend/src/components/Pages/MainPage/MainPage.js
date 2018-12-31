@@ -59,9 +59,7 @@ class MainPage extends Component {
         return (
             <div className="Globals_page MainPage_root">
                 <GlobalHeader user={this.props.user}/>
-                <TheoryExplorer
-                    onChangeDir={this.handleCurrentDirChange.bind(this)}
-                    style={{marginTop: "10px", flex:1}}/>
+                <TheoryExplorer style={{marginTop: "10px", flex:1}}/>
             </div>
         );
     }

@@ -1,0 +1,13 @@
+.ProofViewer_root {
+  padding:8px 16px;
+  overflow: auto;
+}
+
+.ProofViewer_move {
+  color:gray;
+  cursor: pointer;
+
+  &.ProofViewer_selected {
+    color:red;
+  }
+}

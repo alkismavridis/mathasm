@@ -24,6 +24,7 @@ const SAVED_COMMANDS = [
     {id:"3", name:"Watch all users", query:"match (o:user)-[r]-(f) return o,r,f;"},
     {id:"4", name:"File system", query:"match (o:dir)-[r]-(f:dir) return o,r,f;"},
     {id:"5", name:"Whole DB", query:"match (o)-[r]-(f) return o,r,f;"},
+    {id:"5", name:"Update Node", query:"MATCH (n) WHERE ID(n)=39 SET n.type = 65 return n;"},
 ];
 
 class DbVisualisationPage extends Component {

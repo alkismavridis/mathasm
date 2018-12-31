@@ -4,9 +4,11 @@ import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import eu.alkismavridis.mathasm.api.GraphqlContext
 import eu.alkismavridis.mathasm.api.controller.security.SecurityService
 import eu.alkismavridis.mathasm.api.types.LoginResponse
+import eu.alkismavridis.mathasm.api.types.SavedTheoremInfo
 import eu.alkismavridis.mathasm.services.App
 import eu.alkismavridis.mathasm.core.error.ErrorCode
 import eu.alkismavridis.mathasm.core.error.MathAsmException
+import eu.alkismavridis.mathasm.core.proof.LogicMove
 import eu.alkismavridis.mathasm.core.proof.ProofExecutor
 import eu.alkismavridis.mathasm.core.proof.TheoremGenerator
 import eu.alkismavridis.mathasm.core.proof.TheoremSaver
@@ -152,15 +154,14 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
         return newAxiom
     }
 
-    fun createTheorem(moves:MutableList<LogicMoveEntity>, env:DataFetchingEnvironment) : MathAsmProof {
+    fun uploadProof(moves:MutableList<LogicMove>, env:DataFetchingEnvironment) : List<SavedTheoremInfo> {
         //1. Check user permissions
         val requestingUser = env.getContext<GraphqlContext>().user
         if (requestingUser==null) throw MathAsmException(ErrorCode.UNAUTHORIZED, "No session.")
         if (!requestingUser.canCreateTheorems()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to create theorems.")
 
-
         //2. Create the executor environment
-        val theoremList = mutableListOf<MathAsmStatementEntity>()
+        val theoremList = mutableListOf<SavedTheoremInfo>()
         val proofExecutor = ProofExecutor(
             java.util.function.Function { id -> app.statementRepo.findById(id, 1).orElse(null) },
             TheoremSaver{ statementToSave, parentId, name -> ProofUtils.persistTheorem(theoremList, statementToSave, parentId, name, requestingUser, app) },
@@ -168,21 +169,17 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
         )
 
         //3. Execute the moves.
-        var index = 0
-        for (move: LogicMoveEntity in moves) {
-            move.index = index++
-            proofExecutor.executeMove(ProofUtils.toLogicMove(move))
-        }
+        for (move: LogicMove in moves) proofExecutor.executeMove(move)
 
         //4. Create the proof and save it in DB
-        val proof = MathAsmProof(moves)
-        app.proofRepo.save(proof, 1)
+        val proof = MathAsmProof(moves.mapIndexed{index,lm -> LogicMoveEntity(lm, index, proofExecutor.getBaseCache())}.toMutableList())
+        app.proofRepo.save(proof, 2)
 
         //5. Associate all theorems with their proof
-        theoremList.forEach { it.proof = proof }
-        app.statementRepo.saveAll(theoremList)
+        theoremList.forEach { it.theorem.proof = proof }
+        app.statementRepo.saveAll(theoremList.map { it.theorem })
 
-        return proof
+        return theoremList
     }
     //endregion
 }

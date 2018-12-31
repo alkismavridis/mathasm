@@ -5,10 +5,23 @@ import "./TheoremCreator.scss";
 import Statement from "../ReusableComponents/Statement/Statement";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import StatementUtils from "../../services/symbol/StatementUtils";
-import BaseDirection from "../../constants/BaseDirection";
 import SelectionType from "../../constants/SelectionType";
 import StatementSide from "../../constants/StatementSide";
 import QuickInfoService from "../../services/QuickInfoService";
+import MathAsmProof from "../../entities/MathAsmProof";
+import MathAsmMove from "../../entities/MathAsmMove";
+import ProofViewer from "./ProofViewer/ProofViewer";
+import ModalService from "../../services/ModalService";
+import GraphQL from "../../services/GraphQL";
+
+const q = {
+    UPLOAD_PROOF: `mutation($moves:[LogicMove!]!) {
+        uploadProof(moves:$moves) {
+            parentId
+            theorem {id, name, type, left, right, isBidirectional, grade}
+        }
+    }`
+};
 
 export default class TheoremCreator extends Component {
     //region STATIC
@@ -18,7 +31,7 @@ export default class TheoremCreator extends Component {
         parentDir:PropTypes.object.isRequired,
 
         //actions
-        onSetCurrentDir:PropTypes.func,
+        onCreateStatements:PropTypes.func, //accepts an array of SavedTheoremInfo objects: the newly created theorems.
 
         //styling
         style: PropTypes.object,
@@ -37,10 +50,13 @@ export default class TheoremCreator extends Component {
 
         //selection
         base:null,
-        baseDir:BaseDirection.LTR,
-        occurrenceLeft:[], //notNull
-        occurrenceRight:[], //notNull
+        baseSide:StatementSide.LEFT,
+        leftMatches:[], //notNull
+        rightMatches:[], //notNull
         selectionType:SelectionType.NONE,
+
+        //proof
+        proof:MathAsmProof.emptyProof(),
     };
     //endregion
 
@@ -69,11 +85,9 @@ export default class TheoremCreator extends Component {
         const changes = {base: base};
 
         //2. Select either according to a base, or choose an empty selection if no selection is possible.
-        const currentTarget = this.state.selectedTargetIndex==null?
-            null :
-            this.state.targets[this.state.selectedTargetIndex];
+        const currentTarget = this.getSelectedTarget();
 
-        if (base && currentTarget) TheoremCreator.addDefaultSelectionFor(base, currentTarget, BaseDirection.LTR, changes);
+        if (base && currentTarget) TheoremCreator.addDefaultSelectionFor(base, currentTarget, StatementSide.LEFT, changes);
         else TheoremCreator.addEmptySelection(changes);
 
         //3. Update the component
@@ -87,9 +101,9 @@ export default class TheoremCreator extends Component {
      * sets up an empty-selection field set into the given object.
      * */
     static addEmptySelection(changes) {
-        changes.baseDir = BaseDirection.LTR;
-        changes.occurrenceLeft = [];
-        changes.occurrenceRight = [];
+        changes.baseSide = StatementSide.LEFT;
+        changes.leftMatches = [];
+        changes.rightMatches = [];
 
         changes.selectionType = SelectionType.NONE;
     }
@@ -97,14 +111,14 @@ export default class TheoremCreator extends Component {
     /** Base and target and changes are considered NOT NULL. */
     static addDefaultSelectionFor(base, target, direction, changes) {
         //1. Find all occurrences
-        changes.baseDir = direction;
+        changes.baseSide = direction;
 
-        const sentenceToSearch = direction===BaseDirection.LTR? base.left : base.right;
-        changes.occurrenceLeft = StatementUtils.findMatches(target.left, sentenceToSearch);
-        changes.occurrenceRight = StatementUtils.findMatches(target.right, sentenceToSearch);
+        const sentenceToSearch = direction===StatementSide.LEFT? base.left : base.right;
+        changes.leftMatches = StatementUtils.findMatches(target.left, sentenceToSearch, false);
+        changes.rightMatches = StatementUtils.findMatches(target.right, sentenceToSearch, false);
 
         changes.selectionType = StatementUtils.getDefaultSelectionTypeFor(base, target);
-        StatementUtils.setupSelection(changes.occurrenceLeft, changes.occurrenceRight, changes.selectionType);
+        StatementUtils.setupSelection(changes.leftMatches, changes.rightMatches, changes.selectionType);
     }
 
     /**
@@ -118,8 +132,7 @@ export default class TheoremCreator extends Component {
     addSelectionMove(selectionType, params, changes) {
         const base = this.state.base;
         const target = this.getSelectedTarget();
-        if (!StatementUtils.isSelectionLegal(selectionType, params, base, target, this.state.occurrenceLeft, this.state.occurrenceRight)) {
-            QuickInfoService.makeWarning("Illegal selection detected!");
+        if (!StatementUtils.isSelectionLegal(selectionType, params, base, target, this.state.leftMatches, this.state.rightMatches)) {
             console.log("ILLEGAL SELECTION: ", selectionType, params, base, target);
             return false;
         }
@@ -129,9 +142,9 @@ export default class TheoremCreator extends Component {
         changes.selectionType = selectionType;
 
         //2. Update occurrences.
-        changes.occurrenceLeft = this.state.occurrenceLeft;
-        changes.occurrenceRight = this.state.occurrenceRight;
-        StatementUtils.setupSelection(changes.occurrenceLeft, changes.occurrenceRight, changes.selectionType, params);
+        changes.leftMatches = this.state.leftMatches;
+        changes.rightMatches = this.state.rightMatches;
+        StatementUtils.setupSelection(changes.leftMatches, changes.rightMatches, changes.selectionType, params);
         return true;
     }
 
@@ -139,7 +152,7 @@ export default class TheoremCreator extends Component {
     getBaseSentenceLength() {
         if (!this.state.base) return 0;
 
-        return this.state.baseDir===BaseDirection.LTR?
+        return this.state.baseSide===StatementSide.LEFT?
             this.state.base.left.length :
             this.state.base.right.length;
     }
@@ -148,6 +161,30 @@ export default class TheoremCreator extends Component {
     getSelectedTarget() {
         if (this.state.selectedTargetIndex==null) return null;
         return this.state.targets[this.state.selectedTargetIndex];
+    }
+
+    getSingleReplacementPos() {
+        switch(this.state.selectionType){
+            case SelectionType.ONE_IN_LEFT: {
+                const match = this.state.leftMatches.find(m => m.selected);
+                return match? match.index : null;
+            }
+
+
+            case SelectionType.ONE_IN_RIGHT: {
+                const match = this.state.rightMatches.find(m => m.selected);
+                return match? match.index : null;
+            }
+
+            default: return null;
+        }
+    }
+
+    /** Returns a base that is guaranteed to remain immutable. Useful for building proof */
+    getImmutableBase() {
+        if (!this.state.base) return null;
+        if (this.state.base._internalId!=null) return StatementUtils.clone(this.state.base, StatementSide.BOTH, this.state.base._internalId);
+        return this.state.base;
     }
     //endregion
 
@@ -162,12 +199,12 @@ export default class TheoremCreator extends Component {
         //1. Setup the changes object
         const changes = {
             selectedTargetIndex:index,
-            baseDir:BaseDirection.LTR,
+            baseSide:StatementSide.LEFT,
         };
 
         //2. Append the changes
         if (!this.state.base || index==null) TheoremCreator.addEmptySelection(changes);
-        else TheoremCreator.addDefaultSelectionFor(this.state.base, this.state.targets[index], BaseDirection.LTR, changes);
+        else TheoremCreator.addDefaultSelectionFor(this.state.base, this.state.targets[index], StatementSide.LEFT, changes);
 
         //3. Update the state
         this.setState(changes);
@@ -178,14 +215,14 @@ export default class TheoremCreator extends Component {
      * */
     setBaseDir(newDir) {
         //1. Check if conditions are correct.
-        if (!this.state.base || this.state.selectedTargetIndex==null) return;
+        const target = this.getSelectedTarget();
+        if (!this.state.base || !target) return;
 
-        const target = this.state.targets[this.state.selectedTargetIndex];
         if (!StatementUtils.isDirectionLegal(this.state.base, target, newDir)) return;
 
 
         //2. Setup the changes object
-        const changes = {baseDir:newDir};
+        const changes = {baseSide:newDir};
         TheoremCreator.addDefaultSelectionFor(this.state.base, target, newDir, changes);
 
         //3. Update the component
@@ -194,7 +231,7 @@ export default class TheoremCreator extends Component {
 
     changeSelectionType(newSelectionType) {
         //1. Check conditions
-        if (this.state.occurrenceLeft.length===0 && this.state.occurrenceRight.length===0) return;
+        if (this.state.leftMatches.length===0 && this.state.rightMatches.length===0) return;
 
         //2. Gather the changes
         const changes = {};
@@ -207,14 +244,16 @@ export default class TheoremCreator extends Component {
     /** Attempt to switch to either LEFT or RIGHT selection. */
     switchToSelectSentenceMode() {
         //1. Check conditions
-        if (this.state.occurrenceLeft.length===0 && this.state.occurrenceRight.length===0) return;
+        if (this.state.leftMatches.length===0 && this.state.rightMatches.length===0) return;
 
         //2. Try to set LEFT selection
         const changes = {};
         let success = this.addSelectionMove(SelectionType.LEFT, null, changes);
 
         //3. If this fails, try the RIGHT one
-        if (!success) this.addSelectionMove(SelectionType.RIGHT, null, changes);
+        if (!success) success = this.addSelectionMove(SelectionType.RIGHT, null, changes);
+        if (!success) QuickInfoService.makeWarning("Illegal move: Could not perform sentence selection.");
+
 
         //4. Update the component
         this.setState(changes);
@@ -222,14 +261,15 @@ export default class TheoremCreator extends Component {
 
     switchToSingleSelectionMode() {
         //1. Check conditions
-        if (this.state.occurrenceLeft.length===0 && this.state.occurrenceRight.length===0) return;
+        if (this.state.leftMatches.length===0 && this.state.rightMatches.length===0) return;
 
         //2. Try to set ONE_IN_LEFT selection
         const changes = {};
         let success = this.addSelectionMove(SelectionType.ONE_IN_LEFT, null, changes);
 
         //3. If this fails, try the ONE_IN_RIGHT
-        if (!success) this.addSelectionMove(SelectionType.ONE_IN_RIGHT, null, changes);
+        if (!success) success = this.addSelectionMove(SelectionType.ONE_IN_RIGHT, null, changes);
+        if (!success) QuickInfoService.makeWarning("Illegal move: Could not perform single selection.");
 
         //4. Update the component
         this.setState(changes);
@@ -238,7 +278,7 @@ export default class TheoremCreator extends Component {
     /** Moves the selection, staying on the current selectionType */
     moveSelection(step) {
         //1. Check conditions
-        if (this.state.occurrenceLeft.length===0 && this.state.occurrenceRight.length===0) return;
+        if (this.state.leftMatches.length===0 && this.state.rightMatches.length===0) return;
 
         //2. Gather the changes
         const changes = {};
@@ -254,14 +294,14 @@ export default class TheoremCreator extends Component {
                 break;
 
             case SelectionType.ONE_IN_LEFT: {
-                const currentlySelectedMatchIndex = this.state.occurrenceLeft.findIndex(m => m.selected);
+                const currentlySelectedMatchIndex = this.state.leftMatches.findIndex(m => m.selected);
                 if (currentlySelectedMatchIndex===-1) break;
                 const newIndex = step>0?
                     currentlySelectedMatchIndex+1 :
                     currentlySelectedMatchIndex-1;
 
                 if (newIndex<0) break; //left-most occurrence. Cannot go more left.
-                else if (newIndex>=this.state.occurrenceLeft.length) {
+                else if (newIndex>=this.state.leftMatches.length) {
                     this.addSelectionMove(SelectionType.ONE_IN_RIGHT, {index:0}, changes);
                 }
                 else this.addSelectionMove(SelectionType.ONE_IN_LEFT, {index:newIndex}, changes);
@@ -269,16 +309,16 @@ export default class TheoremCreator extends Component {
             }
 
             case SelectionType.ONE_IN_RIGHT: {
-                const currentlySelectedMatchIndex = this.state.occurrenceRight.findIndex(m => m.selected);
+                const currentlySelectedMatchIndex = this.state.rightMatches.findIndex(m => m.selected);
                 if (currentlySelectedMatchIndex===-1) break;
                 const newIndex = step>0?
                     currentlySelectedMatchIndex+1 :
                     currentlySelectedMatchIndex-1;
 
                 if (newIndex<0) {
-                    this.addSelectionMove(SelectionType.ONE_IN_LEFT, {index:this.state.occurrenceLeft.length-1}, changes);
+                    this.addSelectionMove(SelectionType.ONE_IN_LEFT, {index:this.state.leftMatches.length-1}, changes);
                 }
-                else if (newIndex>=this.state.occurrenceRight.length) break; //right-most occurrence. Cannot go more right.
+                else if (newIndex>=this.state.rightMatches.length) break; //right-most occurrence. Cannot go more right.
                 else this.addSelectionMove(SelectionType.ONE_IN_RIGHT, {index:newIndex}, changes);
                 break;
             }
@@ -300,53 +340,84 @@ export default class TheoremCreator extends Component {
             return;
         }
 
-        //2. Setup the changes object and perform the cloning
-        const newTarget = StatementUtils.clone(this.state.base, sideToClone);
+        //2. Construct the logic move
+        const targetToReplace = this.getSelectedTarget();
+        const newInternalId = targetToReplace==null?
+            this.state.targets.reduce((prev, el) => Math.max(prev, el._internalId), 0) + 1 :
+            targetToReplace._internalId;
+
+        const cloneOfTargetToReplace = targetToReplace? StatementUtils.clone(targetToReplace, StatementSide.BOTH, targetToReplace._internalId) : null;
+        const move = MathAsmMove.newStartMove(
+            newInternalId,
+            this.getImmutableBase(),
+            sideToClone,
+            cloneOfTargetToReplace
+        );
+        MathAsmProof.addMove(this.state.proof, move);
+
+
+        //3. Setup the changes object and perform the cloning
+        const newTarget = StatementUtils.clone(this.state.base, sideToClone, newInternalId);
 
         if (this.state.selectedTargetIndex==null) { //add new clone to list
             const changes = {
+                proof:this.state.proof,
                 targets:[...this.state.targets, newTarget],
                 selectedTargetIndex:this.state.targets.length //we will select the newly created statement
             };
-            TheoremCreator.addDefaultSelectionFor(this.state.base, newTarget, BaseDirection.LTR, changes);
+            TheoremCreator.addDefaultSelectionFor(this.state.base, newTarget, StatementSide.LEFT, changes);
             this.setState(changes);
         }
         else { //overwrite selected target
             const newArray = this.state.targets.slice();
             newArray[this.state.selectedTargetIndex] = newTarget;
-            this.setState({targets:newArray});
+            this.setState({targets:newArray, proof:this.state.proof});
         }
     }
 
     /** Performs the replacement based on the current selection. */
     performReplacement() {
         //1. Check conditions
-        if (!this.state.base) return;
+        if (!this.state.base || this.state.selectionType===SelectionType.NONE) return;
 
         const target = this.getSelectedTarget();
         if (!target) return;
 
-        //2. Perform the replacement
-        const changes = {};
-        const oldSentence = this.state.baseDir===BaseDirection.LTR? this.state.base.left : this.state.base.right;
-        const newSentence = this.state.baseDir===BaseDirection.LTR? this.state.base.right : this.state.base.left;
-        StatementUtils.performReplacement(target, oldSentence, newSentence, this.state.occurrenceLeft, this.state.occurrenceRight);
+
+        //2. Construct the logic move
+        const move = MathAsmMove.newReplaceMove(
+            target._internalId,
+            this.getImmutableBase(),
+            this.state.baseSide,
+            this.state.selectionType,
+            this.getSingleReplacementPos()
+        );
+        MathAsmProof.addMove(this.state.proof, move);
+
+        //3. Perform the replacement
+        const changes = {
+            proof:this.state.proof
+        };
+
+        const oldSentence = this.state.baseSide===StatementSide.LEFT? this.state.base.left : this.state.base.right;
+        const newSentence = this.state.baseSide===StatementSide.LEFT? this.state.base.right : this.state.base.left;
+        StatementUtils.performReplacement(target, oldSentence, newSentence, this.state.leftMatches, this.state.rightMatches);
         changes.templates = this.state.templates;
 
-        //3. Reset the selection
-        TheoremCreator.addDefaultSelectionFor(this.state.base, target, this.state.baseDir, changes);
+        //4. Reset the selection
+        TheoremCreator.addDefaultSelectionFor(this.state.base, target, this.state.baseSide, changes);
 
-        //3. Update the component
+        //5. Update the component
         this.setState(changes);
     }
 
+    /** The user could interact with this component with the keyboard too. Here are the controls: */
     handleKeyPress(e) {
         console.log(e.keyCode);
 
         switch (e.keyCode) {
-
             case 32: //space bar (Action: switch base direction)
-                this.setBaseDir(this.state.baseDir===BaseDirection.LTR? BaseDirection.RTL : BaseDirection.LTR);
+                this.setBaseDir(this.state.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT);
                 break;
 
             case 13: //enter key (Action: perform replacement)
@@ -404,11 +475,69 @@ export default class TheoremCreator extends Component {
                 this.cloneBase(StatementSide.RIGHT);
                 break;
 
+            case 80: //"p" key (Action: persist selected template)
+                this.handleSaveClicked( );
+                break;
+
             case 66: //"b" key (Action: use target as base)
                 const selectedTarget = this.getSelectedTarget();
                 if (selectedTarget) this.setBase(selectedTarget);
                 break;
+
+            case 27: //escape key (Action: Select none)
+                this.changeSelectionType(SelectionType.NONE);
+                break;
         }
+    }
+
+    /** Hello world. */
+    goToMove(index) {
+        console.log("I go to move", index);
+        const moveToGoTo = this.state.proof.moves[index];
+
+        MathAsmProof.goToMove(this.state.proof, index, this.state.targets);
+
+        const selectedTargetIndex = this.state.targets.findIndex(t => t._internalId === moveToGoTo.targetId);
+        this.setState({
+            proof:this.state.proof,
+            targets:this.state.targets,
+            selectedTargetIndex:selectedTargetIndex
+        });
+    }
+
+    handleSaveClicked() {
+        const target = this.getSelectedTarget();
+        if (target==null) return;
+
+        const onSave = (modalId, name) => {
+            if (!name) return;
+
+            //1. Create the save move
+            const move = MathAsmMove.newSaveMove(target._internalId, name, this.props.parentDir.id);
+            MathAsmProof.addMove(this.state.proof, move);
+            this.setState({proof: this.state.proof});
+
+            //2. Perform the replacement
+            ModalService.removeModal(modalId);
+        };
+
+        ModalService.showTextGetter("Save under "+this.props.parentDir.name, "Theorem's name...", onSave);
+    }
+
+    /** Uploads the proof to the server. */
+    uploadProof() {
+        if(this.state.proof.moves.length===0) return;
+
+        const dataToUpload = MathAsmProof.toBackendProof(this.state.proof);
+        GraphQL.run(q.UPLOAD_PROOF, {moves:dataToUpload})
+            .then(resp => {
+                QuickInfoService.makeSuccess("Proof successfully uploaded.");
+                if (this.props.onCreateStatements) this.props.onCreateStatements(resp.uploadProof);
+            })
+            .catch(error => {
+                QuickInfoService.makeError("Error while uploading proof. Please note that parts of the proof may have been successfully saved.");
+                console.log(error);
+            });
     }
     //endregion
 
@@ -432,8 +561,8 @@ export default class TheoremCreator extends Component {
             <Statement
                 symbolMap={this.props.symbolMap}
                 statement={target}
-                leftMatches={isSelected? this.state.occurrenceLeft : null}
-                rightMatches={isSelected? this.state.occurrenceRight : null}
+                leftMatches={isSelected? this.state.leftMatches : null}
+                rightMatches={isSelected? this.state.rightMatches : null}
                 matchLength={isSelected? this.getBaseSentenceLength() : 0}
                 onClick={changeHandler}/>
         </div>;
@@ -448,9 +577,9 @@ export default class TheoremCreator extends Component {
         return <div style={{margin:"16px 0"}}>
             <button
                 className="Globals_roundBut"
-                title="Change dir (space)"
+                title="Change base dir (space)"
                 style={{backgroundColor: "green", width: "32px", height: "32px", fontSize: "18px", marginRight:"32px"}}
-                onClick={()=>this.setBaseDir(this.state.baseDir===BaseDirection.LTR? BaseDirection.RTL : BaseDirection.LTR)}>
+                onClick={()=>this.setBaseDir(this.state.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT)}>
                 <FontAwesomeIcon icon="exchange-alt"/>
             </button>
 
@@ -479,7 +608,7 @@ export default class TheoremCreator extends Component {
             <button
                 className="Globals_roundBut"
                 title="Move selection left (left arrow)"
-                style={{backgroundColor: "#e2b228", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                style={{backgroundColor: "#e2b228", width: "24px", height: "24px", fontSize: "18px", margin:"0 4px"}}
                 onClick={()=>this.moveSelection(-1)}>
                 <FontAwesomeIcon icon="caret-left"/>
             </button>
@@ -507,7 +636,7 @@ export default class TheoremCreator extends Component {
             <button
                 className="Globals_roundBut"
                 title="Move selection right (right arrow)"
-                style={{backgroundColor: "#e2b228", width: "32px", height: "32px", fontSize: "18px", margin:"0 32px 0 4px"}}
+                style={{backgroundColor: "#e2b228", width: "24px", height: "24px", fontSize: "18px", margin:"0 32px 0 4px"}}
                 onClick={()=>this.moveSelection(1)}>
                 <FontAwesomeIcon icon="caret-right"/>
             </button>
@@ -518,6 +647,21 @@ export default class TheoremCreator extends Component {
                 style={{backgroundColor: "#e2331c", width: "32px", height: "32px", fontSize: "18px", margin:"0 32px 0 4px"}}
                 onClick={()=>this.performReplacement()}>
                 <FontAwesomeIcon icon="check"/>
+            </button>
+
+            <button
+                className="Globals_roundBut"
+                title={"Persist selected template under "+this.props.parentDir.name+" (p)"}
+                style={{backgroundColor: "#3847e2", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                onClick={()=>this.handleSaveClicked()}>
+                <FontAwesomeIcon icon="save"/>
+            </button>
+            <button
+                className="Globals_roundBut"
+                title="Upload proof"
+                style={{backgroundColor: "#3847e2", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                onClick={()=>this.uploadProof()}>
+                <FontAwesomeIcon icon="cloud-upload-alt"/>
             </button>
 
         </div>;
@@ -531,13 +675,18 @@ export default class TheoremCreator extends Component {
 
     render() {
         return (
-            <div className={cx("TheoremCreator_root", this.props.className)} style={this.props.style} onKeyDown={e=>this.handleKeyPress(e)} tabIndex="0">
-                {this.renderBase()}
-                {this.renderButtons()}
-                <form>
-                    {this.state.targets.map((t,index) => this.renderTarget(t, index))}
-                    {this.renderEmptyStmtDiv()}
-                </form>
+            <div className={cx("TheoremCreator_root", this.props.className)} style={this.props.style} onKeyUp={e=>this.handleKeyPress(e)} tabIndex="0">
+                <div className="TheoremCreator_main">
+                    {this.renderBase()}
+                    {this.renderButtons()}
+                    <form>
+                        {this.state.targets.map((t,index) => this.renderTarget(t, index))}
+                        {this.renderEmptyStmtDiv()}
+                    </form>
+                </div>
+                <ProofViewer
+                    proof={this.state.proof}
+                    onNavigateAction={index => this.goToMove(index)}/>
                 {/*<div style={{whiteSpace:"pre"}}>{JSON.stringify(this.state, null, 2)}</div>*/}
             </div>
         );

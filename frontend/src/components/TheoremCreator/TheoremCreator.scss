@@ -1,10 +1,16 @@
 .TheoremCreator_root {
   display: flex;
+  border: solid 2px #ad6c1b;
+  border-radius: 8px;
+}
+
+.TheoremCreator_main {
+  flex:1;
+
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
 
-  border: solid 2px #ad6c1b;
-  border-radius: 8px;
   padding: 8px 16px;
   background-color: #2556c530;
   overflow: auto;

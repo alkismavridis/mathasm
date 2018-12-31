@@ -1,4 +1,4 @@
-/** The codes must be the same as in MathAsmStatement.kt */
+/** The codes must be the same as in StatementType.kt */
 export default {
     AXIOM:1,
     AXIOM_TEMPLATE:2,

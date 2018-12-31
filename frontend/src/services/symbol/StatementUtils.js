@@ -1,19 +1,23 @@
-import BaseDirection from "../../constants/BaseDirection";
 import SelectionType from "../../constants/SelectionType";
 import StatementSide from "../../constants/StatementSide";
+import StatementType from "../../constants/StatementType";
 
 export default class StatementUtils {
     /**
      * clones the given base. sideToClone is one of StatementSide enum, and determines the actual outcome.
      * NOTE: not validation will be done to check whether the cloning is legal. This should be checked before calling this method!
      *  */
-    static clone(base, sideToClone) {
+    static clone(base, sideToClone, targetId) {
         return {
             left:  sideToClone===StatementSide.RIGHT? base.right.slice() : base.left.slice(),
             right: sideToClone===StatementSide.LEFT? base.left.slice() : base.right.slice(),
             grade: base.grade,
-            isBidirectional: base.isBidirectional
-        }
+            isBidirectional: base.isBidirectional,
+            id:null,
+            _internalId:targetId,
+            name:"",
+            type:StatementType.THEOREM_TEMPLATE
+        };
     }
 
     /**
@@ -81,13 +85,13 @@ export default class StatementUtils {
 
     //region LOGIC RULES
     static isDirectionLegal(base, target, dir) {
-        return dir === BaseDirection.LTR || base.isBidirectional;
+        return dir === StatementSide.LEFT || base.isBidirectional;
     }
 
     /** Determines whether a start move is legal or not. */
     static isStartLegal(base, side) {
         if ((base.type % 2) === 0) return false;
-        return side === StatementSide.LEFT || base.isBidirectional;
+        return side !== StatementSide.RIGHT || base.isBidirectional;
     }
 
     /** Determines whicher an attempting selection is legal. */
@@ -190,13 +194,13 @@ export default class StatementUtils {
     /**
      * Accepts to sentences and returns an array with all occurrences of "toSearch" in "toBeSearched".
      * Every occurrence is an object with the index of the occurrence, and a "selected" property that can be used for toggling selections.
-     * The return value of this function has all "selected" attributes set to false.
+     * The return value of this function has all "selected" attributes set to @selectMatches parameter.
      * Selection can be configured later.
      *
      * for example findMatches([1,4,   1,2,   3,   1,2,   3,   1,2  ,9], [1,2])
      * would return: [{index:2, selected:false}, {index:5, selected:false}, {index:8, selected:false}]
      * */
-    static findMatches(toBeSearched, toSearch) {
+    static findMatches(toBeSearched, toSearch, selectMatches) {
         const ret = [];
         const first = toSearch[0];
 
@@ -220,7 +224,7 @@ export default class StatementUtils {
                 else searchTester++;
             }
 
-            ret.push({index:searchIndex, selected:false});
+            ret.push({index:searchIndex, selected:selectMatches});
             searchIndex = searchTester; //move the pointer to the next search point
         }
 

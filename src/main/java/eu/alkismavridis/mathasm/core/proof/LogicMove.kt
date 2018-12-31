@@ -1,100 +1,107 @@
 package eu.alkismavridis.mathasm.core.proof
 
+import eu.alkismavridis.mathasm.core.enums.*
 
 
-//directions
-const val BaseDirection_LTR:Byte = 1
-const val BaseDirection_RTL:Byte = 2
-
-
-//region MOVE CODES
-const val LOGIC_MOVE_INT_SELECT:Byte = 1
-const val LOGIC_MOVE_EXT_SELECT:Byte = 2
-
-const val LOGIC_MOVE_START:Byte = 3
-const val LOGIC_MOVE_REPLACE_ALL:Byte = 4
-const val LOGIC_MOVE_REPLACE_PHRASE:Byte = 5
-const val LOGIC_MOVE_REPLACE_ONE:Byte = 6
-
-const val LOGIC_MOVE_SAVE:Byte = 7
-//endregion
+class LogicMove {
+    //region FIELDS
+    var moveType:Byte = -1       //One of MoveType.kt
+    var extBaseId:Long? = null   //used to indicate external selections
+    var intBaseId:Long? = null   //used to indicate internal selections. ONLY ONE of extBaseId and intBaseId must be set.
+    var side:Byte = -1           //used by replacement and start moves to indicate which sentence of the BASE to choose.
+    var pos:Int = 0              //used by moves ONE_IN_LEFT and ONE_IN_RIGHT to indicate the position to be replaced
+    var targetId:Long = 0        //pointer to a target of the proof.
+    var parentId:Long = 0        //used by SAVE move to indicate where the theorem will be saved
+    var name:String = ""         //used by SAVE move to indicate the new theorem's name
+    //endregion
 
 
 
-abstract class LogicMove(index:Int) {
-    val index = index //TODO maybe remove the index property
-    abstract fun getType() : Byte //one of LOGIC_MOVE_XXX codes
-}
 
+    //region CONSTRUCTORS AND STATIC GENERATORS
+    private constructor(moveType:Byte) {
+        this.moveType = moveType
+    }
 
-/** selects a theorem template from the current executors list.
- * Many other moves that follow this move will be based on that selection.
- * Selecting a sentence will replace the previous selection.
- * */
-class InternalSelectMove(index:Int, templateIndex:Int) : LogicMove(index) {
-    val templateIndex:Int = templateIndex
+    companion object {
+        fun makeStart(targetId: Long, extBaseId:Long?, intBaseId:Long?, side: Byte) : LogicMove {
+            return LogicMove(MoveType_START).apply {
+                this.targetId = targetId
+                this.extBaseId = extBaseId
+                this.intBaseId = intBaseId
+                this.side = side
+            }
+        }
 
-    override fun getType(): Byte = LOGIC_MOVE_INT_SELECT
-}
+        fun makeSave(targetId: Long, parentId:Long, name:String) : LogicMove {
+            return LogicMove(MoveType_SAVE).apply {
+                this.targetId = targetId
+                this.parentId = parentId
+                this.name = name
+            }
+        }
 
-/** selects an existing theorem from the env.
- * Many other moves that follow this move will be based on that selection.
- * Selecting a sentence will replace the previous selection.
- * */
-class ExternalSelectMove(index:Int, id:Long) : LogicMove(index) {
-    val id:Long = id
+        /**
+         * @param side the side of the BASE that needs to be replaced
+         * */
+        fun makeReplaceAll(targetId: Long, extBaseId:Long?, intBaseId:Long?, side: Byte) : LogicMove {
+            return LogicMove(MoveType_REPLACE_ALL).apply {
+                this.targetId = targetId
+                this.extBaseId = extBaseId
+                this.intBaseId = intBaseId
+                this.side = side
+            }
+        }
 
-    override fun getType(): Byte = LOGIC_MOVE_EXT_SELECT
+        /**
+         * @param side the side of the BASE that needs to be replaced
+         * */
+        fun makeReplaceLeft(targetId: Long, extBaseId:Long?, intBaseId:Long?, side: Byte) : LogicMove {
+            return LogicMove(MoveType_REPLACE_LEFT).apply {
+                this.targetId = targetId
+                this.extBaseId = extBaseId
+                this.intBaseId = intBaseId
+                this.side = side
+            }
+        }
 
-}
+        /**
+         * @param side the side of the BASE that needs to be replaced
+         * */
+        fun makeReplaceRight(targetId: Long, extBaseId:Long?, intBaseId:Long?, side: Byte) : LogicMove {
+            return LogicMove(MoveType_REPLACE_RIGHT).apply {
+                this.targetId = targetId
+                this.extBaseId = extBaseId
+                this.intBaseId = intBaseId
+                this.side = side
+            }
+        }
 
-/** initializes a theorem template, based on the selected sentence. */
-class StartMove(index:Int, templateIndex: Int, side: Byte) : LogicMove(index) {
-    val templateIndex:Int = templateIndex
-    val side:Byte = side
+        /**
+         * @param side the side of the BASE that needs to be replaced
+         * */
+        fun makeReplaceOneInLeft(targetId: Long, extBaseId:Long?, intBaseId:Long?, side: Byte, pos:Int) : LogicMove {
+            return LogicMove(MoveType_ONE_IN_LEFT).apply {
+                this.targetId = targetId
+                this.extBaseId = extBaseId
+                this.intBaseId = intBaseId
+                this.side = side
+                this.pos = pos
+            }
+        }
 
-    override fun getType(): Byte = LOGIC_MOVE_START
-}
-
-/** Replaces all occurrences of the selected sentence in the a theorem template. */
-class ReplaceAllMove(index:Int, templateIndex: Int, dir:Byte) : LogicMove(index) {
-    val templateIndex:Int = templateIndex
-    val dir:Byte = dir
-
-    override fun getType(): Byte = LOGIC_MOVE_REPLACE_ALL
-
-}
-
-/** Replaces all occurrences of the selected sentence in one phrase of a theorem template. */
-class ReplaceSentenceMove(index:Int, templateIndex: Int, dir:Byte, side:Byte) : LogicMove(index) {
-    val templateIndex:Int = templateIndex
-    val dir:Byte = dir
-    val side:Byte = side
-
-    override fun getType(): Byte = LOGIC_MOVE_REPLACE_PHRASE
-
-}
-
-/** Replaces a single occurrence of the selected sentence in a theorem template. */
-class ReplaceOneMove(index:Int, templateIndex: Int, dir:Byte, side:Byte, position:Int) : LogicMove(index) {
-    val templateIndex:Int = templateIndex
-    val dir:Byte = dir
-    val side:Byte = side
-    val position:Int = position
-
-    override fun getType(): Byte = LOGIC_MOVE_REPLACE_ONE
-
-}
-
-/**
- * Persists the given theorem template into DB.
- * Please note that the proof may continue and thus, multiple theorems may be generated by one proof.
- */
-class SaveMove(
-    index:Int,
-    val templateIndex: Int,
-    val parentId:Long,
-    val name:String
-) : LogicMove(index) {
-    override fun getType(): Byte = LOGIC_MOVE_SAVE
+        /**
+         * @param side the side of the BASE that needs to be replaced
+         * */
+        fun makeReplaceOneInRight(targetId: Long, extBaseId:Long?, intBaseId:Long?, side: Byte, pos:Int) : LogicMove {
+            return LogicMove(MoveType_ONE_IN_RIGHT).apply {
+                this.targetId = targetId
+                this.extBaseId = extBaseId
+                this.intBaseId = intBaseId
+                this.side = side
+                this.pos = pos
+            }
+        }
+    }
+    //endregion
 }

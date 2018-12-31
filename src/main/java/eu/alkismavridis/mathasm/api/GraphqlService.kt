@@ -7,7 +7,7 @@ import eu.alkismavridis.mathasm.api.controller.security.SecurityService
 import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.api.resolvers.MathAsmDirResolver
 import eu.alkismavridis.mathasm.services.App
-import eu.alkismavridis.mathasm.api.resolvers.SentenceResolver
+import eu.alkismavridis.mathasm.api.resolvers.StatementResolver
 import eu.alkismavridis.mathasm.api.resolvers.UserResolver
 import eu.alkismavridis.mathasm.api.resolvers.Mutation
 import eu.alkismavridis.mathasm.api.resolvers.Query
@@ -78,7 +78,7 @@ class GraphqlService {
             Query(app),
             Mutation(app, secService),
             UserResolver(),
-            SentenceResolver(),
+            StatementResolver(app),
             MathAsmDirResolver()
         )
 

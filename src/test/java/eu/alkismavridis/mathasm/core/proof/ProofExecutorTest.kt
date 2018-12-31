@@ -1,5 +1,9 @@
 package eu.alkismavridis.mathasm.core.proof
 
+import eu.alkismavridis.mathasm.core.enums.StatementSide_BOTH
+import eu.alkismavridis.mathasm.core.enums.StatementSide_LEFT
+import eu.alkismavridis.mathasm.core.enums.StatementSide_RIGHT
+import eu.alkismavridis.mathasm.core.enums.StatementType_THEOREM
 import eu.alkismavridis.mathasm.core.error.ErrorCode
 import eu.alkismavridis.mathasm.core.error.MathAsmException
 import eu.alkismavridis.mathasm.core.sentence.*
@@ -81,52 +85,8 @@ class ProofExecutorTest {
         try { executor.getExternal(99999L); fail("Exception not thrown"); }
         catch (e: MathAsmException) { assertEquals(ErrorCode.STATEMENT_NOT_FOUND, e.code) }
     }
-
-    @Test
-    fun getSourceSideTest() {
-        //1. Create a proof executor
-        val state = CoreState()
-        val savedList = mutableListOf<MathAsmStatement>()
-
-        var senProv = Function<Long, MathAsmStatement?>{ id -> state.getStatement(id) }
-        val onSave = TheoremSaver{ stmt, parentId, name -> saveTheorem(stmt, parentId, name, savedList) }
-        val onGenerateTheorem = TheoremGenerator { stmt, side, check -> MathAsmStatement.createTheoremTempl(stmt, side, check); }
-        val executor = ProofExecutor(senProv, onSave, onGenerateTheorem)
-
-        //2. assert source side
-        assertEquals(MathAsmStatement_LEFT_SIDE ,executor.getSourceSide(BaseDirection_LTR))
-        assertEquals(MathAsmStatement_RIGHT_SIDE ,executor.getSourceSide(BaseDirection_RTL))
-    }
     //endregion
-
-
-
-    //region SELECT MOVES TESTS
-    @Test
-    fun executeInternalSelectMoveTest() {
-        //TODO
-    }
-
-    @Test
-    fun executeExternalSelectMoveTest() {
-        //1. Create a proof executor
-        val state = CoreState()
-        val savedList = mutableListOf<MathAsmStatement>()
-
-        var senProv = Function<Long, MathAsmStatement?>{ id -> state.getStatement(id) }
-        val onSave = TheoremSaver{ stmt, parentId, name -> saveTheorem(stmt, parentId, name, savedList) }
-        val onGenerateTheorem = TheoremGenerator { stmt, side, check -> MathAsmStatement.createTheoremTempl(stmt, side, check); }
-        val executor = ProofExecutor(senProv, onSave, onGenerateTheorem)
-
-        //2. Assert selections
-        executor.executeExternalSelectMove(ExternalSelectMove(0, 1L))
-        assertEquals(state.getStatement(1L), executor.selectedBase)
-
-        //3. Test non existing base
-        try { executor.executeExternalSelectMove(ExternalSelectMove(0, 99999L)) }
-        catch (e: MathAsmException) { assertEquals(ErrorCode.STATEMENT_NOT_FOUND, e.code) }
-    }
-    //endregion
+    
 
 
 
@@ -143,27 +103,25 @@ class ProofExecutorTest {
         val executor = ProofExecutor(senProv, onSave, onGenerateTheorem)
 
         //2. Start new template
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom2"]!!.id!!))
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_LEFT_SIDE))
-        assertEquals("\"1 1 1 __0__ 1 1 1 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0, state.statements["axiom2"]!!.id!!, null, StatementSide_LEFT))
+        assertEquals("\"1 1 1 __0__ 1 1 1 \"", executor.getTarget(0).toString())
 
-        executor.executeStartMove(StartMove(0, 1, MathAsmStatement_RIGHT_SIDE))
-        assertEquals("\"3 __0__ 3 \"", executor.getTemplate(1).toString())
+        executor.executeStartMove(LogicMove.makeStart(1, state.statements["axiom2"]!!.id!!, null, StatementSide_RIGHT))
+        assertEquals("\"3 __0__ 3 \"", executor.getTarget(1).toString())
 
-        executor.executeStartMove(StartMove(0, 2, MathAsmStatement_BOTH_SIDES))
-        assertEquals("\"1 1 1 __0__ 3 \"", executor.getTemplate(2).toString())
+        executor.executeStartMove(LogicMove.makeStart(2, state.statements["axiom2"]!!.id!!, null, StatementSide_BOTH))
+        assertEquals("\"1 1 1 __0__ 3 \"", executor.getTarget(2).toString())
 
 
         //3. Start existing theorems
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom3"]!!.id!!))
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_LEFT_SIDE))
-        assertEquals("\"5 5 __1__ 5 5 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0,  state.statements["axiom3"]!!.id!!,null,  StatementSide_LEFT))
+        assertEquals("\"5 5 __1__ 5 5 \"", executor.getTarget(0).toString())
 
-        executor.executeStartMove(StartMove(0, 1, MathAsmStatement_RIGHT_SIDE))
-        assertEquals("\"25 1 __1__ 25 1 \"", executor.getTemplate(1).toString())
+        executor.executeStartMove(LogicMove.makeStart(1, state.statements["axiom3"]!!.id!!,null, StatementSide_RIGHT))
+        assertEquals("\"25 1 __1__ 25 1 \"", executor.getTarget(1).toString())
 
-        executor.executeStartMove(StartMove(0, 2, MathAsmStatement_BOTH_SIDES))
-        assertEquals("\"5 5 __1__ 25 1 \"", executor.getTemplate(2).toString())
+        executor.executeStartMove(LogicMove.makeStart(2, state.statements["axiom3"]!!.id!!,null, StatementSide_BOTH))
+        assertEquals("\"5 5 __1__ 25 1 \"", executor.getTarget(2).toString())
     }
 
     @Test
@@ -179,50 +137,53 @@ class ProofExecutorTest {
 
         //2.Test with null base
         try {
-            executor.executeStartMove(StartMove(0, 1, MathAsmStatement_LEFT_SIDE))
+            executor.executeStartMove(LogicMove.makeStart(1, null,null, StatementSide_LEFT))
             fail("Exception not thrown")
         }
         catch (e: MathAsmException) { assertEquals(ErrorCode.NULL_BASE, e.code) }
 
 
         //3. Test out of bounds index: negative
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom1"]!!.id!!))
-        try {
-            executor.executeStartMove(StartMove(0, -1, MathAsmStatement_LEFT_SIDE))
-            fail("Exception not thrown");
-        }
-        catch (e: MathAsmException) { assertEquals(ErrorCode.ILLEGAL_INDEX_FOR_THEOREM_START, e.code) }
-
-        //4. Test out of bounds index: positive
-        try {
-            executor.executeStartMove(StartMove(0, 99, MathAsmStatement_LEFT_SIDE))
-            fail("Exception not thrown")
-        }
-        catch (e: MathAsmException) { assertEquals(ErrorCode.ILLEGAL_INDEX_FOR_THEOREM_START, e.code) }
-
-        try { executor.executeStartMove(StartMove(0, 1, MathAsmStatement_LEFT_SIDE)) }
-        catch (e: MathAsmException) { assertEquals(ErrorCode.ILLEGAL_INDEX_FOR_THEOREM_START, e.code) }
+//        try {
+//            executor.executeStartMove(LogicMove.makeStart(0, -1, StatementSide_LEFT))
+//            fail("Exception not thrown");
+//        }
+//        catch (e: MathAsmException) { assertEquals(ErrorCode.ILLEGAL_INDEX_FOR_THEOREM_START, e.code) }
+//
+//        //4. Test out of bounds index: positive
+//        try {
+//            executor.executeStartMove(LogicMove.makeStart(0, 99, StatementSide_LEFT))
+//            fail("Exception not thrown")
+//        }
+//        catch (e: MathAsmException) { assertEquals(ErrorCode.ILLEGAL_INDEX_FOR_THEOREM_START, e.code) }
+//
+//
+//        try {
+//            executor.executeStartMove(LogicMove.makeStart(0, 1, StatementSide_LEFT))
+//            fail("Exception not thrown")
+//        }
+//        catch (e: MathAsmException) { assertEquals(ErrorCode.ILLEGAL_INDEX_FOR_THEOREM_START, e.code) }
 
 
         //5. Add one theorem and try to access out of bounds again
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_LEFT_SIDE)) //successful start!
-
-        try {
-            executor.executeStartMove(StartMove(0, 2, MathAsmStatement_LEFT_SIDE))
-            fail("Exception not thrown")
-        }
-        catch (e: MathAsmException) { assertEquals(ErrorCode.ILLEGAL_INDEX_FOR_THEOREM_START, e.code) }
+//        executor.executeStartMove(LogicMove.makeStart(0, 0, StatementSide_LEFT)) //successful start!
+//
+//        try {
+//            executor.executeStartMove(LogicMove.makeStart(0, 2, StatementSide_LEFT))
+//            fail("Exception not thrown")
+//        }
+//        catch (e: MathAsmException) { assertEquals(ErrorCode.ILLEGAL_INDEX_FOR_THEOREM_START, e.code) }
 
         //6. Illegal start (existing theorem template)
         try {
-            executor.executeStartMove(StartMove(0, 0, MathAsmStatement_RIGHT_SIDE))
+            executor.executeStartMove(LogicMove.makeStart(0, state.statements["axiom1"]!!.id!!, null, StatementSide_RIGHT))
             fail("Exception not thrown")
         }
         catch (e: MathAsmException) { assertEquals(ErrorCode.ILLEGAL_DIRECTION, e.code) }
 
         //7. Illegal start (new theorem template)
         try {
-            executor.executeStartMove(StartMove(0, 1, MathAsmStatement_RIGHT_SIDE))
+            executor.executeStartMove(LogicMove.makeStart(1, state.statements["axiom1"]!!.id!!, null, StatementSide_RIGHT))
             fail("Exception not thrown")
         }
         catch (e: MathAsmException) { assertEquals(ErrorCode.ILLEGAL_DIRECTION, e.code) }
@@ -244,18 +205,16 @@ class ProofExecutorTest {
         val executor = ProofExecutor(senProv, onSave, onGenerateTheorem)
 
         //2. Start new template
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom6"]!!.id!!))
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_BOTH_SIDES))
-        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0, state.statements["axiom6"]!!.id!!, null, StatementSide_BOTH))
+        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTarget(0).toString())
 
         //3. Replace all "2"
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeReplaceAllMove(ReplaceAllMove(0, 0, BaseDirection_LTR))
-        assertEquals("\"8 8 4 8 8 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        executor.executeReplaceAllMove(LogicMove.makeReplaceAll(0, state.statements["axiom4"]!!.id!!, null, StatementSide_LEFT))
+        assertEquals("\"8 8 4 8 8 __2__ 123 456 \"", executor.getTarget(0).toString())
 
         //Replace them back
-        executor.executeReplaceAllMove(ReplaceAllMove(0, 0, BaseDirection_RTL))
-        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        executor.executeReplaceAllMove(LogicMove.makeReplaceAll(0, state.statements["axiom4"]!!.id!!, null, StatementSide_RIGHT))
+        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTarget(0).toString())
     }
 
     @Test
@@ -271,7 +230,7 @@ class ProofExecutorTest {
 
         //2.Test with null base
         try {
-            executor.executeReplaceAllMove(ReplaceAllMove(0, 1, BaseDirection_LTR))
+            executor.executeReplaceAllMove(LogicMove.makeReplaceAll(1, null, null, StatementSide_LEFT))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.NULL_BASE, e.code)
@@ -279,9 +238,8 @@ class ProofExecutorTest {
 
 
         //3. Test out of bounds index: negative
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom1"]!!.id!!))
         try {
-            executor.executeReplaceAllMove(ReplaceAllMove(0, -1, BaseDirection_LTR))
+            executor.executeReplaceAllMove(LogicMove.makeReplaceAll(-1, state.statements["axiom1"]!!.id!!, null, StatementSide_LEFT))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
@@ -289,18 +247,18 @@ class ProofExecutorTest {
 
         //4. Test out of bounds index: positive
         try {
-            executor.executeReplaceAllMove(ReplaceAllMove(0, 99, BaseDirection_LTR))
+            executor.executeReplaceAllMove(LogicMove.makeReplaceAll(99, state.statements["axiom1"]!!.id!!, null, StatementSide_LEFT))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
         }
 
         //5. Test illegal select all
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_BOTH_SIDES))
-        assertEquals("\"2 4 2 __2-- 2 3 6 2 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0, state.statements["axiom1"]!!.id!!, null, StatementSide_BOTH))
+        assertEquals("\"2 4 2 __2-- 2 3 6 2 \"", executor.getTarget(0).toString())
 
         try {
-            executor.executeReplaceAllMove(ReplaceAllMove(0, 0, BaseDirection_RTL))
+            executor.executeReplaceAllMove(LogicMove.makeReplaceAll(0, state.statements["axiom1"]!!.id!!, null, StatementSide_RIGHT))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_DIRECTION, e.code)
@@ -320,31 +278,27 @@ class ProofExecutorTest {
         val executor = ProofExecutor(senProv, onSave, onGenerateTheorem)
 
         //2. Start new template
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom6"]!!.id!!))
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_BOTH_SIDES))
-        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0,  state.statements["axiom6"]!!.id!!, null, StatementSide_BOTH))
+        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTarget(0).toString())
 
         //3. Replace all "2"
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE))
-        assertEquals("\"8 8 4 8 8 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        executor.executeReplaceSentenceMove(LogicMove.makeReplaceLeft(0, state.statements["axiom4"]!!.id!!, null, StatementSide_LEFT))
+        assertEquals("\"8 8 4 8 8 __2__ 123 456 \"", executor.getTarget(0).toString())
 
         //Replace them back
-        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE))
-        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        executor.executeReplaceSentenceMove(LogicMove.makeReplaceLeft(0, state.statements["axiom4"]!!.id!!, null, StatementSide_RIGHT))
+        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTarget(0).toString())
 
         //4. Replace right Sentence
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom6"]!!.id!!))
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_LEFT_SIDE))
-        assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0, state.statements["axiom6"]!!.id!!, null, StatementSide_LEFT))
+        assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTarget(0).toString())
 
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, BaseDirection_LTR, MathAsmStatement_RIGHT_SIDE))
-        assertEquals("\"2 4 2 __2__ 8 8 4 8 8 \"", executor.getTemplate(0).toString())
+        executor.executeReplaceSentenceMove(LogicMove.makeReplaceRight(0, state.statements["axiom4"]!!.id!!, null, StatementSide_LEFT))
+        assertEquals("\"2 4 2 __2__ 8 8 4 8 8 \"", executor.getTarget(0).toString())
 
         //Replace them back
-        executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, BaseDirection_RTL, MathAsmStatement_RIGHT_SIDE))
-        assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTemplate(0).toString())
+        executor.executeReplaceSentenceMove(LogicMove.makeReplaceRight(0, state.statements["axiom4"]!!.id!!, null, StatementSide_RIGHT))
+        assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTarget(0).toString())
     }
 
     @Test
@@ -360,7 +314,7 @@ class ProofExecutorTest {
 
         //2.Test with null base
         try {
-            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 1, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE))
+            executor.executeReplaceSentenceMove(LogicMove.makeReplaceLeft(0, null, null, StatementSide_LEFT))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.NULL_BASE, e.code)
@@ -368,9 +322,8 @@ class ProofExecutorTest {
 
 
         //3. Test out of bounds index: negative
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom1"]!!.id!!))
         try {
-            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, -1, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE))
+            executor.executeReplaceSentenceMove(LogicMove.makeReplaceLeft(-1, state.statements["axiom1"]!!.id!!, null, StatementSide_LEFT))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
@@ -378,18 +331,18 @@ class ProofExecutorTest {
 
         //4. Test out of bounds index: positive
         try {
-            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 99, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE))
+            executor.executeReplaceSentenceMove(LogicMove.makeReplaceLeft(99, state.statements["axiom1"]!!.id!!, null, StatementSide_LEFT))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
         }
 
         //5. Test illegal select all
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_BOTH_SIDES))
-        assertEquals("\"2 4 2 __2-- 2 3 6 2 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0, state.statements["axiom1"]!!.id!!, null, StatementSide_BOTH))
+        assertEquals("\"2 4 2 __2-- 2 3 6 2 \"", executor.getTarget(0).toString())
 
         try {
-            executor.executeReplaceSentenceMove(ReplaceSentenceMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE))
+            executor.executeReplaceSentenceMove(LogicMove.makeReplaceLeft(0, state.statements["axiom1"]!!.id!!, null, StatementSide_RIGHT))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_DIRECTION, e.code)
@@ -408,31 +361,27 @@ class ProofExecutorTest {
         val executor = ProofExecutor(senProv, onSave, onGenerateTheorem)
 
         //2. Start new template
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom6"]!!.id!!))
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_BOTH_SIDES))
-        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0, state.statements["axiom6"]!!.id!!, null, StatementSide_BOTH))
+        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTarget(0).toString())
 
         //3. Replace all "2"
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 2))
-        assertEquals("\"2 4 8 8 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        executor.executeReplaceOneMove(LogicMove.makeReplaceOneInLeft(0, state.statements["axiom4"]!!.id!!, null, StatementSide_LEFT, 2))
+        assertEquals("\"2 4 8 8 __2__ 123 456 \"", executor.getTarget(0).toString())
 
         //Replace them back
-        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE, 2))
-        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        executor.executeReplaceOneMove(LogicMove.makeReplaceOneInLeft(0, state.statements["axiom4"]!!.id!!, null, StatementSide_RIGHT, 2))
+        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTarget(0).toString())
 
         //4. Replace right Sentence
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom6"]!!.id!!))
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_LEFT_SIDE))
-        assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0,  state.statements["axiom6"]!!.id!!, null, StatementSide_LEFT))
+        assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTarget(0).toString())
 
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, BaseDirection_LTR, MathAsmStatement_RIGHT_SIDE, 0))
-        assertEquals("\"2 4 2 __2__ 8 8 4 2 \"", executor.getTemplate(0).toString())
+        executor.executeReplaceOneMove(LogicMove.makeReplaceOneInRight(0, state.statements["axiom4"]!!.id!!, null, StatementSide_LEFT, 0))
+        assertEquals("\"2 4 2 __2__ 8 8 4 2 \"", executor.getTarget(0).toString())
 
         //Replace them back
-        executor.executeReplaceOneMove(ReplaceOneMove(0, 0, BaseDirection_RTL, MathAsmStatement_RIGHT_SIDE, 0))
-        assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTemplate(0).toString())
+        executor.executeReplaceOneMove(LogicMove.makeReplaceOneInRight(0,  state.statements["axiom4"]!!.id!!, null, StatementSide_RIGHT, 0))
+        assertEquals("\"2 4 2 __2__ 2 4 2 \"", executor.getTarget(0).toString())
     }
 
     @Test
@@ -448,7 +397,7 @@ class ProofExecutorTest {
 
         //2.Test with null base
         try {
-            executor.executeReplaceOneMove(ReplaceOneMove(0, 1, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 0))
+            executor.executeReplaceOneMove(LogicMove.makeReplaceOneInLeft(1, null, null, StatementSide_LEFT, 0))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.NULL_BASE, e.code)
@@ -456,9 +405,8 @@ class ProofExecutorTest {
 
 
         //3. Test out of bounds index: negative
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom1"]!!.id!!))
         try {
-            executor.executeReplaceOneMove(ReplaceOneMove(0, -1, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 0))
+            executor.executeReplaceOneMove(LogicMove.makeReplaceOneInLeft(-1, state.statements["axiom1"]!!.id!!, null, StatementSide_LEFT, 0))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
@@ -466,18 +414,18 @@ class ProofExecutorTest {
 
         //4. Test out of bounds index: positive
         try {
-            executor.executeReplaceOneMove(ReplaceOneMove(0, 99, BaseDirection_LTR, MathAsmStatement_LEFT_SIDE, 0))
+            executor.executeReplaceOneMove(LogicMove.makeReplaceOneInLeft(99, state.statements["axiom1"]!!.id!!, null, StatementSide_LEFT, 0))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
         }
 
         //5. Test illegal select all
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_BOTH_SIDES))
-        assertEquals("\"2 4 2 __2-- 2 3 6 2 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0, state.statements["axiom1"]!!.id!!, null, StatementSide_BOTH))
+        assertEquals("\"2 4 2 __2-- 2 3 6 2 \"", executor.getTarget(0).toString())
 
         try {
-            executor.executeReplaceOneMove(ReplaceOneMove(0, 0, BaseDirection_RTL, MathAsmStatement_LEFT_SIDE, 0))
+            executor.executeReplaceOneMove(LogicMove.makeReplaceOneInLeft(0, state.statements["axiom1"]!!.id!!, null, StatementSide_RIGHT, 0))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_DIRECTION, e.code)
@@ -496,18 +444,15 @@ class ProofExecutorTest {
         val executor = ProofExecutor(senProv, onSave, onGenerateTheorem)
 
         //2. Start new template
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom6"]!!.id!!))
-        executor.executeStartMove(StartMove(0, 0, MathAsmStatement_BOTH_SIDES))
-        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        executor.executeStartMove(LogicMove.makeStart(0, state.statements["axiom6"]!!.id!!, null, StatementSide_BOTH))
+        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTarget(0).toString())
 
         //3. Save a theorem
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom4"]!!.id!!))
-        executor.executeSaveMove(SaveMove(0, 0, 789, "hello"))
+        executor.executeSaveMove(LogicMove.makeSave(0, 789, "hello"))
 
         //4. Check generated theorem
-        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTemplate(0).toString())
+        assertEquals("\"2 4 2 __2__ 123 456 \"", executor.getTarget(0).toString())
         assertEquals("hello ___ 789", savedList[0].name)
-        assertEquals(MathAsmStatement_THEOREM, savedList[0].type)
     }
 
     @Test
@@ -522,18 +467,9 @@ class ProofExecutorTest {
         val executor = ProofExecutor(senProv, onSave, onGenerateTheorem)
 
 
-        //2. Test out of bounds index: negative
-        executor.executeExternalSelectMove(ExternalSelectMove(0, state.statements["axiom1"]!!.id!!))
+        //2. Test non existing target
         try {
-            executor.executeSaveMove(SaveMove(0, -1, 123, "hello"))
-            fail("Exception not thrown")
-        } catch (e: MathAsmException) {
-            assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)
-        }
-
-        //2. Test out of bounds index: positive
-        try {
-            executor.executeSaveMove(SaveMove(0, 99, 123, "hello"))
+            executor.executeSaveMove(LogicMove.makeSave(-1, 123, "hello"))
             fail("Exception not thrown")
         } catch (e: MathAsmException) {
             assertEquals(ErrorCode.ILLEGAL_INTERNAL_SELECT, e.code)

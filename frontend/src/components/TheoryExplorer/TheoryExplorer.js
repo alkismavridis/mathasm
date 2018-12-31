@@ -21,7 +21,6 @@ export default class TheoryExplorer extends Component {
         //data
 
         //actions
-        onChangeDir: PropTypes.func.isRequired,
 
         //styling
         className: PropTypes.string,
@@ -42,7 +41,6 @@ export default class TheoryExplorer extends Component {
         mode:Mode.VIEW,
 
         //axiom creator
-        actionDir:null, //the directory for which an action is chosen
         activeDir:null, //the directory currently shown on the dir viewer group
 
     };
@@ -67,7 +65,7 @@ export default class TheoryExplorer extends Component {
     toggleSymbolCreationMode(parentDirId) {
         const newState = this.state.mode === Mode.CREATE_SYMBOL?
             {mode:Mode.VIEW} :
-            {mode:Mode.CREATE_SYMBOL, actionDir:parentDirId};
+            {mode:Mode.CREATE_SYMBOL, activeDir:parentDirId};
 
         this.setState(newState);
     }
@@ -76,18 +74,18 @@ export default class TheoryExplorer extends Component {
     toggleAxiomCreationMode(parentDirId) {
         const newState = this.state.mode === Mode.CREATE_AXIOM?
             {mode:Mode.VIEW} :
-            {mode:Mode.CREATE_AXIOM, actionDir:parentDirId};
+            {mode:Mode.CREATE_AXIOM, activeDir:parentDirId};
 
         this.setState(newState);
     }
 
     /** Enters or leaves theorem creation mode. Leaving is always performed towards Mode.VIEW. */
     toggleTheoremCreationMode(parentDirId) {
-        const newState = this.state.mode === Mode.CREATE_THEOREM?
+        const changes = this.state.mode === Mode.CREATE_THEOREM?
             {mode:Mode.VIEW} :
-            {mode:Mode.CREATE_THEOREM, actionDir:parentDirId};
+            {mode:Mode.CREATE_THEOREM, activeDir:parentDirId};
 
-        this.setState(newState);
+        this.setState(changes);
     }
 
 
@@ -112,7 +110,18 @@ export default class TheoryExplorer extends Component {
     }
 
     handleAxiomSaved(axiom) {
-        if (this._dirViewerGroup) this._dirViewerGroup.statementCreated(axiom, this.state.actionDir);
+        if (this._dirViewerGroup && this.state.activeDir) {
+            this._dirViewerGroup.statementCreated(axiom, this.state.activeDir.id);
+        }
+    }
+
+    /** accepts an array of SavedTheoremInfo objects. Updates the keyboards. */
+    handleProofSaved(saveInfo) {
+        if (this._dirViewerGroup) {
+            saveInfo.forEach(si => {
+                this._dirViewerGroup.statementCreated(si.theorem, si.parentId)
+            });
+        }
     }
 
     handleSymbolMapUpdated(newMap) {
@@ -127,20 +136,19 @@ export default class TheoryExplorer extends Component {
     //region RENDERING
     renderSymbolCreator() {
         return <SymbolCreator
-            parentId={this.state.actionDir.id}
+            parentId={this.state.activeDir.id}
             showCreatedSymbols={false}
             onSymbolCreated={s => {
-                const newDir = Object.assign({}, this.state.actionDir);
+                const newDir = Object.assign({}, this.state.activeDir);
                 newDir.symbols.push(s);
-                this.props.onChangeDir(newDir);
+                this.setState({activeDir:newDir});
             }}/>;
     }
 
     renderAxiomCreator() {
         return <AxiomCreator
             ref={el => this._axiomCreator = el}
-            parentDir={this.state.actionDir}
-            onSetCurrentDir={() => this.setState({actionDir:this.state.activeDir})}
+            parentDir={this.state.activeDir}
             onSave={this.handleAxiomSaved.bind(this)}/>;
     }
 
@@ -148,8 +156,8 @@ export default class TheoryExplorer extends Component {
         return <TheoremCreator
             ref={el => this._theoremCreator = el}
             symbolMap={this.state.symbolMap}
-            parentDir={this.state.actionDir}
-            onSetCurrentDir={() => this.setState({actionDir:this.state.activeDir})}
+            onCreateStatements={info => this.handleProofSaved(info)}
+            parentDir={this.state.activeDir}
             style={{maxHeight:"200px"}}
         />;
     }

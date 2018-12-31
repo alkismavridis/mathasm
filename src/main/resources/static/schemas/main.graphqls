@@ -40,6 +40,7 @@ type Mutation {
     #axiom creation
     createAxiom(parentId:Long!, name:String!, left:[Long!]!, grade:Int = 0, isBidirectional:Boolean = false, right:[Long!]!) : MathAsmStatementEntity!
     createDir(parentId:Long!, name:String!) : MathAsmDirEntity!
+    uploadProof(moves:[LogicMove!]!) : [SavedTheoremInfo!]!
 }
 #endregion
 
@@ -67,6 +68,8 @@ type MathAsmStatementEntity {
 
     isBidirectional: Boolean!
     grade: Int!
+
+    proof:[LogicMoveEntity!]
 }
 
 type MathAsmDirEntity {
@@ -81,6 +84,36 @@ type MathAsmDirEntity {
 type MathAsmSymbol {
     uid:Long!
     text:String!
+}
+
+type SavedTheoremInfo {
+    parentId:Long
+    theorem:MathAsmStatementEntity
+}
+
+
+type LogicMoveEntity {
+    id:Long
+    index:Int
+    extBase:MathAsmStatementEntity
+    intBaseId:Long
+    moveType:Int
+    targetId:Int
+    side:Int
+    pos:Int
+    parentId:Long
+    name:String
+}
+
+input LogicMove {
+    moveType:Int
+    extBaseId:Long
+    intBaseId:Long
+    side:Int
+    pos:Int
+    targetId:Long
+    parentId:Long
+    name:String
 }
 
 

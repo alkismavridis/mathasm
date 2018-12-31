@@ -2,77 +2,78 @@ package eu.alkismavridis.mathasm.db.entities
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import eu.alkismavridis.mathasm.core.error.ErrorCode
+import eu.alkismavridis.mathasm.core.error.MathAsmException
 import eu.alkismavridis.mathasm.core.proof.*
+import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement
 import org.neo4j.ogm.annotation.GeneratedValue
 import org.neo4j.ogm.annotation.Id
 import org.neo4j.ogm.annotation.NodeEntity
+import org.neo4j.ogm.annotation.Relationship
 
-/** This is the type that the client side sends to the server as a logic move.
- * Not all fields have sense for every move type, but this object should include them all anyway.
+/**
+ * This class defines a DB-version of a logic move.
+ * This is what we will be saving into DB.
+ *
+ * This class is NOT used for business logic, such as proof executor.
  * */
 @NodeEntity(label="move")
-class LogicMoveEntity {
+open class LogicMoveEntity {
     //region FIELDS
     @Id
     @GeneratedValue
     var id:Long? = null
 
     var index:Int = 0
-    var moveType:Byte = 0
-    var templateIndex:Int = 0
-    var targetId:Long = 0
-    var side:Byte = 0
-    var dir:Byte = 0
-    var position:Int = 0
-    var parentId:Long = -1
-    var name:String = ""
+
+    @Relationship(type = "BS", direction = Relationship.OUTGOING)
+    var extBase:MathAsmStatementEntity? = null
+
+    var intBaseId:Long? = null //If the base is not external, this should be used instead of base parameter
+
+    var moveType:Byte = 0      //Defines the move type.
+    var targetId:Long = 0      //Pointer to a target of the proof. Used for INTERNAL SELECTS, CLONINGS or REPLACEMENTS
+    var side:Byte = 0          //The side of the base to replace or clone
+    var pos:Int = 0            //used for moveType ONE_IN_LEFT and ONE_IN_RIGHT
+    var parentId:Long = -1     //used by SAVE move
+    var name:String = ""       //used by SAVE move
     //endregion
 
 
     //region CONSTRUCTORS
     constructor() {}
 
-    constructor(index: Int, moveType: Byte, templateIndex: Int, targetId: Long, side: Byte, dir: Byte, position: Int, parentId: Long, name: String) {
+    constructor(index: Int, extBase:MathAsmStatementEntity?, moveType: Byte, targetId: Long, side: Byte, position: Int, parentId: Long, name: String) {
         this.index = index
+        this.extBase = extBase
         this.moveType = moveType
-        this.templateIndex = templateIndex
         this.targetId = targetId
         this.side = side
-        this.dir = dir
-        this.position = position
+        this.pos = position
         this.parentId = parentId
         this.name = name
     }
-    //endregion
 
+    constructor(lm:LogicMove, index:Int, basesMap:Map<Long, MathAsmStatement>) {
+        this.index = index
 
-    //region STATIC GENERATORS
-    companion object {
-        fun makeExtSelect(targetId: Long) : LogicMoveEntity {
-            return LogicMoveEntity(0, LOGIC_MOVE_EXT_SELECT, 0, targetId, 0, 0, 0, 0, "")
+        if (lm.intBaseId!=null) this.intBaseId = lm.intBaseId
+        else if (lm.extBaseId!=null) {
+            val base = basesMap[lm.extBaseId!!]
+            if (!(base is MathAsmStatementEntity)) throw MathAsmException(ErrorCode.WRONG_CLASS_INSTANCE)
+            this.extBase = base
         }
 
-        fun makeIntSelect(templateIndex: Int) : LogicMoveEntity {
-            return LogicMoveEntity(0, LOGIC_MOVE_INT_SELECT, templateIndex, 0, 0, 0, 0, 0, "")
-        }
-
-        fun makeStart(templateIndex: Int, side: Byte) : LogicMoveEntity {
-            return LogicMoveEntity(0, LOGIC_MOVE_START, templateIndex, 0, side, 0, 0, 0, "")
-        }
-
-        fun makeReplaceAll(templateIndex: Int, dir: Byte) : LogicMoveEntity {
-            return LogicMoveEntity(0, LOGIC_MOVE_REPLACE_ALL, templateIndex, 0, 0, dir, 0, 0, "")
-        }
-
-        fun makeReplaceOne(templateIndex: Int, dir: Byte, side: Byte, position: Int) : LogicMoveEntity {
-            return LogicMoveEntity(0, LOGIC_MOVE_REPLACE_ONE, templateIndex, 0, side, dir, position, 0, "")
-        }
-
-        fun makeSave(templateIndex: Int, parentId: Long, name: String) : LogicMoveEntity {
-            return LogicMoveEntity(0, LOGIC_MOVE_SAVE, templateIndex, 0, 0, 0, 0, parentId, name)
-        }
+        this.moveType = lm.moveType
+        this.targetId = lm.targetId
+        this.side = lm.side
+        this.pos = lm.pos
+        this.parentId = lm.parentId
+        this.name = lm.name
     }
     //endregion
+
+
 
 
     //region DB SERIALIZATION
@@ -81,13 +82,16 @@ class LogicMoveEntity {
                 .put("id", this.id)
                 .put("index", this.index)
                 .put("moveType", this.moveType.toInt())
-                .put("templateIndex", this.templateIndex)
                 .put("targetId", this.targetId)
+                .put("extBaseId", if (this.extBase==null) null else this.extBase!!.id)
                 .put("side", this.side.toInt())
-                .put("dir", this.dir.toInt())
-                .put("position", this.position)
+                .put("intBaseId", this.intBaseId)
+                .put("pos", this.pos)
                 .put("parentId", this.parentId)
                 .put("name", this.name)
     }
     //endregion
 }
+
+//defined for GraphQL only
+class LogicMoveInput : LogicMoveEntity() {}
