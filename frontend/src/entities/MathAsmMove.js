@@ -10,13 +10,13 @@ export default class MathAsmMove {
             moveType:MoveType.START,
             targetId:targetId,        //null means: "append at the end of the array"
             base:base,
-            side:side,
+            baseSide:side,
             prevStatement:prevStatement,
         };
     }
 
     static executeStart(startMove, targets) {
-        const newStatement = StatementUtils.clone(startMove.base, startMove.side, startMove.targetId);
+        const newStatement = StatementUtils.clone(startMove.base, startMove.baseSide, startMove.targetId);
         const indexOfTarget = targets.findIndex(t => t._internalId === startMove.targetId);
 
         if (indexOfTarget>=0) targets[indexOfTarget] = newStatement;
@@ -25,7 +25,10 @@ export default class MathAsmMove {
 
     static revertStart(startMove, targets) {
         const indexOfTarget = targets.findIndex(t => t._internalId === startMove.targetId);
-        if (indexOfTarget>=0) targets[indexOfTarget] = startMove.prevStatement;
+        if (indexOfTarget<0) return;
+
+        if (startMove.prevStatement) targets[indexOfTarget] = startMove.prevStatement;
+        else targets.splice(indexOfTarget, 1);
     }
     //endregion
 

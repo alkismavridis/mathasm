@@ -8,13 +8,14 @@
   color:black;
 
   &.Statement_matched {
-    color:blue;
+    color:#495d49;
     font-weight: bold;
   }
 
   &.Statement_selected {
-    color:green;
+    color:#2dc32d;
     font-weight: bold;
+    text-decoration: underline;
   }
 }
 
@@ -23,12 +24,18 @@
   flex-direction: column;
   align-items: center;
 
-  color:#cc4545;
+  color:gray;
   font-weight: bold;
   margin-top: 10px;
 }
 
 .Statement_grade {
+  color: #ff6266;
   line-height: 0;
   font-size: 14px;
+}
+
+.Statement_dirArrow {
+  color: #ff6266;
+  font-weight: bold;
 }

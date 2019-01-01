@@ -186,6 +186,23 @@ export default class TheoremCreator extends Component {
         if (this.state.base._internalId!=null) return StatementUtils.clone(this.state.base, StatementSide.BOTH, this.state.base._internalId);
         return this.state.base;
     }
+
+    /** Returns the params to be given to StatementUtils.setupSelection. */
+    static getReplacementParamsFor(selectionType, positionToReplace, leftMatches, rightMatches) {
+        switch (selectionType) {
+            case SelectionType.ONE_IN_LEFT: {
+                const indexToReplace = leftMatches.findIndex(m => m.index === positionToReplace);
+                return {index: indexToReplace};
+            }
+
+            case SelectionType.ONE_IN_RIGHT: {
+                const indexToReplace = rightMatches.findIndex(m => m.index === positionToReplace);
+                return {index: indexToReplace};
+            }
+
+            default: return null;
+        }
+    }
     //endregion
 
 
@@ -490,19 +507,53 @@ export default class TheoremCreator extends Component {
         }
     }
 
-    /** Hello world. */
+    /** Navigates to the selected move of the proof. */
     goToMove(index) {
-        console.log("I go to move", index);
         const moveToGoTo = this.state.proof.moves[index];
+        const nextMove = this.state.proof.moves[index+1];
 
-        MathAsmProof.goToMove(this.state.proof, index, this.state.targets);
+        //1. Update the targets
+        const newTargets = MathAsmProof.goToMove(this.state.proof, index, this.state.targets);
 
+        //2. Setup changes
         const selectedTargetIndex = this.state.targets.findIndex(t => t._internalId === moveToGoTo.targetId);
-        this.setState({
+        const changes = {
             proof:this.state.proof,
-            targets:this.state.targets,
-            selectedTargetIndex:selectedTargetIndex
-        });
+            targets:newTargets,
+            selectedTargetIndex:selectedTargetIndex,
+            selectionType:SelectionType.NONE,
+        };
+
+        //3. Update base, matches and selection in order to show the next move that will happen.
+        const nextBase = nextMove? nextMove.base : null;
+        if (nextBase) {
+            changes.base = nextBase;
+            const sentenceToSearch = nextMove.baseSide===StatementSide.LEFT? nextBase.left : nextBase.right;
+
+            //3a. matches
+            changes.leftMatches = StatementUtils.findMatches(newTargets[selectedTargetIndex].left, sentenceToSearch, false);
+            changes.rightMatches = StatementUtils.findMatches(newTargets[selectedTargetIndex].right, sentenceToSearch, false);
+
+            //3b. selection
+            if (nextMove.selectionType!=null) {
+                changes.selectionType = nextMove.selectionType;
+                StatementUtils.setupSelection(
+                    changes.leftMatches,
+                    changes.rightMatches,
+                    changes.selectionType,
+                    TheoremCreator.getReplacementParamsFor(changes.selectionType, nextMove.pos, changes.leftMatches, changes.rightMatches)
+                );
+            }
+        }
+        else {
+            changes.base = null;
+            changes.leftMatches = [];
+            changes.rightMatches = [];
+            changes.selectionType = SelectionType.NONE;
+        }
+
+        //4. Update the component
+        this.setState(changes);
     }
 
     handleSaveClicked() {
@@ -570,7 +621,7 @@ export default class TheoremCreator extends Component {
 
     renderBase() {
         if (!this.state.base) return <div>No base selected...</div>;
-        else return <Statement symbolMap={this.props.symbolMap} statement={this.state.base} />;
+        else return <Statement symbolMap={this.props.symbolMap} statement={this.state.base} side={this.state.baseSide}/>;
     }
 
     renderButtons() {

@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import PropTypes from "prop-types";
 import cx from 'classnames';
 import "./Statement.scss";
+import StatementSide from "../../../constants/StatementSide";
 
 export default class Statement extends Component {
     //region STATIC
@@ -10,6 +11,7 @@ export default class Statement extends Component {
         /** The cache of all loaded symbols. */
         symbolMap:PropTypes.object.isRequired,
         statement:PropTypes.object,
+        side:PropTypes.number, //optional parameter to mark the side of a statement (that is used as a base, for example)
 
         //matches
         leftMatches:PropTypes.array,
@@ -65,10 +67,26 @@ export default class Statement extends Component {
 
     /** renders the connection of the given statement. */
     renderStatementConnection(stmt) {
-        return <div className="Statement_conn">
-            {stmt.grade>0 && <div className="Statement_grade">{stmt.grade}</div>}
-            <div>{stmt.isBidirectional? "<----->" : "----->"}</div>
-        </div>;
+
+        //1. Calculate the arrow
+        let arrow;
+        if (this.props.side == null) arrow = <div className="Statement_dirArrow">{stmt.isBidirectional ? "<----->" : "----->"}</div>;
+        else if (this.props.side === StatementSide.RIGHT) {
+            if (stmt.isBidirectional) arrow = <div><span>{"<"}</span><span className="Statement_dirArrow">{"----->"}</span></div>;
+            else arrow = <div>{"----->"}</div>;
+        }
+        else {
+            if (stmt.isBidirectional) arrow = <div><span className="Statement_dirArrow">{"<-----"}</span><span>{">"}</span></div>;
+            else arrow = <div>{"----->"}</div>;
+        }
+
+        //2. Put it all together
+        return (
+            <div className="Statement_conn">
+                {stmt.grade > 0 && <div className="Statement_grade">{stmt.grade}</div>}
+                {arrow}
+            </div>
+        );
     }
 
     /** Renders a sentence, taking the match and selection info into account. */

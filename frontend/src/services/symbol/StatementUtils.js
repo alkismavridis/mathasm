@@ -94,7 +94,7 @@ export default class StatementUtils {
         return side !== StatementSide.RIGHT || base.isBidirectional;
     }
 
-    /** Determines whicher an attempting selection is legal. */
+    /** Determines whether an attempting selection is legal. */
     static isSelectionLegal(selectionType, params, base, target, selectionLeft, selectionRight) {
         if ((base.type % 2) === 0) return false;
 

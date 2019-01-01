@@ -1,9 +1,7 @@
 import MathAsmMove from "./MathAsmMove";
 import MoveType from "../constants/MoveType";
 import BackendMoveType from "../constants/BackendMoveType";
-import StatementType from "../constants/StatementType";
 import SelectionType from "../constants/SelectionType";
-import StatementSide from "../constants/StatementSide";
 
 export default class MathAsmProof {
     //region GENERATOR FUNCTIONS
@@ -53,6 +51,8 @@ export default class MathAsmProof {
 
         //2. We setup the current move
         proof.currentMove = newMoveIndex;
+
+        return targets.slice();
     }
     //endregion
 
@@ -134,7 +134,7 @@ export default class MathAsmProof {
                         targetId:move.targetId,
                         extBaseId:move.base._internalId==null? move.base.id : null,
                         intBaseId:move.base._internalId,
-                        side:move.side
+                        side:move.baseSide
                     });
                     break;
 

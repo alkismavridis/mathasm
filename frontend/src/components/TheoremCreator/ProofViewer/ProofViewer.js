@@ -49,7 +49,7 @@ export default class ProofViewer extends Component {
     renderStartMove(move, index) {
         const isSelected = index === this.props.proof.currentMove;
         let message = "";
-        switch(move.side) {
+        switch(move.baseSide) {
             case StatementSide.BOTH:
                 message = "Cloning at "+move.targetId;
                 break;
