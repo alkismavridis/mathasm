@@ -101,10 +101,14 @@ export default class DirViewerGroup extends Component {
 
         //2. Add the tab
         const tabs = this.state.tabs;
-        tabs.push({tabId:maxTabId? maxTabId+1 : 1, initDirId:initDirId, currentDir:null});
+        const newTabId = maxTabId? maxTabId+1 : 1;
+        tabs.push({tabId:newTabId, initDirId:initDirId, currentDir:null});
 
         //3. Update the state
-        this.setState({tabs:tabs});
+        this.setState({
+            tabs:tabs,
+            selectedTabId:newTabId
+        });
     }
 
     removeTab(tabId) {

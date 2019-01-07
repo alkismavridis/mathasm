@@ -39,15 +39,32 @@ Maybe this could be good and constructive for humanity, which is precisely the r
 I will still publish it, though. It is fun, and who knows - maybe some crazy math/philosophy nerd will be happy to play with it.
 
 
-### Ok, enough. More about this weird instruction set.
-Ok, there are a couple of concepts that MathAsm is based upon.
-I don't have time now for a proper documentation, so I will make a brief overview on how it works.
-More info will come soon.
+### Ok. Describe the basic principles of MathAsm in a nutshell.
+Ok these are the golden rules.
 
-### So, explain me the basic concepts of MathAsm
-The first basic concept is the symbol. Symbols are like the atoms of the MathAsm universe.
+1. Mathematical symbols have no internal properties or functionality. They are only labels.
+2. A sequence of symbols is called a **sentence**.
+3. Every Axioms and every Theorems is a **pair of sentences** bound together. This is called a **statement** in MathAsm.
+Those pairs must be interpreted as replacement pairs: two sentences that one can replace the other under certain conditions.
+4. Theorems and Axioms have no internal properties or functionality.
+5. Creating an axiom is an arbitrary process: one constructs freely two sentences by choosing symbols.
+6. Creating theorems is a strict process. There are specific moves that one is allowed to perform when proving a theorem.
+Those moves is called an **instruction set**.
+7. The instruction set may define the properties that the bond of each statement has, in order to function.
+But it may **not** give any special handling to any symbol, sentence or statement. This would violate the core principles of MathAsm.
+
+One of MathAsm's goals is the definition of a functional and sound instruction set that can build any mathematical theory.
+This is an ongoing process: the current instruction set may be changed/expanded if needed.
+One may experiment with other MathAsm instruction sets and see where those lead.
+
+The **standard MathAsm instruction set** defines only two properties on each sentence bond: flow and grade.
+
+
+### Hey, that's to fast! I am lost. Explain this step by step now.
+Ok, lets start from the basics.
+The first important concept of MathAsm is the **symbol**. Symbols are like the atoms of the MathAsm universe.
 Stuff that you cannot divide further into smaller pieces.
-In Math, symbols would include stuff like:
+In mathematics, symbols would include stuff like:
 
 1 2 3 + = ( ) sin cos
 
@@ -58,7 +75,7 @@ true and false would be symbols too. Note the sin and cos from the example above
 Moving on. Every theory has its own symbols, so one is free to define as many as needed.
 MathAsm does not define any symbol. MathAsm does not care about your theory specifics. Your theory will define its own symbols.
 
-Oh, and the most important on symbols:
+Oh, and the golden rule of symbols:
 For MathAsm, symbols have **no meaning**, **no internal functionality** and are considered **all equal**.
 
 
@@ -79,7 +96,7 @@ With axioms. Only Axioms give meaning to the symbols. But you are rushing a bit.
 
 
 ### Ok, I see. Move to the next concept, please.
-The next concept is the sentence. Sentence is any collection of one-or-more symbols. Like:
+The next concept is the sentence. Sentence is any sequence of one-or-more symbols. Like:
 - 1 + 1 = 2
 - x + 2 = x - 2
 - 5 * x
@@ -131,10 +148,12 @@ Replacing stuff with other stuff is how mathematics work according to MathAsm. W
 Of course not.
 
 
-### What then?
+### What comes next?
 There is one last key concept. A very important one: the connection.
 We said that a statement is a pair of sentences, bound together.
-This bond (which we call a **connection**) has its own properties that need to be defined.
+This bond (which we call a **connection**) has its own properties.
+Each **MathAsm instruction set** may define the properties that it needs in order to function.
+Those properties are integrated into each statement's connection.
 
 
 ### Ok, so, a statement consist of left part - a connection - and a right part?
@@ -142,34 +161,36 @@ Exactly. This is exactly the structure of a statement, the structure of every st
 Every theorem and every axiom of every theory has this form.
 
 
-### You said that connections have properties. WHat are they?
-Connections have just two properties: flow and grade.
+### And what about the properties? What properties does the current instruction set defines?
+In the standard instruction set, connections have just two properties: flow and grade.
 
-The flow of a statement may be unidirectional or bidirectional. One or the other. There is no third option.
-The grade of a statement is a zero-or-more integer.
+The **flow** of a statement is one of the following: unidirectional or bidirectional.
+One or the other. There is no third option.
+
+The **grade** of a statement is a zero-or-more integer.
 
 Just to clarify: both flow and grade are permanent features of theorems and axioms. Once a theorem/axiom is created
 with unidirectional flow and grade 3, for example, it stays like that for ever. These stuff are organic part of the theorem/axiom,
 equally important to their sentences.
 
 In this document, we will represent the connections like that:
-- <--3-->   (bidirectional connection with grade 3)
+- <--3-->  (bidirectional connection with grade 3)
 - ---5-->     (unidirectional connection with grade 5)
 
 
 ### Got it. But what do those flows and grades do?
-Well, it is time to talk about the **instruction set**.
+We will demonstrate this in detail when we will talk about the **standard MathAsm instruction set**.
+But first, we will see how we define an **axiom**.
 
 
-### Ok, I hope this is the last one. I am bored.
-Yes, it is the last one.
-So, building axioms is easy and messy. Your parrot can make it, too.
-Here is how it goes.
+### So, building axioms. How is it done?
+Building axioms is easy and messy. Here is how it goes.
 
 - Form a sentence. Any sentence! Just put one or more symbols in order. As many as you wish, and whichever you wish. This will be the left part of your axiom.
-- Chose a flow for the connection. You like unidirectional? You chose unidirectional. Prefer bidirectional? You get bidirectional. Whatever you like.
-- Chose a grade. Zero or positive number. Again, whichever you like.
-- Repeat the step 1: form one more  sentence with whatever crap you want. This is the right part.
+- Chose your connection of the statement. This is related to the instruction set that you will use.
+For the standard MathAsm instruction set, we will define a flow and a grade. We chose one of unidirectional or bidirectional as flow (whichever we like),
+and a zero-or-more integer as grade.
+- Repeat the step 1: form one more sentence with whatever symbols you want. This is the right part of the sentence.
 
 Congrats! You got your first axiom! You are now a theory creator!
 
@@ -179,12 +200,12 @@ Exactly! This is how you build axioms. You do anything you like, as long as it i
 Building axioms is a total anarchy.
 
 ### Ok. And what about theorems?
-Ok, now we need to talk about the theorem building process.
+Ok, now we need to talk about the theorem building process, which means defining the MathAsm standard instruction set.
 Here the picture is totally different than in axioms.
 
 Building theorems is done under very strict rules.
-In fact, there are only 4 operations that we can perform. Everything else is forbidden.
-These 4 operations are the instruction set of mathematics that we were talking about before.
+In fact, standard instruction set defines only 4 operations that we can perform.
+You have to build all of mathematics with those 4. Everything else is forbidden.
 
 One may perform as many of those "moves" as desired to build new statements based on the existing ones.
 Once ready, we **save** the new statement into the theory, which means that it can no longer be transformed.
@@ -297,7 +318,7 @@ Correct! The rules for the statement replacement are:
   Using a base with grade less-or-equals to the target is illegal.
   
   
-### Finally! This instruction set thing is. Any bonus points?
+### Finally! This instruction set thing was long. Any bonus points?
 Yes! While building theorems, you may have multiple targets. In other words, multiple statements that you just generated and working on.
 We don't have to be limited to have 1 at a time.
 One may use the one of those temporary statements as a base to perform operations into the others.
@@ -307,26 +328,24 @@ Please note that the theorem building process is also called a **proof** in Math
 
 
 ### All right. But dude, you made those rules out of thin air! Why these rules are that way?
-That is correct. The instruction set is arbitrary, axiomatic.
-As mentioned in the beginning, the ultimate and only goal is to give a set of rules
+That is correct. The instruction set is arbitrary, kind of axiomatic.
+As mentioned in the beginning, the ultimate and only goal is to find am instruction set
 that are able to produce (almost) **any** valid statement and can produce **only** valid statements.
 With the assumption that we give valid axioms, of course.
 
-I did a lot of trial and error until I conclude to the instruction set I presented to you.
+I went through a lot of trial and error until I conclude to the instruction set I presented to you.
+I have already build boolean algebra, arithmetic etc using it.
 
-### What kind of trial and error?
+The development of the standard instruction set still an ongoing process.
+Trying out different instruction sets, for experiment or curiosity is by itself a huge topic.
+If you want to propose/try alternative instruction sets, you are most welcome to do so!
+As long as it respects the basic rules of MathAsm described above, it can be called a MathAsm instruction set.
+
+
+### What kind of trial and error did you go through?
 I started with a very simplistic instruction set.
 Every time I realized that my instruction had limitations, which means that it could generate mathematically valid statements, I had to expand it.
 Every time I realized that my instruction set was too loose, which means that it could produce invalid statements, I had to make it stricter.
-
-
-### Does this mean that the current instruction set might change again?
-Of course! MathAsm is on its start.
-If you used MathAsm and could not generate a statement that you consider valid, or generated an invalid statement,
-please share with us your suggestions!
-
-Trying out different instruction sets, for experiment or curiosity is by itself a huge topic.
-If you want to propose/try alternative instruction sets, you are most welcome to do so!
 
 
 ### Ok, ok. Tell me about how the current instruction set was born. What was your starting point?
