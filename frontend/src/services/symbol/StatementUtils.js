@@ -141,8 +141,33 @@ export default class StatementUtils {
     }
 
     /** Returns the default selection type for the given base-target pair. */
-    static getDefaultSelectionTypeFor(base, target) {
-        return SelectionType.NONE; //TODO return something more brave than that...
+    static getDefaultSelectionTypeFor(base, target, leftMatches, rightMatches) {
+        //1. Try ONE_IN_LEFT selection
+        if (leftMatches.length>0 && StatementUtils.isSelectionLegal(SelectionType.ONE_IN_LEFT, {index:0}, base, target, leftMatches, rightMatches)) {
+            return SelectionType.ONE_IN_LEFT;
+        }
+
+        //2. Try ONE_IN_RIGHT selection
+        if (rightMatches.length>0 && StatementUtils.isSelectionLegal(SelectionType.ONE_IN_RIGHT, {index:0}, base, target, leftMatches, rightMatches)) {
+            return SelectionType.ONE_IN_RIGHT;
+        }
+
+        //3. Try LEFT selection
+        if (leftMatches.length>0 && StatementUtils.isSelectionLegal(SelectionType.LEFT, null, base, target, leftMatches, rightMatches)) {
+            return SelectionType.LEFT;
+        }
+
+        //4. Try RIGHT selection
+        if (rightMatches.length>0 && StatementUtils.isSelectionLegal(SelectionType.RIGHT, null, base, target, leftMatches, rightMatches)) {
+            return SelectionType.RIGHT;
+        }
+
+        //4. Try ALL selection
+        if (leftMatches.length!==0 || rightMatches.length!==0) {
+            return SelectionType.ALL;
+        }
+
+        return SelectionType.NONE;
     }
 
     /** Sets the selected flag of each element of leftMatches and rightMatches arrays, based on the given selectionType. */

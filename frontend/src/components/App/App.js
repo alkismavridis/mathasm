@@ -88,8 +88,6 @@ let instance;
  * */
 export default class App extends Component {
   //region FIELDS
-
-
     state = {
         location:null,
         user:null
@@ -100,10 +98,11 @@ export default class App extends Component {
     _localStorageCache = {};
     _sessionStorageCache = {};
 
-    //non-ui states
+    //non-react states
     _notificationDOMRef = null;
     _modalGroupRef = null;
     _history = null;
+    _eventListeners = [];
   //endregion
 
 
@@ -153,7 +152,7 @@ export default class App extends Component {
 
 
 
-    //region STATE INTERACTION
+    //region GLOBAL STATE INTERACTION
     static getSessionKey() {
       if (instance._localStorageCache.sessionKey === undefined) {
           instance._localStorageCache.sessionKey = window.localStorage.getItem("sessionKey") || null;
@@ -175,18 +174,14 @@ export default class App extends Component {
     static setUser(user) {
       instance.setState({user:user});
     }
+
+    static getEventListeners() { return instance._eventListeners; }
+    static setEventListeners(newlist) { instance._eventListeners = newlist; }
     //endregion
 
 
     //region MODALS
     static getModalGroup() { return instance._modalGroupRef; }
-    //endregion
-
-
-    //region NAVIGATION
-    static navigateTo(str) {
-        this._history.push(str);
-    }
     //endregion
 
 

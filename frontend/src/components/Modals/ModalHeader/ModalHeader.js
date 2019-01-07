@@ -26,15 +26,15 @@ export default class ModalHeader extends Component {
 
     //region RENDERING
     renderConfirmButton() {
-        return <div onClick={this.props.onConfirm}>
+        return <button className="Globals_textBut" onClick={this.props.onConfirm}>
             <FontAwesomeIcon icon="check" title="Confirm" className="ModalHeader_confirm"/>
-        </div>;
+        </button>;
     }
 
     renderCloseButton() {
-        return <div onClick={this.props.onClose}>
+        return <button className="Globals_textBut" onClick={this.props.onClose}>
             <FontAwesomeIcon icon="times" title="Close" className="ModalHeader_close"/>
-        </div>;
+        </button>;
     }
 
     render() {

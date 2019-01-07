@@ -11,6 +11,7 @@ import {SymbolRangeUtils} from "../../../../services/symbol/SymbolRangeUtils";
 import Connection from "../../Connection/Connection";
 import Statement from "../../Statement/Statement";
 import StatementType from "../../../../constants/StatementType";
+import SortingUtils from "../../../../services/symbol/SortingUtils";
 
 const q = {
     FETCH_PARENT: `query($id:Long!){
@@ -358,7 +359,7 @@ export default class DirViewer extends Component {
     }
 
     renderStatements() {
-        const statements = this.state.currentDir.statements;
+        const statements = SortingUtils.sortStatementsById(this.state.currentDir.statements);
         if (!statements || statements.length === 0) return null;
 
         return (
@@ -379,7 +380,7 @@ export default class DirViewer extends Component {
     }
 
     renderSymbols() {
-        const symbols = this.state.currentDir.symbols;
+        const symbols = SortingUtils.sortSymbolsById(this.state.currentDir.symbols);
         if (!symbols || symbols.length === 0) return null;
 
         return (
@@ -402,6 +403,5 @@ export default class DirViewer extends Component {
             </div>
         );
     }
-
     //endregion
 }

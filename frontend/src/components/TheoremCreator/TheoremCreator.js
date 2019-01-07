@@ -58,6 +58,8 @@ export default class TheoremCreator extends Component {
         //proof
         proof:MathAsmProof.emptyProof(),
     };
+
+    _rootRef = null;
     //endregion
 
 
@@ -93,6 +95,10 @@ export default class TheoremCreator extends Component {
         //3. Update the component
         this.setState(changes);
     }
+
+    focus() {
+        if (this._rootRef) this._rootRef.focus();
+    }
     //endregion
 
 
@@ -117,7 +123,7 @@ export default class TheoremCreator extends Component {
         changes.leftMatches = StatementUtils.findMatches(target.left, sentenceToSearch, false);
         changes.rightMatches = StatementUtils.findMatches(target.right, sentenceToSearch, false);
 
-        changes.selectionType = StatementUtils.getDefaultSelectionTypeFor(base, target);
+        changes.selectionType = StatementUtils.getDefaultSelectionTypeFor(base, target, changes.leftMatches, changes.rightMatches);
         StatementUtils.setupSelection(changes.leftMatches, changes.rightMatches, changes.selectionType);
     }
 
@@ -386,9 +392,13 @@ export default class TheoremCreator extends Component {
             this.setState(changes);
         }
         else { //overwrite selected target
-            const newArray = this.state.targets.slice();
-            newArray[this.state.selectedTargetIndex] = newTarget;
-            this.setState({targets:newArray, proof:this.state.proof});
+            const changes = {
+                proof:this.state.proof,
+                targets:this.state.targets.slice(),
+            };
+            changes.targets[this.state.selectedTargetIndex] = newTarget;
+            TheoremCreator.addDefaultSelectionFor(this.state.base, newTarget, StatementSide.LEFT, changes);
+            this.setState(changes);
         }
     }
 
@@ -522,6 +532,7 @@ export default class TheoremCreator extends Component {
             targets:newTargets,
             selectedTargetIndex:selectedTargetIndex,
             selectionType:SelectionType.NONE,
+            baseSide: nextMove && nextMove.baseSide!=null? nextMove.baseSide : StatementSide.LEFT
         };
 
         //3. Update base, matches and selection in order to show the next move that will happen.
@@ -601,14 +612,46 @@ export default class TheoremCreator extends Component {
         const changeHandler = () => this.selectTarget(this.state.selectedTargetIndex===index? null : index);
 
         const isSelected = this.state.selectedTargetIndex===index;
-        return <div key={index} className="Globals_flexStart">
-            <div
-                className="TheoremCreator_tempAsBase"
+        return <div key={index} className="Globals_flexStartDown">
+            <button
+                className="Globals_textBut"
                 title="Use as base (b)"
+                style={{
+                    width: "16px",
+                    height: "16px",
+                    color:"green",
+                    marginRight:"8px"
+                }}
                 onClick={e => this.setBase(this.state.targets[index])}>
                 <FontAwesomeIcon icon="cog"/>
-            </div>
-            <input type="radio" checked={isSelected} name="target" value={index} onChange={changeHandler}/>
+            </button>
+            <button
+                className="Globals_textBut"
+                title="Replace (enter)"
+                style={{
+                    visibility:!isSelected || this.state.base==null || this.state.selectedTargetIndex==null || this.state.selectionType===SelectionType.NONE? "hidden" : "",
+                    width: "16px",
+                    height: "16px",
+                    color:"red",
+                    backgroundColor:"transparent",
+                    marginRight:"8px"
+                }}
+                onClick={()=>this.performReplacement()}>
+                <FontAwesomeIcon icon="check"/>
+            </button>
+            <button
+                className="Globals_textBut"
+                title="Replace (enter)"
+                style={{
+                    width: "16px",
+                    height: "16px",
+                    color:isSelected? "#001fff" : "#001fff73",
+                    backgroundColor:"transparent",
+                    marginRight:"8px"
+                }}
+                onClick={changeHandler}>
+                <FontAwesomeIcon icon="angle-right"/>
+            </button>
             <Statement
                 symbolMap={this.props.symbolMap}
                 statement={target}
@@ -620,38 +663,65 @@ export default class TheoremCreator extends Component {
     }
 
     renderBase() {
-        if (!this.state.base) return <div>No base selected...</div>;
-        else return <Statement symbolMap={this.props.symbolMap} statement={this.state.base} side={this.state.baseSide}/>;
+        if (!this.state.base) return <div>Please select a base...</div>;
+        else return <div className="Globals_flexStartDown">
+            <button
+                className="Globals_textBut"
+                title="Change base dir (space)"
+                style={{
+                    width: "16px",
+                    height: "16px",
+                    color:"#001fff73",
+                    marginRight:"8px"
+                }}
+                onClick={()=>this.setBaseDir(this.state.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT)}>
+                <FontAwesomeIcon icon="exchange-alt"/>
+            </button>
+            <Statement symbolMap={this.props.symbolMap} statement={this.state.base} side={this.state.baseSide}/>
+        </div>
     }
 
     renderButtons() {
         return <div style={{margin:"16px 0"}}>
             <button
                 className="Globals_roundBut"
-                title="Change base dir (space)"
-                style={{backgroundColor: "green", width: "32px", height: "32px", fontSize: "18px", marginRight:"32px"}}
-                onClick={()=>this.setBaseDir(this.state.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT)}>
-                <FontAwesomeIcon icon="exchange-alt"/>
-            </button>
-
-            <button
-                className="Globals_roundBut"
                 title="Clone left side of base (x)"
-                style={{backgroundColor: "cornflowerblue", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                style={{
+                    visibility:this.state.base==null? "hidden" : "",
+                    backgroundColor: "cornflowerblue",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "14px",
+                    margin:"0 4px"
+                }}
                 onClick={()=>this.cloneBase(StatementSide.LEFT)}>
                 <FontAwesomeIcon icon="step-backward"/>
             </button>
             <button
                 className="Globals_roundBut"
                 title="Clone base (c)"
-                style={{backgroundColor: "cornflowerblue", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                style={{
+                    visibility:this.state.base==null? "hidden" : "",
+                    backgroundColor: "cornflowerblue",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "14px",
+                    margin:"0 4px"
+                }}
                 onClick={()=>this.cloneBase(StatementSide.BOTH)}>
                 <FontAwesomeIcon icon="copy"/>
             </button>
             <button
                 className="Globals_roundBut"
                 title="Clone right side of base (v)"
-                style={{backgroundColor: "cornflowerblue", width: "32px", height: "32px", fontSize: "18px", margin:"0 32px 0 4px"}}
+                style={{
+                    visibility:this.state.base==null? "hidden" : "",
+                    backgroundColor: "cornflowerblue",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "14px",
+                    margin:"0 20px 0 4px"
+                }}
                 onClick={()=>this.cloneBase(StatementSide.RIGHT)}>
                 <FontAwesomeIcon icon="step-forward"/>
             </button>
@@ -659,58 +729,99 @@ export default class TheoremCreator extends Component {
             <button
                 className="Globals_roundBut"
                 title="Move selection left (left arrow)"
-                style={{backgroundColor: "#e2b228", width: "24px", height: "24px", fontSize: "18px", margin:"0 4px"}}
+                style={{
+                    visibility:this.state.selectionType===SelectionType.ALL || this.state.leftMatches.length+this.state.rightMatches.length<=1? "hidden" : "",
+                    backgroundColor: "#e2b228",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "18px",
+                    margin:"0 4px"
+                }}
                 onClick={()=>this.moveSelection(-1)}>
                 <FontAwesomeIcon icon="caret-left"/>
             </button>
             <button
                 className="Globals_roundBut"
                 title="Select all (a)"
-                style={{backgroundColor: "#e2b228", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                style={{
+                    visibility:this.state.base==null || this.state.selectedTargetIndex==null? "hidden" : "",
+                    backgroundColor: this.state.selectionType===SelectionType.ALL? "#f1814c" : "#e2b228",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "14px",
+                    margin:"0 4px"
+                }}
                 onClick={()=>this.changeSelectionType(SelectionType.ALL)}>
-                <FontAwesomeIcon icon="dice-six"/>
+                <FontAwesomeIcon icon="asterisk"/>
             </button>
             <button
                 className="Globals_roundBut"
                 title="Sentence selection (s)"
-                style={{backgroundColor: "#e2b228", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                style={{
+                    visibility:this.state.base==null || this.state.selectedTargetIndex==null? "hidden" : "",
+                    backgroundColor: this.state.selectionType===SelectionType.LEFT || this.state.selectionType===SelectionType.RIGHT? "#f1814c" : "#e2b228",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "14px",
+                    margin:"0 4px"
+                }}
                 onClick={()=>this.switchToSelectSentenceMode()}>
-                <FontAwesomeIcon icon="dice-two"/>
+                <FontAwesomeIcon icon="balance-scale"/>
             </button>
             <button
                 className="Globals_roundBut"
                 title="Distinct selection (d)"
-                style={{backgroundColor: "#e2b228", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                style={{
+                    visibility:this.state.base==null || this.state.selectedTargetIndex==null? "hidden" : "",
+                    backgroundColor: this.state.selectionType===SelectionType.ONE_IN_LEFT || this.state.selectionType===SelectionType.ONE_IN_RIGHT? "#f1814c" : "#e2b228",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "14px",
+                    margin:"0 4px"
+                }}
                 onClick={()=>this.switchToSingleSelectionMode()}>
-                <FontAwesomeIcon icon="dice-one"/>
+                <FontAwesomeIcon icon="highlighter"/>
             </button>
             <button
                 className="Globals_roundBut"
                 title="Move selection right (right arrow)"
-                style={{backgroundColor: "#e2b228", width: "24px", height: "24px", fontSize: "18px", margin:"0 32px 0 4px"}}
+                style={{
+                    visibility:this.state.selectionType===SelectionType.ALL || this.state.leftMatches.length+this.state.rightMatches.length<=1? "hidden" : "",
+                    backgroundColor: "#e2b228",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "18px",
+                    margin:"0 20px 0 4px"
+                }}
                 onClick={()=>this.moveSelection(1)}>
                 <FontAwesomeIcon icon="caret-right"/>
             </button>
 
             <button
                 className="Globals_roundBut"
-                title="Replace (enter)"
-                style={{backgroundColor: "#e2331c", width: "32px", height: "32px", fontSize: "18px", margin:"0 32px 0 4px"}}
-                onClick={()=>this.performReplacement()}>
-                <FontAwesomeIcon icon="check"/>
-            </button>
-
-            <button
-                className="Globals_roundBut"
                 title={"Persist selected template under "+this.props.parentDir.name+" (p)"}
-                style={{backgroundColor: "#3847e2", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                style={{
+                    visibility:this.state.selectedTargetIndex==null? "hidden" : "",
+                    backgroundColor: "#5db969",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "16px",
+                    margin:"0 4px"
+                }}
                 onClick={()=>this.handleSaveClicked()}>
                 <FontAwesomeIcon icon="save"/>
             </button>
             <button
                 className="Globals_roundBut"
                 title="Upload proof"
-                style={{backgroundColor: "#3847e2", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                style={{
+                    visibility:this.state.proof.moves.length===0? "hidden" : "",
+                    backgroundColor: "#5db969",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "16px",
+                    margin:"0 4px"
+                }}
                 onClick={()=>this.uploadProof()}>
                 <FontAwesomeIcon icon="cloud-upload-alt"/>
             </button>
@@ -719,21 +830,47 @@ export default class TheoremCreator extends Component {
     }
 
     renderEmptyStmtDiv() {
-        return <div style={{marginLeft:"32px"}}>
-            <input type="radio" name="target" checked={this.state.selectedTargetIndex==null} onChange={() => this.selectTarget(null)}/>
-        </div>;
+        return (
+            <div
+                onClick={() => this.selectTarget(null)}
+                style={{
+                    marginLeft:"48px",
+                    marginTop:"16px",
+                    visibility:this.state.base==null? "hidden" : ""
+                }}>
+                <button
+                    className="Globals_textBut"
+                    title="Replace (enter)"
+                    style={{
+                        width: "16px",
+                        height: "16px",
+                        color:this.state.selectedTargetIndex==null? "#001fff" : "#001fff73",
+                        backgroundColor:"transparent",
+                        marginRight:"8px"
+                    }}
+                    onClick={() => this.selectTarget(null)}>
+                    <FontAwesomeIcon icon="angle-right"/>
+                </button>
+                <span>New...</span>
+            </div>
+        );
     }
 
     render() {
         return (
-            <div className={cx("TheoremCreator_root", this.props.className)} style={this.props.style} onKeyUp={e=>this.handleKeyPress(e)} tabIndex="0">
+            <div
+                className={cx("TheoremCreator_root", this.props.className)}
+                style={this.props.style}
+                onKeyUp={e=>this.handleKeyPress(e)}
+                ref={el => this._rootRef = el}
+                tabIndex="0">
                 <div className="TheoremCreator_main">
                     {this.renderBase()}
                     {this.renderButtons()}
-                    <form>
+                    <div>
                         {this.state.targets.map((t,index) => this.renderTarget(t, index))}
                         {this.renderEmptyStmtDiv()}
-                    </form>
+                    </div>
                 </div>
                 <ProofViewer
                     proof={this.state.proof}

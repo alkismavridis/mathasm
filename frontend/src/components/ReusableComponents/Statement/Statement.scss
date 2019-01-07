@@ -4,18 +4,18 @@
 }
 
 .Statement_sym {
-  margin: 0 4px;
+  padding: 0 2px;
   color:black;
 
   &.Statement_matched {
-    color:#495d49;
+    color: #5cbdb4;
     font-weight: bold;
   }
 
   &.Statement_selected {
-    color:#2dc32d;
+    background-color: #5cbdb4;
+    color:white;
     font-weight: bold;
-    text-decoration: underline;
   }
 }
 
@@ -38,4 +38,5 @@
 .Statement_dirArrow {
   color: #ff6266;
   font-weight: bold;
+  white-space: nowrap;
 }

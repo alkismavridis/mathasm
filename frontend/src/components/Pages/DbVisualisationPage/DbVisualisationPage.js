@@ -22,9 +22,12 @@ const SAVED_COMMANDS = [
     {id:"1", name:"Watch Node", query:"match (o)-[r]-(f) where ID(o)=3 return o,r,f;"},
     {id:"2", name:"All users", query:"match (o:user) return o;"},
     {id:"3", name:"Watch all users", query:"match (o:user)-[r]-(f) return o,r,f;"},
-    {id:"4", name:"File system", query:"match (o:dir)-[r]-(f:dir) return o,r,f;"},
-    {id:"5", name:"Whole DB", query:"match (o)-[r]-(f) return o,r,f;"},
-    {id:"5", name:"Update Node", query:"MATCH (n) WHERE ID(n)=39 SET n.type = 65 return n;"},
+    {id:"4", name:"All dirs made by user", query:"match (o:user)-[r]-(f:dir) where ID(o)=0 return o,r,f;"},
+    {id:"5", name:"File system", query:"match (o:dir)-[r]-(f:dir) return o,r,f;"},
+    {id:"6", name:"Whole DB", query:"match (o)-[r]-(f) return o,r,f;"},
+    {id:"7", name:"Update Node", query:"MATCH (n) WHERE ID(n)=39 SET n.type = 65 return n;"},
+    {id:"8", name:"Delete Node", query:"match (o)-[r]-() WHERE ID(o)=49 delete o, r;"},
+    {id:"9", name:"Direct Statement dependencies", query:"match (o:stmt)<-[r:BS]-(move:move)<-[r2:MV]-(proof:proof)<-[r3:PRF]-(stmt:stmt) WHERE ID(o)=45 return  stmt;"},
 ];
 
 class DbVisualisationPage extends Component {

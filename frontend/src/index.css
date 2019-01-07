@@ -49,6 +49,12 @@ html, body {
     align-items: center;
 }
 
+.Globals_flexStartDown {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-end;
+}
+
 .Globals_flexWrapDown {
     display: flex;
     flex-wrap: wrap;
@@ -87,7 +93,7 @@ html, body {
 .Globals_inp {
     border-radius: 8px;
     padding:8px 8px;
-    font-size: 20px;
+    font-size: 16px;
     outline: none;
     border-width: 2px;
 }

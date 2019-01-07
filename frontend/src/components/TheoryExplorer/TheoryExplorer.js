@@ -94,7 +94,10 @@ export default class TheoryExplorer extends Component {
     handleSymbolClick(sym) {
         switch (this.state.mode) {
             case Mode.CREATE_AXIOM:
-                if (this._axiomCreator) this._axiomCreator.addSymbol(sym);
+                if (this._axiomCreator) {
+                    this._axiomCreator.addSymbol(sym);
+                    this._axiomCreator.focus();
+                }
                 break;
 
         }
@@ -103,7 +106,10 @@ export default class TheoryExplorer extends Component {
     handleStatementClick(stmt) {
         switch (this.state.mode) {
             case Mode.CREATE_THEOREM:
-                if (this._theoremCreator) this._theoremCreator.setBase(stmt);
+                if (this._theoremCreator) {
+                    this._theoremCreator.setBase(stmt);
+                    this._theoremCreator.focus();
+                }
                 break;
 
         }

@@ -71,7 +71,7 @@ export default class Statement extends Component {
         //1. Calculate the arrow
         let arrow;
         if (this.props.side == null) arrow = <div className="Statement_dirArrow">{stmt.isBidirectional ? "<----->" : "----->"}</div>;
-        else if (this.props.side === StatementSide.RIGHT) {
+        else if (this.props.side === StatementSide.LEFT) {
             if (stmt.isBidirectional) arrow = <div><span>{"<"}</span><span className="Statement_dirArrow">{"----->"}</span></div>;
             else arrow = <div>{"----->"}</div>;
         }

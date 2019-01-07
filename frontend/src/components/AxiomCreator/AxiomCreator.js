@@ -48,7 +48,7 @@ export default class AxiomCreator extends Component {
         isCursorLeft:true
     };
 
-
+    _rootRef = null;
     //region LIFE CYCLE
 
 
@@ -90,20 +90,20 @@ export default class AxiomCreator extends Component {
     handleKeyPress(e) {
         switch (e.keyCode) {
             case 38: //arrow up
-                this.setState({cursor:0, isCursorLeft:true});
+                this.setState({cursor: 0, isCursorLeft: true});
                 break;
 
             case 40: //arrow down
-                this.setState({cursor:0, isCursorLeft:false});
+                this.setState({cursor: 0, isCursorLeft: false});
                 break;
 
             case 37: //arrow left
-                this.setState({cursor:Math.max(0, this.state.cursor-1)});
+                this.setState({cursor: Math.max(0, this.state.cursor - 1)});
                 break;
 
             case 39: //arrow right
                 const len = this.getCurrentSentence().length;
-                this.setState({cursor:Math.min(len, this.state.cursor+1)});
+                this.setState({cursor: Math.min(len, this.state.cursor + 1)});
                 break;
 
             case 8: { //backspace
@@ -112,7 +112,7 @@ export default class AxiomCreator extends Component {
                 array.splice(this.state.cursor - 1, 1);
 
 
-                const newState = {cursor:this.state.cursor - 1};
+                const newState = {cursor: this.state.cursor - 1};
                 if (this.state.isCursorLeft) newState.left = array;
                 else newState.right = array;
                 this.setState(newState);
@@ -132,7 +132,12 @@ export default class AxiomCreator extends Component {
 
                 break;
             }
+
+            case 13:
+                this.handleSaveClicked();
+                break;
         }
+
     }
 
     /** Sends a save request to the server in order to save the axiom with the given name. */
@@ -161,7 +166,7 @@ export default class AxiomCreator extends Component {
         ModalService.addModal(
             id,
             <StringInputDialog
-                title="Axiom's name..."
+                title={"Save under "+this.props.parentDir.name}
                 placeholder="Axiom's name..."
                 onSubmit={this.commitSaveRequest.bind(this, id)}/>
         )
@@ -184,6 +189,10 @@ export default class AxiomCreator extends Component {
         //Advance the cursor too
         newState.cursor = this.state.cursor+1;
         this.setState(newState);
+    }
+
+    focus() {
+        if (this._rootRef) this._rootRef.focus();
     }
     //endregion
 
@@ -246,18 +255,17 @@ export default class AxiomCreator extends Component {
 
     render() {
         return (
-            <div className="AxiomCreator_root" onKeyDown={this.handleKeyPress.bind(this)} tabIndex="0">
+            <div ref={el => this._rootRef = el} className="AxiomCreator_root" onKeyDown={this.handleKeyPress.bind(this)} tabIndex="0">
                 {this.renderSentence(this.state.left, this.state.isCursorLeft? this.state.cursor : null, true)}
                 {this.renderConnection()}
                 {this.renderSentence(this.state.right, this.state.isCursorLeft? null : this.state.cursor, false)}
                 <div>
                     <button
                         className="Globals_roundBut"
-                        style={{width:"32px", height:"32px", marginLeft:"16px"}}
+                        style={{width:"32px", height:"32px", marginTop:"8px"}}
                         onClick={this.handleSaveClicked.bind(this)}>
                         <FontAwesomeIcon icon="save"/>
                     </button>
-                    <span style={{margin:"0 16px"}}>Axiom will be saved under <b>{this.props.parentDir.name}</b></span>
                 </div>
             </div>
         );

@@ -66,7 +66,7 @@ export default class Dropdown extends Component {
     render() {
         return (
             <div className={cx("Dropdown_root", this.props.className)} style={this.props.style}>
-                <select value={this.props.value} onChange={e => this.handleChange(e)} disabled={this.props.disabled}>
+                <select value={this.props.value} onChange={e => this.handleChange(e)} disabled={this.props.disabled} className="Globals_inp">
                     {this.renderOptions()}
                 </select>
             </div>
