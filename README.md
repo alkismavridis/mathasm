@@ -1,6 +1,6 @@
 ### What the hell is this?
 This project is a tool for building mathematical theories and/or philosophical propositions.
-One can create statements from scratch (Axioms), or use existing statements to generate new statements (theorems) using **certain rules** of transformations.
+One can create statements from scratch (Axioms), or use existing statements to generate new statements (theorems) using **certain rules** of transformation.
 
 
 ### What theories?
@@ -14,53 +14,65 @@ MathAsm might be a tool for you too.
 
 
 ### How is it possible that MathAsm does not care about theory specifics?
-MathAsm tries to see what all mathematical theories have in common, what is the basis of them all. MathAsm tries to focus on that and only on that.
+MathAsm tries to see what all mathematical theories have in common, what is the basis of them all. MathAsm tries to focus on that and only that.
 This applies in philosophical propositions, too (I guess).
 
-It is similar to the instruction set of a CPU: the instruction set does not care about the type of the application you build.
-It is the same one for all applications and it includes the only operations that the application may perform. Nothing else exists for that application.
+A nice metaphor is the instruction set of a CPU: the instruction set does not care about the type of the applications you build.
+The application depends on the instruction set, but not the other way around.
+Thus, the instruction set does not care about the application specifics.
+Also, note that the application can perform **only** the operations that the instruction set specifies.
+
+Similarly, MathAsm specifies the structure and basic concepts for any theory without having to care about that theory's specifics.
 
 
 ### So, are you trying to define the instruction set of mathematics?
-Exactly! And provide a web app where people can use it to create their own theories,
-or import existing mathematical theories into MathAsm (such as boolean algebra) and play with them.
+Kind of. In fact, MathAsm is more abstract than an instruction set. It could be compared to a Turing Machine.
+If defines specifications: the structure of a theory, what a symbol is, an axiom and a theorem is, the rules that an instruction set should apply to in order to be considered MathAsm compliant.
 
+On top of that, we can have instruction sets.
+On this document and on this app, we also provide such an instruction set that we call **standard**, but generally speaking, MathAsm is not bound to one instruction set.
+One could potentially try various instruction sets, which would lead to different kind of theories.
+Various instruction sets are a huge topic. More info will follow soon...
 
-### Who are you? 
-I am Alkis Mavridis and MathAsm is an idea that I started developing about 10 years ago.
+### By the way, who are you? 
+My name is Alkis Mavridis and MathAsm is an idea that I started developing about 10 years ago.
 I am now building a web app (with the help of some amazing colleagues and friends!) in order to further illustrate the usage of MathAsm
-and also use it as a tool for start "importing" existing mathematical and scientific theories into MathAsm.
+and also use it as a tool for start "importing" existing mathematical and scientific theories into MathAsm, using a standard instruction set.
 
 If this would be successful, one could even use it for demonstrating/exploring philosophical theories and their conclusions.
 One could theoretically run political debates with MathAsm, For example, we could list commonly accepted assumptions
-and explore in an objective and irrefutable way the conclusions that those assumptions leads us to.
-
-Maybe this could be good and constructive for humanity, which is precisely the reason why I think that nobody will give a crap about MathAsm.
-I will still publish it, though. It is fun, and who knows - maybe some crazy math/philosophy nerd will be happy to play with it.
+and explore in an structured and solid way the conclusions that those assumptions lead us to.
 
 
 ### Ok. Describe the basic principles of MathAsm in a nutshell.
-Ok these are the golden rules.
+So these are the golden rules.
 
-1. Mathematical symbols have no internal properties or functionality. They are only labels.
-2. A sequence of symbols is called a **sentence**.
-3. Every Axioms and every Theorems is a **pair of sentences** bound together. This is called a **statement** in MathAsm.
-Those pairs must be interpreted as replacement pairs: two sentences that one can replace the other under certain conditions.
-4. Theorems and Axioms have no internal properties or functionality.
-5. Creating an axiom is an arbitrary process: one constructs freely two sentences by choosing symbols.
-6. Creating theorems is a strict process. There are specific moves that one is allowed to perform when proving a theorem.
-Those moves is called an **instruction set**.
-7. The instruction set may define the properties that the bond of each statement has, in order to function.
-But it may **not** give any special handling to any symbol, sentence or statement. This would violate the core principles of MathAsm.
+1. Mathematical symbols have no internal properties or functionality. They are only labels and are all treated equally.
+2. A sequence of such symbols is called a **sentence**.
+3. Every Axiom and every Theorem is a **pair of sentences** with a **connection** that binds them together. This structure is called a **statement**.
+The two sentences of a statement can be interpreted a replacement pair: theorems/axioms are basically two sentences that one can replace the other.
+4. Theorems and Axioms have no internal properties or functionality. Just like symbols, they are all treated equally.
+5. Creating an axiom is an arbitrary process: one constructs freely its two sentences by choosing any positive number symbols.
+6. Creating theorems is a strict process. One start by cloning an **existing statement** and performs a number of specific,
+well defined allowed moves that transform this statement into a new, different one. This new statement is called a theorem.
+7. The set of the possible transformation that one may perform during theorem creation is called an **instruction set**.
+8. As mentioned, every statement has a connection. Every instruction set defines the nature and properties of this connection.
+This means that the connection of a statement contains all needed metadata that the instruction set needs in order to operate.
+9. A MathAsm instruction set should **not** give any special handling to any symbol, sentence or statement.
+This is the most important principle of MathAsm: no special handling exists on any symbol, sentence or statement. They are all equal.
 
-One of MathAsm's goals is the definition of a functional and sound instruction set that can build any mathematical theory.
-This is an ongoing process: the current instruction set may be changed/expanded if needed.
-One may experiment with other MathAsm instruction sets and see where those lead.
+In this document we will present an instruction that we will call the **standard** instruction set of MathAsm. This web app implements this instruction set, so that one can work with it.
+The development of the standard instruction set is an ongoing process, but I think that it is mature enough to produce common mathematical theories, such as boolean algebra and arithmetic.
 
-The **standard MathAsm instruction set** defines only two properties on each sentence bond: flow and grade.
+As mentioned above, each instruction set defines the nature and properties of each statement **connection**.
+In the case of our **standard MathAsm instruction set** only two properties are needed: flow and grade.
+More on that will be explained later on this document.
+
+Please note that one might experiment with other MathAsm instruction sets and see where those lead
+As long as those instruction sets operate on statements and respect the rules stated before, they can be called MathAsm instruction sets.
 
 
-### Hey, that's to fast! I am lost. Explain this step by step now.
+### Hey, that's to much at once! Enough with the nutshell. Explain MathAsm step by step now.
 Ok, lets start from the basics.
 The first important concept of MathAsm is the **symbol**. Symbols are like the atoms of the MathAsm universe.
 Stuff that you cannot divide further into smaller pieces.
@@ -105,12 +117,12 @@ The next concept is the sentence. Sentence is any sequence of one-or-more symbol
 Those are all valid sentences for MathAsm.
 
 
-### I do not get it. How can those be valid sentences? The second one is wrong, the third states nothing, and the fourth looks more like my parrot walking on the keyboard than actual math.
+### I do not get it. How can those be valid sentences? The first one is ok. But the second one is wrong, the third states nothing, and the fourth looks more like my parrot walking on the keyboard than actual math.
 MathAsm does not care about any of that. These are all valid sentences. And thus, your parrot can use MathAsm too.
 
-### This has no sense! How can anyone build meaningful mathematical theories if we cannot distinguish proper from messed up syntax? Also, leave my parrot alone, weirdo!
+### This has no sense! How can anyone build meaningful mathematical theories if we cannot distinguish proper from messed up syntax?
 You can distinguish between good and bad syntax. You can have your well formed and malformed sentences.
-But MathAsm will not do this distinction. Your axioms will. Your axioms define what correct syntax means.
+But MathAsm will not do this distinction. Your axioms will. Your axioms define what correct syntax even means.
 
 MathAsm makes sure that the theorems are direct result of your axioms. They are born by your axioms.
 This means that theorems will have the same syntactical rules and patterns as the axioms you created. It will be just cause and effect.
@@ -129,19 +141,22 @@ This is our next concept: theorems and axioms are **statements**.
 
 
 ### What is a statement? Is it not the same as a sentence? Is it not a collection of symbols?
-Not quite. A MathAsm Statement is a pair of sentences. Two sentences bound together.
+Not quite. A MathAsm Statement is a **pair of sentences**. Two sentences bound together.
 Every axiom and every theorem in MathAsm is exactly that: a pair of sentences.
 One sentence on its own is useless according to MathAsm. Only pairs can function.
 Lets call those sentences **left part** and **right part** of the statement.
 
 
 ### What does this pairing mean?
-Here is where the key point of MathAsm. A statement defines a pair of sentences which can replace each other.
-The left can replace the right and be replaced by the right. Like you can replace the sentence (4/2) with the sentence (8/4),
+Here is where the key point of MathAsm. A statement defines a pair of sentences **which can replace each other**.
+The left can replace the right and be replaced by the right. Like you can replace the sentence (1+1) with the sentence (3-1),
 and vice versa. Those two would be a statement, probably a theorem in the theory of Arithmetic.
 
-So, based on this statement, you could transform the sentence (5 - (4/2)) into (5 - (8/4)).
-Replacing stuff with other stuff is how mathematics work according to MathAsm. We just have to  define which stuff may replace which stuff.
+So, based on this statement, you could transform the sentence (5 - (1+1)) into (5 - (3-1)).
+
+According to MathAsm, replacing stuff with other stuff is the core functionality of all mathematics.
+This is how new information is produced by combining existing information.
+We just have to define which stuff may replace which stuff and then use these rules to produce our theorems.
 
 
 ### Sounds good. So, are we done?
@@ -161,7 +176,7 @@ Exactly. This is exactly the structure of a statement, the structure of every st
 Every theorem and every axiom of every theory has this form.
 
 
-### And what about the properties? What properties does the current instruction set defines?
+### And what about the connection's properties? What properties does the standard instruction set defines?
 In the standard instruction set, connections have just two properties: flow and grade.
 
 The **flow** of a statement is one of the following: unidirectional or bidirectional.
@@ -170,8 +185,7 @@ One or the other. There is no third option.
 The **grade** of a statement is a zero-or-more integer.
 
 Just to clarify: both flow and grade are permanent features of theorems and axioms. Once a theorem/axiom is created
-with unidirectional flow and grade 3, for example, it stays like that for ever. These stuff are organic part of the theorem/axiom,
-equally important to their sentences.
+with unidirectional flow and grade 3, for example, it stays like that for ever. These properties are an organic part of the axiom or theorem and are equally important to the statement's sentences.
 
 In this document, we will represent the connections like that:
 - <--3-->  (bidirectional connection with grade 3)
@@ -188,11 +202,11 @@ Building axioms is easy and messy. Here is how it goes.
 
 - Form a sentence. Any sentence! Just put one or more symbols in order. As many as you wish, and whichever you wish. This will be the left part of your axiom.
 - Chose your connection of the statement. This is related to the instruction set that you will use.
-For the standard MathAsm instruction set, we will define a flow and a grade. We chose one of unidirectional or bidirectional as flow (whichever we like),
-and a zero-or-more integer as grade.
+For the standard MathAsm instruction set, we will define a flow and a grade. We chose unidirectional or bidirectional as flow (whichever we like),
+and a zero-or-more integer as grade (again, whichever we like).
 - Repeat the step 1: form one more sentence with whatever symbols you want. This is the right part of the sentence.
 
-Congrats! You got your first axiom! You are now a theory creator!
+That's it! We have an axiom.
 
 
 ### Wait... Do you mean that I can do anything I like?
@@ -200,11 +214,12 @@ Exactly! This is how you build axioms. You do anything you like, as long as it i
 Building axioms is a total anarchy.
 
 ### Ok. And what about theorems?
-Ok, now we need to talk about the theorem building process, which means defining the MathAsm standard instruction set.
-Here the picture is totally different than in axioms.
+Talking about the theorem building process means defining the MathAsm standard instruction set.
+So, lets move ahead!
 
+Here the picture is totally different than in axioms.
 Building theorems is done under very strict rules.
-In fact, standard instruction set defines only 4 operations that we can perform.
+In fact, the standard instruction set defines only 4 operations that we can perform.
 You have to build all of mathematics with those 4. Everything else is forbidden.
 
 One may perform as many of those "moves" as desired to build new statements based on the existing ones.
@@ -212,16 +227,19 @@ Once ready, we **save** the new statement into the theory, which means that it c
 It is then called a **theorem**.
 
 
-### Ok. What are the 4 moves?
-The first one is the **cloning operation**.
-You get an existing statement of the theory, theorem or axiom, and you copy it.
+### Are you seriously suggesting that one can build all of mathematics with just 4 moves? What kind of moves are those anyway?
+Yes, I claim that 4 moves are enough. So, lets see the first one.
+It is called **cloning operation**.
+
+You get an existing statement of the theory, theorem or axiom, and you copy it. You copy its sentences and its connection.
+
 The one you chose to clone is called the **base** of the operation, and the resulting statement is the **target** of the operation.
 
 The resulting statement will have the same flow and grade as the base, and its two sentences will be exact copies of the base's statements.
 Simple and complete cloning.
 
-### So this is how we start new statements. We copy old ones?
-Exactly. And this may indicate how the syntax pattern preservation works. We talked about that before.
+### So is this how we start building new statements? By copying old ones?
+Exactly. And this may indicate how the syntax pattern preservation that we mentioned before works.
 
 
 ### Ok. The second instruction?
@@ -229,7 +247,7 @@ The second is the **single replacement** operation.
 We have a target (the statement that we will transform) and an existing statement that we will use as base.
 Now assume that we found an **appearance** of the left statement of the base somewhere in the target.
 
-The **single replacement** operation replaces this oen appearance with the right side of the base.
+The **single replacement** operation replaces this appearance with the right side of the base.
 One could replace the right with the left, too.
 
 For example, if we have the base:
@@ -239,26 +257,26 @@ and we are working on the target:
 -  z + ( x + y ) ^ n - ( x + y ) <--2--> ( x + y ) + 1
 
 We see that the sentence **( x + y )** appears 3 times on the target: 2 times in its left sentence and 1 time on its right.
-We choose one of them, lets say the second on the left sentence. We replace it with its base counterpart, and we get:
+We choose one of them, lets say the second one of the left sentence. We then replace it with its base counterpart. This results to:
 -  z + ( x + y ) ^ n - **( y + x )** <--2--> ( x + y ) + 1.
 
 This is the single replacement operation.
 
 ### Seems easy. Can I always perform it?
 No. Here are the conditions under which this operation can be performed:
+- The **grade of the base** must be zero. Performing single replacement with a base of larger-than-zero grade is illegal.
+
 - We are allowed replace the **left** sentence of the base with its **right** one.
   If the base is bidirectional, we also allowed to do the opposite: replace the right with the left one.
-  But replacing the right sentence with the left is illegal for unidirectional bases.
+  But replacing the right sentence with the left is illegal for unidirectional bases. This is precisely what flow is meant to indicate, by the way.
   
-- We may perform single operations in the right side of the target statement.
+- We may perform the single replacement operation in the right side of the target statement.
   If the target is bidirectional, we may also perform it in its left sentence.
-  But performing single replacement on the left sentence of a unidirectional target is illegal.
-  
-- The grade of a single replacement's base must be **zero**. Performing single replacement with a base of larger-than-zero grade is illegal.
+  But performing single replacement on the left sentence of a unidirectional target is illegal.  
 
 
 ### Ok. What is the third instruction?
-The select **sentence operation**. This works exactly like the single replacement, but replaces many occurrences at once.
+The **sentence replacement**. This works exactly like the single replacement, but replaces many occurrences at once.
 All the occurrences in the chosen sentence of the target.
 
 Back to our example: Our base was:
@@ -271,13 +289,15 @@ If we perform a sentence replacement on the target's left sentence we will get:
 
 The right sentence stayed intact, since we performed the operation on the left sentence.
 If we had chosen the right one, we would get:
--  z + ( x + y ) ^ n - **( y + x )** <--2--> **( y + x )** + 1.
+-  z + ( x + y ) ^ n - ( x + y ) <--2--> **( y + x )** + 1.
 
 
 ### I get the point, but this looks redundant. Why making it a new instruction, we could repeat the single replacement more times to achieve the same result.
-True. But the reason we need to explicitly define it as its own more is that single repetition has to strict rules.
-For example, it can be performed only with zero-grade bases.
-The sentence replacement less strict rules. One may perform it when:
+True. But the reason we need to explicitly define it is that single repetition has stricter rules.
+There are situations that the single replacement is forbidden, but sentence replacement is allowed.
+One may perform sentence replacement under the following conditions:
+
+- The base's grade must not be necessary zero like before, be it must be less-or-equal than the target's. Using a base with larger grade than the target's is illegal.
 
 - Like before, we are allowed replace the **left** sentence of the base with its **right** one.
   Like before, if the base is bidirectional, we also allowed to do the opposite: replace the right with the left one.
@@ -287,10 +307,7 @@ The sentence replacement less strict rules. One may perform it when:
   Like before, if the target is bidirectional, we may also perform it in its left sentence.
   But performing sentence replacement on the left sentence of a unidirectional target is illegal.
 
-- The base's grade must be less-or-equal to that of the target's. Using a base with larger grade than the sentence's is illegal.
-
-
-### Finish this, please. What is the last instruction?
+### Ok. What is the last instruction?
 The **Statement replacement** operation.
 This has the same effect as two sentence replacements: one on the left sentence and one on the right.
 In simple terms, it replaces **all** the occurrences of a sentence with its base-counterpart.
@@ -315,13 +332,13 @@ Correct! The rules for the statement replacement are:
 
 - For bidirectional targets, we may choose any statement as a base.
   But for unidirectional targets, one may use only base with larger grade than the target.
-  Using a base with grade less-or-equals to the target is illegal.
+  Using a base with grade less-or-equals than the target's one is illegal.
   
   
 ### Finally! This instruction set thing was long. Any bonus points?
-Yes! While building theorems, you may have multiple targets. In other words, multiple statements that you just generated and working on.
+Yes! While building theorems, you may work with multiple targets. In other words, multiple statements that you just generated and working on.
 We don't have to be limited to have 1 at a time.
-One may use the one of those temporary statements as a base to perform operations into the others.
+The cool part is that we can use each one of those temporary statements as a **base** to perform operations on the others.
 
 At the end of the theorem-building process, we may chose one (or more) of those statements to be permanently saved as theorems.
 Please note that the theorem building process is also called a **proof** in MathAsm.
@@ -329,54 +346,62 @@ Please note that the theorem building process is also called a **proof** in Math
 
 ### All right. But dude, you made those rules out of thin air! Why these rules are that way?
 That is correct. The instruction set is arbitrary, kind of axiomatic.
-As mentioned in the beginning, the ultimate and only goal is to find am instruction set
-that are able to produce (almost) **any** valid statement and can produce **only** valid statements.
+As mentioned in the beginning, one of the goals of MathAsm is to find (at least) one instruction set
+that is able to produce **any** valid statement and **only** valid statements.
 With the assumption that we give valid axioms, of course.
 
-I went through a lot of trial and error until I conclude to the instruction set I presented to you.
+As for the standard instruction set, this is such an attempt and has been through a lot of trial-and-error.
 I have already build boolean algebra, arithmetic etc using it.
+Still, its development is an ongoing process.
 
-The development of the standard instruction set still an ongoing process.
-Trying out different instruction sets, for experiment or curiosity is by itself a huge topic.
-If you want to propose/try alternative instruction sets, you are most welcome to do so!
+As mentioned before, there is not just one MathAsm instruction set: one could experiment with various ones.
+If you want to propose/try alternative ones, you are most welcome to do so!
 As long as it respects the basic rules of MathAsm described above, it can be called a MathAsm instruction set.
 
+Trying various instruction sets can be considered its own field of study.
 
 ### What kind of trial and error did you go through?
 I started with a very simplistic instruction set.
-Every time I realized that my instruction had limitations, which means that it could generate mathematically valid statements, I had to expand it.
-Every time I realized that my instruction set was too loose, which means that it could produce invalid statements, I had to make it stricter.
+Every time I realized that my instruction was to limited, which means that it could not generate some mathematically valid statement, I had to expand it.
+Every time I realized that my instruction set was too loose, which means that it could produce some invalid statements along with the valid ones, I had to make it stricter.
 
 
 ### Ok, ok. Tell me about how the current instruction set was born. What was your starting point?
 I realized that all mathematical operation were stuff replacing other stuff.
 So the idea of sentence pairs was born.
-I just had to just list which stuff could replace which other stuff, as axioms, and then I could
+I just had to list which stuff could replace which other stuff, as axioms, and then I could
 generate even more stuff to replace other stuff, as theorems!
 My instruction set was only the single replacement, which was always allowed.
 
 I did not even got the idea of the cloning move, yet. I would start the theorem's left part freely, like with axioms.
 I would then force the right part to be equal to the left.
+
 My starting points were, for example like: **(x+y)+z <----> (x+y)+z**
+
 This was reflecting the fact the every sentence can replace itself and can be replaced by itself, because, you know, this has zero effect,
 and thus is be definition allowed.
 
-After that, I would start single replacements. For example, I had an axiom that said **(x+y) <----> (y+x)**,
+After that, I would start performing my single replacements and produce new statements.
+
+For example, I had an axiom that said **(x+y) <----> (y+x)**,
 and thus I could transform my statement like that: **(x+y)+z <----> (y+x)+z**
-I was able to prove a couple of theorems like that (I was always building boolean algebra at that time).
+
+I was able to prove a couple of theorems this way (I was always building boolean algebra at the time).
 
 
 ### This looks much more logical than the mess you discribed above. So. Why did you abandon this instruction set?
 Because it was stupid. Its first weakness was the flow. You see, some replacements are tricky.
 Like possible values for a variable, for example.
 Imagine that we are building boolean algebra.
+
 We want to have axioms like **x <----> (true || x)**.
 
 We also want to make clear that everything that we say for "x", holds for true and false two.
-With other words, x can be replaced by true, or by false. We want to prove, for example, based on the axiom above, that
-**false <----> (true || false)**
+With other words, x can be replaced by true, or by false.
 
-The only way to do that would be to create an axioms that stated:
+We want to prove, for example, based on the axiom above, that **false <----> (true || false)**
+
+The only way to do that would be to create axioms that stated that x can be replaced by true or false:
 - **x <----> false**  (axiom_of_doom_1)
 - **x <----> true**  (axiom_of_doom_2)
  
@@ -389,10 +414,11 @@ Using the axioms above one could do:
 - **x <----> (true || x)** (starting point)
 - **x <----> (x || x)** (using axiom_of_doom_2)
 - **x <----> (false || x)** (using axiom_of_doom_1)
-So with those axioms, we may start with a nice, logical statement, but end up with and destruction and despair.
+
+So with those axioms, we may start with a nice, logical statement and end up in destruction and despair.
 
 
-### What was the key flow here?
+### What was the slippery point here?
 The fact that you could jump from the specific to the general, in the same easiness and comfort that you jumped from the general to the specific.
 Replacing x with true is jumping from general to the specific.
 Replacing true with x is jumping from the specific to the general.
@@ -403,13 +429,14 @@ For some statements, such as **x <----> true**, I wanted only one direction to b
 One could jump from x to true, but not from true to x. axiom_of_doom_2 had now become **x ----> true** 
 The idea of flow was born.
 
-With its help, I could create a general -> specific hierarchy.
+With its help, I could create a general -> specific hierarchy of concepts.
 
 
 ### Hm... Was this addition not enough?
 No. I was still at the beginning.
-The next weakness was again being to tolerant.
+The next weakness was again, being to tolerant.
 Even by not allowing x to replace true and false, one could create chaos and nonsense.
+
 Take our initial axiom for example: **x <----> (true || x)** (init_statement)
 Lets say that we improved the axioms of doom to be unidirectional:
 
@@ -430,13 +457,13 @@ Once again, we turned the world up side down.
 ### What happened this time?
 We failed to create the concept of the variable.
 It is not enough to say that x can become true. We must enforce that all x become true simultaneously.
-We cannot replace one occurrence of x with true and an other one with false.
+We cannot replace one occurrence of x with true and an other one with false. This ruins the concept of a variable.
 
 
-### Ok, so you needed some of the replacements to be allowed individually, but others have to be grouped.
-That was precise what leaded (after some failed attempts) to the concept of grade.
+### Ok, so you needed some of the replacements to be allowed individually, but others have to be grouped together.
+Exactly. That was precise what leaded (after some more failed attempts) to the concept of **grade**.
 The lower the grade of the base, the more individual replacements can be done.
-Higher grades mean that those replacements had to spread to more occurrences.
+Higher grades meant that those replacements had to expand into more occurrences.
 
 The replacement from x to true or false had to be of grade 1, at least.
 I then improved further my axioms to state:
@@ -446,7 +473,7 @@ I then improved further my axioms to state:
 
 They are not axioms of doom any more. Replacing an x meant that one had to replace all the x in a zero-based target.
 
-I do not want to write a book here, but though those trial and error attempts, I reached the intrcution set
+I do not want to write a book here, but though this kind of trial and error attempts, I reached the instruction set
 that I presented above.
 
 As mentioned before, this may also have its flaws, and might be still improved.
