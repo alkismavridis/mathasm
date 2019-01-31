@@ -3,7 +3,6 @@ package eu.alkismavridis.mathasm.api.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import eu.alkismavridis.mathasm.api.GraphqlService;
 import eu.alkismavridis.mathasm.core.error.MathAsmException;
 import eu.alkismavridis.mathasm.db.entities.*;
 import eu.alkismavridis.mathasm.services.App;

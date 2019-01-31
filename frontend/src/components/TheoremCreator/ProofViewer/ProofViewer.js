@@ -5,6 +5,7 @@ import "./ProofViewer.scss";
 import MoveType from "../../../constants/MoveType";
 import StatementSide from "../../../constants/StatementSide";
 import SelectionType from "../../../constants/SelectionType";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 
 export default class ProofViewer extends Component {
     //region STATIC
@@ -126,10 +127,32 @@ export default class ProofViewer extends Component {
     }
 
     render() {
+        const moveCount = this.props.proof.moves.length;
+        const currentIndex = this.props.proof.currentMove;
+
         return (
             <div className={cx("ProofViewer_root", this.props.className)} style={this.props.style}>
-                <div>Proof:</div>
-                {this.props.proof.moves.map((m,index) => this.renderMove(m, index))}
+                <div style={{display:"flex"}}>
+                    <div style={{marginRight:"8px"}}>Proof:</div>
+                    <button
+                        className="Globals_textBut"
+                        style={{marginRight:"8px"}}
+                        title="Undo"
+                        disabled={moveCount===0 || currentIndex===0}
+                        onClick={()=>this.props.onNavigateAction(currentIndex-1)}>
+                        <FontAwesomeIcon icon="undo"/>
+                    </button>
+                    <button
+                        className="Globals_textBut"
+                        disabled={moveCount===0 || currentIndex===moveCount-1}
+                        title="Redo"
+                        onClick={()=>this.props.onNavigateAction(currentIndex+1)}>
+                        <FontAwesomeIcon icon="redo"/>
+                    </button>
+                </div>
+                <div className="ProofViewer_main">
+                    {this.props.proof.moves.map((m,index) => this.renderMove(m, index))}
+                </div>
             </div>
         );
     }

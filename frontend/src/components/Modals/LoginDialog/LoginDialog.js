@@ -7,16 +7,6 @@ import App from "../../App/App";
 import QuickInfoService from "../../../services/QuickInfoService";
 
 
-
-const q = {
-    LOGIN: `mutation($userName:String!, $password:String!) {
-        login(username:$userName, password:$password) {
-            sessionKey
-            user {id, userName}
-        }
-    }`
-};
-
 export default class LoginDialog extends Component {
     //region PROPS AND STATE
     static propTypes = {

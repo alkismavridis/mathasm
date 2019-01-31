@@ -3,7 +3,8 @@ package eu.alkismavridis.mathasm.services
 import eu.alkismavridis.mathasm.MathAsmConfig
 import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmTheory
-import eu.alkismavridis.mathasm.api.GraphqlService
+import eu.alkismavridis.mathasm.api.controller.GraphqlService
+import eu.alkismavridis.mathasm.api.controller.security.SecurityService
 import eu.alkismavridis.mathasm.db.repo.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -43,6 +44,10 @@ class App {
 
     @Autowired
     lateinit var symbolRepo: SymbolRepository
+        private set
+
+    @Autowired
+    lateinit var secService: SecurityService
         private set
     //endregion
 

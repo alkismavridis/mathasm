@@ -37,6 +37,10 @@ class MathAsmDirEntity : MathAsmDir {
 
     @DateLong
     var createdAt: Instant? = null
+
+    @Relationship(type = "DIR", direction = Relationship.INCOMING)
+    var parent:MathAsmDirEntity? = null
+
     //endregion
 
 

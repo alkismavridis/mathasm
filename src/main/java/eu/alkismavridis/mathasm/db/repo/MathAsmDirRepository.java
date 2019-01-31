@@ -12,4 +12,7 @@ public interface MathAsmDirRepository extends Neo4jRepository<MathAsmDirEntity, 
 
     @Query("MATCH (par :dir)-[r:DIR]->(chld :dir) where ID(chld)={id} return ID(par);")
     Long findParentIdOfDir(@Param("id") Long id);
+
+    @Query("match (parent)-[r]-(child) where ID(parent)={parentId} and ID(child)={childId} delete r;")
+    void deleteChild(@Param("parentId") Long parentId, @Param("childId") Long childId);
 }

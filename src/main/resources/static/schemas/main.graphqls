@@ -27,12 +27,12 @@ type Query {
     dirParent(id:Long!, depth:Int = 1): MathAsmDirEntity
 
     statement(id:Long!, depth:Int = 1): MathAsmStatementEntity
+    statements(ids:[Long!]!, depth:Int = 1): [MathAsmStatementEntity!]!
 }
 
 type Mutation {
-    login(username:String!, password:String!):LoginResponse
-    signin(username:String!, password:String!):LoginResponse
-    logout:Boolean!
+    authWSector: AuthWSector
+
 
     #symbol management
     createSymbol(parentId:Long!, text:String!, uid:Long!) : MathAsmSymbol
@@ -41,22 +41,20 @@ type Mutation {
     createAxiom(parentId:Long!, name:String!, left:[Long!]!, grade:Int = 0, isBidirectional:Boolean = false, right:[Long!]!) : MathAsmStatementEntity!
     createDir(parentId:Long!, name:String!) : MathAsmDirEntity!
     uploadProof(moves:[LogicMove!]!) : [SavedTheoremInfo!]!
+
+    moveDir(dirIdToMove:Long!, newParentId:Long!, newName:String) : Boolean!
 }
 #endregion
 
 
 
+
+#REGION ENTITIES
 type User {
     id:Long!
     userName:String!
     rights:Int!
 }
-
-type LoginResponse {
-    user:User!
-    sessionKey:String!
-}
-
 
 type MathAsmStatementEntity {
     id:Long!
@@ -86,12 +84,6 @@ type MathAsmSymbol {
     text:String!
 }
 
-type SavedTheoremInfo {
-    parentId:Long
-    theorem:MathAsmStatementEntity
-}
-
-
 type LogicMoveEntity {
     id:Long
     index:Int
@@ -104,6 +96,36 @@ type LogicMoveEntity {
     parentId:Long
     name:String
 }
+#endregion
+
+
+
+#region ENTITY UTILS
+type LoginResponse {
+    user:User!
+    sessionKey:String!
+}
+
+
+
+type SavedTheoremInfo {
+    parentId:Long
+    theorem:MathAsmStatementEntity
+}
+#endregion
+
+
+
+
+
+
+#region WRITE SECTORS
+type AuthWSector {
+    login(username:String!, password:String!):LoginResponse
+    signin(username:String!, password:String!):LoginResponse
+    logout:Boolean!
+}
+#endregion
 
 input LogicMove {
     moveType:Int

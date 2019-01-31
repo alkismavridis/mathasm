@@ -13,6 +13,7 @@ import MathAsmMove from "../../entities/MathAsmMove";
 import ProofViewer from "./ProofViewer/ProofViewer";
 import ModalService from "../../services/ModalService";
 import GraphQL from "../../services/GraphQL";
+import ProofPlayer from "../../entities/ProofPlayer";
 
 const q = {
     UPLOAD_PROOF: `mutation($moves:[LogicMove!]!) {
@@ -44,6 +45,8 @@ export default class TheoremCreator extends Component {
 
     //region FIELDS
     state = {
+        player: new ProofPlayer(),
+
         targets:[],
         selectedTargetIndex:null,
 
@@ -56,7 +59,7 @@ export default class TheoremCreator extends Component {
         selectionType:SelectionType.NONE,
 
         //proof
-        proof:MathAsmProof.emptyProof(),
+        proof:new MathAsmProof(),
     };
 
     _rootRef = null;
@@ -81,133 +84,12 @@ export default class TheoremCreator extends Component {
      * NOTE: base parameter can be null!
      * */
     setBase(base) {
-        if ((base.type % 2) === 0) return; //this statement cannot be used as a base.
-
-        //1. Setup the changes object
-        const changes = {base: base};
-
-        //2. Select either according to a base, or choose an empty selection if no selection is possible.
-        const currentTarget = this.getSelectedTarget();
-
-        if (base && currentTarget) TheoremCreator.addDefaultSelectionFor(base, currentTarget, StatementSide.LEFT, changes);
-        else TheoremCreator.addEmptySelection(changes);
-
-        //3. Update the component
-        this.setState(changes);
+        this.state.player.setBase(base);
+        this.setState({player:this.state.player});
     }
 
     focus() {
         if (this._rootRef) this._rootRef.focus();
-    }
-    //endregion
-
-
-    //region UTILS
-    /**
-     * sets up an empty-selection field set into the given object.
-     * */
-    static addEmptySelection(changes) {
-        changes.baseSide = StatementSide.LEFT;
-        changes.leftMatches = [];
-        changes.rightMatches = [];
-
-        changes.selectionType = SelectionType.NONE;
-    }
-
-    /** Base and target and changes are considered NOT NULL. */
-    static addDefaultSelectionFor(base, target, direction, changes) {
-        //1. Find all occurrences
-        changes.baseSide = direction;
-
-        const sentenceToSearch = direction===StatementSide.LEFT? base.left : base.right;
-        changes.leftMatches = StatementUtils.findMatches(target.left, sentenceToSearch, false);
-        changes.rightMatches = StatementUtils.findMatches(target.right, sentenceToSearch, false);
-
-        changes.selectionType = StatementUtils.getDefaultSelectionTypeFor(base, target, changes.leftMatches, changes.rightMatches);
-        StatementUtils.setupSelection(changes.leftMatches, changes.rightMatches, changes.selectionType);
-    }
-
-    /**
-     * Adjust the selection to the given selectionType and (optionally) other parameters.
-     * Every selection type may expect different parameters.
-     * This functions appends all properties to the changes parameter.
-     *
-     * NOTE: this method performs validation. This means that it will have no effect if the requested selection was illegal.
-     * returns true if the operation succeeded.
-     * */
-    addSelectionMove(selectionType, params, changes) {
-        const base = this.state.base;
-        const target = this.getSelectedTarget();
-        if (!StatementUtils.isSelectionLegal(selectionType, params, base, target, this.state.leftMatches, this.state.rightMatches)) {
-            console.log("ILLEGAL SELECTION: ", selectionType, params, base, target);
-            return false;
-        }
-
-
-        //1. Update the selection type
-        changes.selectionType = selectionType;
-
-        //2. Update occurrences.
-        changes.leftMatches = this.state.leftMatches;
-        changes.rightMatches = this.state.rightMatches;
-        StatementUtils.setupSelection(changes.leftMatches, changes.rightMatches, changes.selectionType, params);
-        return true;
-    }
-
-    /** Returns the length of the selected sentence of the base, or 0 if no base is selected. */
-    getBaseSentenceLength() {
-        if (!this.state.base) return 0;
-
-        return this.state.baseSide===StatementSide.LEFT?
-            this.state.base.left.length :
-            this.state.base.right.length;
-    }
-
-    /** convenience method that returns the currently selected target, or null, if none is selected. */
-    getSelectedTarget() {
-        if (this.state.selectedTargetIndex==null) return null;
-        return this.state.targets[this.state.selectedTargetIndex];
-    }
-
-    getSingleReplacementPos() {
-        switch(this.state.selectionType){
-            case SelectionType.ONE_IN_LEFT: {
-                const match = this.state.leftMatches.find(m => m.selected);
-                return match? match.index : null;
-            }
-
-
-            case SelectionType.ONE_IN_RIGHT: {
-                const match = this.state.rightMatches.find(m => m.selected);
-                return match? match.index : null;
-            }
-
-            default: return null;
-        }
-    }
-
-    /** Returns a base that is guaranteed to remain immutable. Useful for building proof */
-    getImmutableBase() {
-        if (!this.state.base) return null;
-        if (this.state.base._internalId!=null) return StatementUtils.clone(this.state.base, StatementSide.BOTH, this.state.base._internalId);
-        return this.state.base;
-    }
-
-    /** Returns the params to be given to StatementUtils.setupSelection. */
-    static getReplacementParamsFor(selectionType, positionToReplace, leftMatches, rightMatches) {
-        switch (selectionType) {
-            case SelectionType.ONE_IN_LEFT: {
-                const indexToReplace = leftMatches.findIndex(m => m.index === positionToReplace);
-                return {index: indexToReplace};
-            }
-
-            case SelectionType.ONE_IN_RIGHT: {
-                const indexToReplace = rightMatches.findIndex(m => m.index === positionToReplace);
-                return {index: indexToReplace};
-            }
-
-            default: return null;
-        }
     }
     //endregion
 
@@ -219,136 +101,50 @@ export default class TheoremCreator extends Component {
      * NOTE: index can be null, which means DESELECT
      * */
     selectTarget(index) {
-        //1. Setup the changes object
-        const changes = {
-            selectedTargetIndex:index,
-            baseSide:StatementSide.LEFT,
-        };
-
-        //2. Append the changes
-        if (!this.state.base || index==null) TheoremCreator.addEmptySelection(changes);
-        else TheoremCreator.addDefaultSelectionFor(this.state.base, this.state.targets[index], StatementSide.LEFT, changes);
-
-        //3. Update the state
-        this.setState(changes);
+        this.state.player.setTargetIndex(index);
+        this.setState({player:this.state.player});
     }
 
     /**
      * Changes the direction of the base, if the move is allowed.
      * */
     setBaseDir(newDir) {
-        //1. Check if conditions are correct.
-        const target = this.getSelectedTarget();
-        if (!this.state.base || !target) return;
-
-        if (!StatementUtils.isDirectionLegal(this.state.base, target, newDir)) return;
-
-
-        //2. Setup the changes object
-        const changes = {baseSide:newDir};
-        TheoremCreator.addDefaultSelectionFor(this.state.base, target, newDir, changes);
-
-        //3. Update the component
-        this.setState(changes);
+        this.state.player.setBaseDir(newDir);
+        this.setState({player:this.state.player});
     }
 
     changeSelectionType(newSelectionType) {
-        //1. Check conditions
-        if (this.state.leftMatches.length===0 && this.state.rightMatches.length===0) return;
+        const didChange = this.state.player.setSelection(newSelectionType, null);
 
-        //2. Gather the changes
-        const changes = {};
-        this.addSelectionMove(newSelectionType, null, changes);
-
-        //3. Update the component
-        this.setState(changes);
+        if (didChange) this.setState({player:this.state.player});
+        else QuickInfoService.makeWarning("This selection is not allowed for the selected base and target.");
     }
 
     /** Attempt to switch to either LEFT or RIGHT selection. */
     switchToSelectSentenceMode() {
-        //1. Check conditions
-        if (this.state.leftMatches.length===0 && this.state.rightMatches.length===0) return;
+        //1. Try to set LEFT or RIGHT selection.
+        let success = this.state.player.setSelection(SelectionType.LEFT, null);
+        if (!success) success = this.state.player.setSelection(SelectionType.RIGHT, null);
 
-        //2. Try to set LEFT selection
-        const changes = {};
-        let success = this.addSelectionMove(SelectionType.LEFT, null, changes);
-
-        //3. If this fails, try the RIGHT one
-        if (!success) success = this.addSelectionMove(SelectionType.RIGHT, null, changes);
-        if (!success) QuickInfoService.makeWarning("Illegal move: Could not perform sentence selection.");
-
-
-        //4. Update the component
-        this.setState(changes);
+        //2. Handle result
+        if (success) this.setState({player:this.state.player});
+        else QuickInfoService.makeWarning("Illegal move: Could not perform sentence selection.");
     }
 
     switchToSingleSelectionMode() {
-        //1. Check conditions
-        if (this.state.leftMatches.length===0 && this.state.rightMatches.length===0) return;
+        //1. Try to set LEFT or RIGHT selection.
+        let success = this.state.player.setSelection(SelectionType.ONE_IN_LEFT, null);
+        if (!success) success = this.state.player.setSelection(SelectionType.ONE_IN_RIGHT, null);
 
-        //2. Try to set ONE_IN_LEFT selection
-        const changes = {};
-        let success = this.addSelectionMove(SelectionType.ONE_IN_LEFT, null, changes);
-
-        //3. If this fails, try the ONE_IN_RIGHT
-        if (!success) success = this.addSelectionMove(SelectionType.ONE_IN_RIGHT, null, changes);
-        if (!success) QuickInfoService.makeWarning("Illegal move: Could not perform single selection.");
-
-        //4. Update the component
-        this.setState(changes);
+        //2. Handle result
+        if (success) this.setState({player:this.state.player});
+        else QuickInfoService.makeWarning("Illegal move: Could not perform single selection.");
     }
 
     /** Moves the selection, staying on the current selectionType */
     moveSelection(step) {
-        //1. Check conditions
-        if (this.state.leftMatches.length===0 && this.state.rightMatches.length===0) return;
-
-        //2. Gather the changes
-        const changes = {};
-        switch(this.state.selectionType) {
-            case SelectionType.NONE: break; //nothing to do
-            case SelectionType.ALL: break; //still, nothing to do
-            case SelectionType.LEFT:
-                if(step>0) this.addSelectionMove(SelectionType.RIGHT, null, changes);
-                break;
-
-            case SelectionType.RIGHT:
-                if(step<0) this.addSelectionMove(SelectionType.LEFT, null, changes);
-                break;
-
-            case SelectionType.ONE_IN_LEFT: {
-                const currentlySelectedMatchIndex = this.state.leftMatches.findIndex(m => m.selected);
-                if (currentlySelectedMatchIndex===-1) break;
-                const newIndex = step>0?
-                    currentlySelectedMatchIndex+1 :
-                    currentlySelectedMatchIndex-1;
-
-                if (newIndex<0) break; //left-most occurrence. Cannot go more left.
-                else if (newIndex>=this.state.leftMatches.length) {
-                    this.addSelectionMove(SelectionType.ONE_IN_RIGHT, {index:0}, changes);
-                }
-                else this.addSelectionMove(SelectionType.ONE_IN_LEFT, {index:newIndex}, changes);
-                break;
-            }
-
-            case SelectionType.ONE_IN_RIGHT: {
-                const currentlySelectedMatchIndex = this.state.rightMatches.findIndex(m => m.selected);
-                if (currentlySelectedMatchIndex===-1) break;
-                const newIndex = step>0?
-                    currentlySelectedMatchIndex+1 :
-                    currentlySelectedMatchIndex-1;
-
-                if (newIndex<0) {
-                    this.addSelectionMove(SelectionType.ONE_IN_LEFT, {index:this.state.leftMatches.length-1}, changes);
-                }
-                else if (newIndex>=this.state.rightMatches.length) break; //right-most occurrence. Cannot go more right.
-                else this.addSelectionMove(SelectionType.ONE_IN_RIGHT, {index:newIndex}, changes);
-                break;
-            }
-        }
-
-        //3. Update the component
-        this.setState(changes);
+        const didChange = this.state.player.moveSelection(step);
+        if (didChange) this.setState({player:this.state.player});
     }
 
     /**
@@ -357,94 +153,97 @@ export default class TheoremCreator extends Component {
      * */
     cloneBase(sideToClone) {
         //1. Check conditions
-        if (!this.state.base) return;
-        if (!StatementUtils.isStartLegal(this.state.base, sideToClone)) {
+        if (!this.state.player.base) return;
+        if (!StatementUtils.isStartLegal(this.state.player.base, sideToClone)) {
             QuickInfoService.makeWarning("Cloning move not allowed. Please check base direction.");
             return;
         }
 
         //2. Construct the logic move
-        const targetToReplace = this.getSelectedTarget();
+        const targetToReplace = this.state.player.getSelectedTarget();
         const newInternalId = targetToReplace==null?
-            this.state.targets.reduce((prev, el) => Math.max(prev, el._internalId), 0) + 1 :
+            this.state.player.targets.reduce((prev, el) => Math.max(prev, el._internalId), 0) + 1 :
             targetToReplace._internalId;
 
         const cloneOfTargetToReplace = targetToReplace? StatementUtils.clone(targetToReplace, StatementSide.BOTH, targetToReplace._internalId) : null;
         const move = MathAsmMove.newStartMove(
             newInternalId,
-            this.getImmutableBase(),
+            this.state.player.getImmutableBase(),
             sideToClone,
             cloneOfTargetToReplace
         );
-        MathAsmProof.addMove(this.state.proof, move);
+
+        this.state.player.addAndExecuteMove(move);
+        this.setState({player:this.state.player})
 
 
         //3. Setup the changes object and perform the cloning
-        const newTarget = StatementUtils.clone(this.state.base, sideToClone, newInternalId);
-
-        if (this.state.selectedTargetIndex==null) { //add new clone to list
-            const changes = {
-                proof:this.state.proof,
-                targets:[...this.state.targets, newTarget],
-                selectedTargetIndex:this.state.targets.length //we will select the newly created statement
-            };
-            TheoremCreator.addDefaultSelectionFor(this.state.base, newTarget, StatementSide.LEFT, changes);
-            this.setState(changes);
-        }
-        else { //overwrite selected target
-            const changes = {
-                proof:this.state.proof,
-                targets:this.state.targets.slice(),
-            };
-            changes.targets[this.state.selectedTargetIndex] = newTarget;
-            TheoremCreator.addDefaultSelectionFor(this.state.base, newTarget, StatementSide.LEFT, changes);
-            this.setState(changes);
-        }
+        // const newTarget = StatementUtils.clone(this.state.base, sideToClone, newInternalId);
+        //
+        // if (this.state.selectedTargetIndex==null) { //add new clone to list
+        //     const changes = {
+        //         proof:this.state.proof,
+        //         targets:[...this.state.targets, newTarget],
+        //         selectedTargetIndex:this.state.targets.length //we will select the newly created statement
+        //     };
+        //     TheoremCreator.addDefaultSelectionFor(this.state.base, newTarget, StatementSide.LEFT, changes);
+        //     this.setState(changes);
+        // }
+        // else { //overwrite selected target
+        //     const changes = {
+        //         proof:this.state.proof,
+        //         targets:this.state.targets.slice(),
+        //     };
+        //     changes.targets[this.state.selectedTargetIndex] = newTarget;
+        //     TheoremCreator.addDefaultSelectionFor(this.state.base, newTarget, StatementSide.LEFT, changes);
+        //     this.setState(changes);
+        // }
     }
 
     /** Performs the replacement based on the current selection. */
     performReplacement() {
         //1. Check conditions
-        if (!this.state.base || this.state.selectionType===SelectionType.NONE) return;
+        if (!this.state.player.base || this.state.player.selectionType===SelectionType.NONE) return;
 
-        const target = this.getSelectedTarget();
+        const target = this.state.player.getSelectedTarget();
         if (!target) return;
 
 
         //2. Construct the logic move
         const move = MathAsmMove.newReplaceMove(
             target._internalId,
-            this.getImmutableBase(),
-            this.state.baseSide,
-            this.state.selectionType,
-            this.getSingleReplacementPos()
+            this.state.player.getImmutableBase(),
+            this.state.player.baseSide,
+            this.state.player.selectionType,
+            this.state.player.getSingleReplacementPos()
         );
-        MathAsmProof.addMove(this.state.proof, move);
+        this.state.player.addAndExecuteMove(move);
+        this.setState({player:this.state.player});
+
 
         //3. Perform the replacement
-        const changes = {
-            proof:this.state.proof
-        };
-
-        const oldSentence = this.state.baseSide===StatementSide.LEFT? this.state.base.left : this.state.base.right;
-        const newSentence = this.state.baseSide===StatementSide.LEFT? this.state.base.right : this.state.base.left;
-        StatementUtils.performReplacement(target, oldSentence, newSentence, this.state.leftMatches, this.state.rightMatches);
-        changes.templates = this.state.templates;
-
-        //4. Reset the selection
-        TheoremCreator.addDefaultSelectionFor(this.state.base, target, this.state.baseSide, changes);
+        // const changes = {
+        //     proof:this.state.proof
+        // };
+        //
+        // const oldSentence = this.state.baseSide===StatementSide.LEFT? this.state.base.left : this.state.base.right;
+        // const newSentence = this.state.baseSide===StatementSide.LEFT? this.state.base.right : this.state.base.left;
+        // StatementUtils.performReplacement(target, oldSentence, newSentence, this.state.leftMatches, this.state.rightMatches);
+        // changes.templates = this.state.templates;
+        //
+        // //4. Reset the selection
+        // TheoremCreator.addDefaultSelectionFor(this.state.base, target, this.state.baseSide, changes);
 
         //5. Update the component
-        this.setState(changes);
     }
 
     /** The user could interact with this component with the keyboard too. Here are the controls: */
     handleKeyPress(e) {
-        console.log(e.keyCode);
+        //console.log(e.keyCode);
 
         switch (e.keyCode) {
             case 32: //space bar (Action: switch base direction)
-                this.setBaseDir(this.state.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT);
+                this.setBaseDir(this.state.player.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT);
                 break;
 
             case 13: //enter key (Action: perform replacement)
@@ -452,22 +251,21 @@ export default class TheoremCreator extends Component {
                 break;
 
             case 38: //arrow up (Action: change selected target)
-                if (this.state.targets.length===0) break;
+                if (this.state.player.targets.length===0) break;
 
                 e.preventDefault();
-                if (this.state.selectedTargetIndex===0) this.selectTarget(null);
-                else if (this.state.selectedTargetIndex==null) this.selectTarget(this.state.targets.length-1);
-                else this.selectTarget(this.state.selectedTargetIndex-1);
+                if (this.state.player.selectedTargetIndex===0) this.selectTarget(null);
+                else if (this.state.player.selectedTargetIndex==null) this.selectTarget(this.state.player.targets.length-1);
+                else this.selectTarget(this.state.player.selectedTargetIndex-1);
                 break;
 
             case 40: //arrow down (Action: change selected target)
-                // this.setState({cursor: 0, isCursorLeft: false});
-                if (this.state.targets.length===0) break;
+                if (this.state.player.targets.length===0) break;
 
                 e.preventDefault();
-                if (this.state.selectedTargetIndex===this.state.targets.length-1) this.selectTarget(null);
-                else if (this.state.selectedTargetIndex==null) this.selectTarget(0);
-                else this.selectTarget(this.state.selectedTargetIndex+1);
+                if (this.state.player.selectedTargetIndex===this.state.player.targets.length-1) this.selectTarget(null);
+                else if (this.state.player.selectedTargetIndex==null) this.selectTarget(0);
+                else this.selectTarget(this.state.player.selectedTargetIndex+1);
                 break;
 
             case 37: //arrow left (Action: moves the selection to the left)
@@ -503,72 +301,42 @@ export default class TheoremCreator extends Component {
                 break;
 
             case 80: //"p" key (Action: persist selected template)
-                this.handleSaveClicked( );
+                this.handleSaveClicked();
                 break;
 
             case 66: //"b" key (Action: use target as base)
-                const selectedTarget = this.getSelectedTarget();
+                const selectedTarget = this.state.player.getSelectedTarget();
                 if (selectedTarget) this.setBase(selectedTarget);
                 break;
 
             case 27: //escape key (Action: Select none)
                 this.changeSelectionType(SelectionType.NONE);
                 break;
+
+            case 90: { //z key
+                const currentMoveIndex = this.state.player.currentMoveIndex;
+                const moveCount = this.state.player.proof.moves.length;
+
+                if (e.shiftKey && e.ctrlKey) { //redo.
+                    if (moveCount!==0 && currentMoveIndex!==moveCount-1) this.goToMove(currentMoveIndex+1);
+                }
+                else if (e.ctrlKey) { //undo
+                    if (moveCount!==0 && currentMoveIndex!==0) this.goToMove(currentMoveIndex-1);
+                }
+                break;
+            }
+
         }
     }
 
     /** Navigates to the selected move of the proof. */
     goToMove(index) {
-        const moveToGoTo = this.state.proof.moves[index];
-        const nextMove = this.state.proof.moves[index+1];
-
-        //1. Update the targets
-        const newTargets = MathAsmProof.goToMove(this.state.proof, index, this.state.targets);
-
-        //2. Setup changes
-        const selectedTargetIndex = this.state.targets.findIndex(t => t._internalId === moveToGoTo.targetId);
-        const changes = {
-            proof:this.state.proof,
-            targets:newTargets,
-            selectedTargetIndex:selectedTargetIndex,
-            selectionType:SelectionType.NONE,
-            baseSide: nextMove && nextMove.baseSide!=null? nextMove.baseSide : StatementSide.LEFT
-        };
-
-        //3. Update base, matches and selection in order to show the next move that will happen.
-        const nextBase = nextMove? nextMove.base : null;
-        if (nextBase) {
-            changes.base = nextBase;
-            const sentenceToSearch = nextMove.baseSide===StatementSide.LEFT? nextBase.left : nextBase.right;
-
-            //3a. matches
-            changes.leftMatches = StatementUtils.findMatches(newTargets[selectedTargetIndex].left, sentenceToSearch, false);
-            changes.rightMatches = StatementUtils.findMatches(newTargets[selectedTargetIndex].right, sentenceToSearch, false);
-
-            //3b. selection
-            if (nextMove.selectionType!=null) {
-                changes.selectionType = nextMove.selectionType;
-                StatementUtils.setupSelection(
-                    changes.leftMatches,
-                    changes.rightMatches,
-                    changes.selectionType,
-                    TheoremCreator.getReplacementParamsFor(changes.selectionType, nextMove.pos, changes.leftMatches, changes.rightMatches)
-                );
-            }
-        }
-        else {
-            changes.base = null;
-            changes.leftMatches = [];
-            changes.rightMatches = [];
-            changes.selectionType = SelectionType.NONE;
-        }
-
-        //4. Update the component
-        this.setState(changes);
+        this.state.player.goToMove(index);
+        this.setState({player:this.state.player});
     }
 
     handleSaveClicked() {
-        const target = this.getSelectedTarget();
+        const target = this.state.player.getSelectedTarget();
         if (target==null) return;
 
         const onSave = (modalId, name) => {
@@ -576,8 +344,8 @@ export default class TheoremCreator extends Component {
 
             //1. Create the save move
             const move = MathAsmMove.newSaveMove(target._internalId, name, this.props.parentDir.id);
-            MathAsmProof.addMove(this.state.proof, move);
-            this.setState({proof: this.state.proof});
+            this.state.player.proof.addAndExecuteMove(move);
+            this.setState({player: this.state.player});
 
             //2. Perform the replacement
             ModalService.removeModal(modalId);
@@ -588,9 +356,9 @@ export default class TheoremCreator extends Component {
 
     /** Uploads the proof to the server. */
     uploadProof() {
-        if(this.state.proof.moves.length===0) return;
+        if(this.state.player.proof.moves.length===0) return;
 
-        const dataToUpload = MathAsmProof.toBackendProof(this.state.proof);
+        const dataToUpload = this.state.player.proof.toBackendProof();
         GraphQL.run(q.UPLOAD_PROOF, {moves:dataToUpload})
             .then(resp => {
                 QuickInfoService.makeSuccess("Proof successfully uploaded.");
@@ -609,9 +377,10 @@ export default class TheoremCreator extends Component {
     renderTarget(target, index) {
         if (!target) return <div>Empty target</div>;
 
-        const changeHandler = () => this.selectTarget(this.state.selectedTargetIndex===index? null : index);
+        const changeHandler = () => this.selectTarget(this.state.player.selectedTargetIndex===index? null : index);
 
-        const isSelected = this.state.selectedTargetIndex===index;
+        const player = this.state.player;
+        const isSelected = player.selectedTargetIndex===index;
         return <div key={index} className="Globals_flexStartDown">
             <button
                 className="Globals_textBut"
@@ -622,14 +391,14 @@ export default class TheoremCreator extends Component {
                     color:"green",
                     marginRight:"8px"
                 }}
-                onClick={e => this.setBase(this.state.targets[index])}>
+                onClick={e => this.setBase(player.targets[index])}>
                 <FontAwesomeIcon icon="cog"/>
             </button>
             <button
                 className="Globals_textBut"
                 title="Replace (enter)"
                 style={{
-                    visibility:!isSelected || this.state.base==null || this.state.selectedTargetIndex==null || this.state.selectionType===SelectionType.NONE? "hidden" : "",
+                    visibility:!isSelected || player.base==null || player.selectedTargetIndex==null || player.selectionType===SelectionType.NONE? "hidden" : "",
                     width: "16px",
                     height: "16px",
                     color:"red",
@@ -655,39 +424,45 @@ export default class TheoremCreator extends Component {
             <Statement
                 symbolMap={this.props.symbolMap}
                 statement={target}
-                leftMatches={isSelected? this.state.leftMatches : null}
-                rightMatches={isSelected? this.state.rightMatches : null}
-                matchLength={isSelected? this.getBaseSentenceLength() : 0}
+                leftMatches={isSelected? player.leftMatches : null}
+                rightMatches={isSelected? player.rightMatches : null}
+                matchLength={isSelected? player.getBaseSentenceLength() : 0}
                 onClick={changeHandler}/>
         </div>;
     }
 
     renderBase() {
-        if (!this.state.base) return <div>Please select a base...</div>;
-        else return <div className="Globals_flexStartDown">
+        const player = this.state.player;
+        if (!player.base) return <div>Please select a base...</div>;
+
+        const isBidirectional = player.base && player.base.isBidirectional;
+        return <div className="Globals_flexStartDown">
             <button
                 className="Globals_textBut"
                 title="Change base dir (space)"
                 style={{
                     width: "16px",
                     height: "16px",
-                    color:"#001fff73",
+                    color: isBidirectional? "#38d0f3" : "#afb3d06e",
                     marginRight:"8px"
                 }}
-                onClick={()=>this.setBaseDir(this.state.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT)}>
+                disabled={!isBidirectional}
+                onClick={()=>this.setBaseDir(player.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT)}>
                 <FontAwesomeIcon icon="exchange-alt"/>
             </button>
-            <Statement symbolMap={this.props.symbolMap} statement={this.state.base} side={this.state.baseSide}/>
+            <Statement symbolMap={this.props.symbolMap} statement={player.base} side={player.baseSide}/>
         </div>
     }
 
     renderButtons() {
+        const player = this.state.player;
+
         return <div style={{margin:"16px 0"}}>
             <button
                 className="Globals_roundBut"
                 title="Clone left side of base (x)"
                 style={{
-                    visibility:this.state.base==null? "hidden" : "",
+                    visibility:player.base==null? "hidden" : "",
                     backgroundColor: "cornflowerblue",
                     width: "24px",
                     height: "24px",
@@ -695,13 +470,13 @@ export default class TheoremCreator extends Component {
                     margin:"0 4px"
                 }}
                 onClick={()=>this.cloneBase(StatementSide.LEFT)}>
-                <FontAwesomeIcon icon="step-backward"/>
+                <FontAwesomeIcon icon="ruler-combined" flip="horizontal"/>
             </button>
             <button
                 className="Globals_roundBut"
                 title="Clone base (c)"
                 style={{
-                    visibility:this.state.base==null? "hidden" : "",
+                    visibility:player.base==null? "hidden" : "",
                     backgroundColor: "cornflowerblue",
                     width: "24px",
                     height: "24px",
@@ -709,13 +484,13 @@ export default class TheoremCreator extends Component {
                     margin:"0 4px"
                 }}
                 onClick={()=>this.cloneBase(StatementSide.BOTH)}>
-                <FontAwesomeIcon icon="copy"/>
+                <FontAwesomeIcon icon="bolt"/>
             </button>
             <button
                 className="Globals_roundBut"
                 title="Clone right side of base (v)"
                 style={{
-                    visibility:this.state.base==null? "hidden" : "",
+                    visibility:player.base==null? "hidden" : "",
                     backgroundColor: "cornflowerblue",
                     width: "24px",
                     height: "24px",
@@ -723,14 +498,14 @@ export default class TheoremCreator extends Component {
                     margin:"0 20px 0 4px"
                 }}
                 onClick={()=>this.cloneBase(StatementSide.RIGHT)}>
-                <FontAwesomeIcon icon="step-forward"/>
+                <FontAwesomeIcon icon="ruler-combined"/>
             </button>
 
             <button
                 className="Globals_roundBut"
                 title="Move selection left (left arrow)"
                 style={{
-                    visibility:this.state.selectionType===SelectionType.ALL || this.state.leftMatches.length+this.state.rightMatches.length<=1? "hidden" : "",
+                    visibility:player.selectionType===SelectionType.ALL || player.leftMatches.length+player.rightMatches.length<=1? "hidden" : "",
                     backgroundColor: "#e2b228",
                     width: "24px",
                     height: "24px",
@@ -744,8 +519,8 @@ export default class TheoremCreator extends Component {
                 className="Globals_roundBut"
                 title="Select all (a)"
                 style={{
-                    visibility:this.state.base==null || this.state.selectedTargetIndex==null? "hidden" : "",
-                    backgroundColor: this.state.selectionType===SelectionType.ALL? "#f1814c" : "#e2b228",
+                    visibility:player.base==null || player.selectedTargetIndex==null? "hidden" : "",
+                    backgroundColor: player.selectionType===SelectionType.ALL? "#f1814c" : "#e2b228",
                     width: "24px",
                     height: "24px",
                     fontSize: "14px",
@@ -758,8 +533,8 @@ export default class TheoremCreator extends Component {
                 className="Globals_roundBut"
                 title="Sentence selection (s)"
                 style={{
-                    visibility:this.state.base==null || this.state.selectedTargetIndex==null? "hidden" : "",
-                    backgroundColor: this.state.selectionType===SelectionType.LEFT || this.state.selectionType===SelectionType.RIGHT? "#f1814c" : "#e2b228",
+                    visibility:player.base==null || player.selectedTargetIndex==null? "hidden" : "",
+                    backgroundColor: player.selectionType===SelectionType.LEFT || player.selectionType===SelectionType.RIGHT? "#f1814c" : "#e2b228",
                     width: "24px",
                     height: "24px",
                     fontSize: "14px",
@@ -772,8 +547,8 @@ export default class TheoremCreator extends Component {
                 className="Globals_roundBut"
                 title="Distinct selection (d)"
                 style={{
-                    visibility:this.state.base==null || this.state.selectedTargetIndex==null? "hidden" : "",
-                    backgroundColor: this.state.selectionType===SelectionType.ONE_IN_LEFT || this.state.selectionType===SelectionType.ONE_IN_RIGHT? "#f1814c" : "#e2b228",
+                    visibility:player.base==null || player.selectedTargetIndex==null? "hidden" : "",
+                    backgroundColor: player.selectionType===SelectionType.ONE_IN_LEFT || player.selectionType===SelectionType.ONE_IN_RIGHT? "#f1814c" : "#e2b228",
                     width: "24px",
                     height: "24px",
                     fontSize: "14px",
@@ -786,7 +561,7 @@ export default class TheoremCreator extends Component {
                 className="Globals_roundBut"
                 title="Move selection right (right arrow)"
                 style={{
-                    visibility:this.state.selectionType===SelectionType.ALL || this.state.leftMatches.length+this.state.rightMatches.length<=1? "hidden" : "",
+                    visibility:player.selectionType===SelectionType.ALL || player.leftMatches.length+player.rightMatches.length<=1? "hidden" : "",
                     backgroundColor: "#e2b228",
                     width: "24px",
                     height: "24px",
@@ -801,7 +576,7 @@ export default class TheoremCreator extends Component {
                 className="Globals_roundBut"
                 title={"Persist selected template under "+this.props.parentDir.name+" (p)"}
                 style={{
-                    visibility:this.state.selectedTargetIndex==null? "hidden" : "",
+                    visibility:player.selectedTargetIndex==null? "hidden" : "",
                     backgroundColor: "#5db969",
                     width: "24px",
                     height: "24px",
@@ -815,7 +590,7 @@ export default class TheoremCreator extends Component {
                 className="Globals_roundBut"
                 title="Upload proof"
                 style={{
-                    visibility:this.state.proof.moves.length===0? "hidden" : "",
+                    visibility:player.proof.moves.length===0? "hidden" : "",
                     backgroundColor: "#5db969",
                     width: "24px",
                     height: "24px",
@@ -836,7 +611,7 @@ export default class TheoremCreator extends Component {
                 style={{
                     marginLeft:"48px",
                     marginTop:"16px",
-                    visibility:this.state.base==null? "hidden" : ""
+                    visibility:this.state.player.base==null? "hidden" : ""
                 }}>
                 <button
                     className="Globals_textBut"
@@ -844,7 +619,7 @@ export default class TheoremCreator extends Component {
                     style={{
                         width: "16px",
                         height: "16px",
-                        color:this.state.selectedTargetIndex==null? "#001fff" : "#001fff73",
+                        color:this.state.player.selectedTargetIndex==null? "#001fff" : "#001fff73",
                         backgroundColor:"transparent",
                         marginRight:"8px"
                     }}
@@ -868,12 +643,12 @@ export default class TheoremCreator extends Component {
                     {this.renderBase()}
                     {this.renderButtons()}
                     <div>
-                        {this.state.targets.map((t,index) => this.renderTarget(t, index))}
+                        {this.state.player.targets.map((t,index) => this.renderTarget(t, index))}
                         {this.renderEmptyStmtDiv()}
                     </div>
                 </div>
                 <ProofViewer
-                    proof={this.state.proof}
+                    proof={this.state.player.proof}
                     onNavigateAction={index => this.goToMove(index)}/>
                 {/*<div style={{whiteSpace:"pre"}}>{JSON.stringify(this.state, null, 2)}</div>*/}
             </div>

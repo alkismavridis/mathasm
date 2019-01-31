@@ -27,7 +27,9 @@ const SAVED_COMMANDS = [
     {id:"6", name:"Whole DB", query:"match (o)-[r]-(f) return o,r,f;"},
     {id:"7", name:"Update Node", query:"MATCH (n) WHERE ID(n)=39 SET n.type = 65 return n;"},
     {id:"8", name:"Delete Node", query:"match (o)-[r]-() WHERE ID(o)=49 delete o, r;"},
-    {id:"9", name:"Direct Statement dependencies", query:"match (o:stmt)<-[r:BS]-(move:move)<-[r2:MV]-(proof:proof)<-[r3:PRF]-(stmt:stmt) WHERE ID(o)=45 return  stmt;"},
+    {id:"9", name:"Delete Relationship", query:"match (parent)-[r]-(child) where ID(parent)=4 and ID(child)=3 delete r;"},
+    {id:"10", name:"Statements depending on...", query:"match (o:stmt)<-[r:BS]-(move:move)<-[r2:MV]-(proof:proof)<-[r3:PRF]-(stmt:stmt) WHERE ID(o)=45 return  stmt;"},
+    {id:"11", name:"Theorem proof...", query:"match (stmt:stmt)-[r:PRF]->(proof:proof)-[r2:MV]->(move:move)-[r3:BS]->(base:stmt) WHERE ID(stmt)=95 return  r, move, r2, proof, r3, base;"},
 ];
 
 class DbVisualisationPage extends Component {
@@ -85,31 +87,31 @@ class DbVisualisationPage extends Component {
         for (let node of nodes) {
             switch (node._t) {
                 case GraphTypes.USER:
-                    node.color = "green";
+                    node.color = "#6aff7d";
                     break;
 
                 case GraphTypes.THEORY:
-                    node.color = "red";
+                    node.color = "#ffde29";
                     break;
 
                 case GraphTypes.SYMBOL:
-                    node.color = "gray";
+                    node.color = "#5f65ff";
                     break;
 
                 case GraphTypes.OBJECT:
-                    node.color = "gray";
+                    node.color = "#ff9d50";
                     break;
 
                 case GraphTypes.STATEMENT:
-                    node.color = "yellow";
+                    node.color = "#fffcb6";
                     break;
 
                 case GraphTypes.MOVE:
-                    node.color = "purple";
+                    node.color = "#ff0e58";
                     break;
 
                 case GraphTypes.PROOF:
-                    node.color = "blue";
+                    node.color = "#ff97e5";
                     break;
             }
         }
@@ -151,7 +153,7 @@ class DbVisualisationPage extends Component {
     }
 
     setSavedQuery(queryId) {
-        const queryObj = SAVED_COMMANDS.find(c => c.id == queryId);
+        const queryObj = SAVED_COMMANDS.find(c => c.id === queryId);
         if (!queryObj) return;
         this.setState({cypherCommand:queryObj.query});
     }

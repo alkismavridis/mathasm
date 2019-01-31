@@ -9,12 +9,14 @@ import DomUtils from "../../../../services/DomUtils";
 
 
 const q = {
-    SIGN_IN: `mutation($userName:String!, $password:String!) {
-        signin(username:$userName, password:$password) {
-            sessionKey
-            user {id, userName}
-        }
-    }`
+  SIGN_IN: `mutation($userName:String!, $password:String!) {
+    authWSector {
+      signin(username:$userName, password:$password) {
+        sessionKey
+        user {id, userName}
+      }
+    }
+  }`
 };
 
 

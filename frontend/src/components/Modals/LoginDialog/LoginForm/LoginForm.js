@@ -10,10 +10,13 @@ import DomUtils from "../../../../services/DomUtils";
 
 const q = {
     LOGIN: `mutation($userName:String!, $password:String!) {
-        login(username:$userName, password:$password) {
-            sessionKey
-            user {id, userName}
+        authWSector{
+            login(username:$userName, password:$password) {
+                sessionKey
+                user {id, userName}
+            }
         }
+        
     }`
 };
 
@@ -64,9 +67,15 @@ class LoginForm extends Component {
         event.preventDefault();
 
         GraphQL.run(q.LOGIN, {userName:this.state.userName, password:this.state.password})
-            .then(data => {
-                if (!data || !data.login) return;
-                this.props.onSuccessfulLogin(data.login);
+            .then(mutation => {
+                let login;
+                try {
+                    login = mutation.authWSector.login;
+                    if(!login) return;
+                }
+                catch(e) { return; }
+
+                this.props.onSuccessfulLogin(login);
             })
             .catch(err => {
                 console.log(err);

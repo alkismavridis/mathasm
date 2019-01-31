@@ -74,5 +74,9 @@ class Query: GraphQLQueryResolver {
     fun statement(id:Long, depth:Int) : MathAsmStatementEntity? {
         return app.statementRepo.findById(id, depth).orElse(null)
     }
+
+    fun statements(ids:List<Long>, depth:Int): List<MathAsmStatementEntity> {
+        return IterableUtils.toList(app.statementRepo.findAllById(ids, depth))
+    }
     //endregion
 }

@@ -5,6 +5,7 @@ import SymbolCreator from "../SymbolCreator/SymbolCreator";
 import AxiomCreator from "../AxiomCreator/AxiomCreator";
 import DirViewerGroup from "../ReusableComponents/DirViewerGroup/DirViewerGroup";
 import TheoremCreator from "../TheoremCreator/TheoremCreator";
+import {MathAsmEventType} from "../../entities/MathAsmEvent";
 
 const Mode = {
     VIEW: 1,
@@ -90,28 +91,28 @@ export default class TheoryExplorer extends Component {
 
 
 
-    /** callback on symbol click*/
-    handleSymbolClick(sym) {
+    /** callback on symbol or statement click*/
+    handleSelection(event) {
+        // console.log("EVENT!!!", event);
         switch (this.state.mode) {
             case Mode.CREATE_AXIOM:
-                if (this._axiomCreator) {
-                    this._axiomCreator.addSymbol(sym);
+                if (this._axiomCreator && event.type===MathAsmEventType.SYMBOL_SELECTED) {
+                    this._axiomCreator.addSymbol(event.symbol);
                     this._axiomCreator.focus();
                 }
                 break;
 
-        }
-    }
-
-    handleStatementClick(stmt) {
-        switch (this.state.mode) {
             case Mode.CREATE_THEOREM:
-                if (this._theoremCreator) {
-                    this._theoremCreator.setBase(stmt);
+                if (!this._theoremCreator) break;
+                if (event.type===MathAsmEventType.SYMBOL_SELECTED && event.statement){
+                    this._theoremCreator.setBase(event.statement);
+                    this._theoremCreator.focus();
+                }
+                else if (event.type===MathAsmEventType.STATEMENT_SELECTED) {
+                    this._theoremCreator.setBase(event.statement);
                     this._theoremCreator.focus();
                 }
                 break;
-
         }
     }
 
@@ -164,7 +165,7 @@ export default class TheoryExplorer extends Component {
             symbolMap={this.state.symbolMap}
             onCreateStatements={info => this.handleProofSaved(info)}
             parentDir={this.state.activeDir}
-            style={{maxHeight:"200px"}}
+            style={{maxHeight:"50vh"}}
         />;
     }
 
@@ -180,8 +181,7 @@ export default class TheoryExplorer extends Component {
                     symbolMap={this.state.symbolMap}
                     onUpdateSymbolMap={this.handleSymbolMapUpdated.bind(this)}
                     onShowDir={dir => this.setState({activeDir:dir})}
-                    onSymbolClicked={this.handleSymbolClick.bind(this)}
-                    onStatementClicked={this.handleStatementClick.bind(this)}
+                    onSelect={this.handleSelection.bind(this)}
                     onCreateSymbolStart={this.toggleSymbolCreationMode.bind(this)}
                     onCreateAxiomStart={this.toggleAxiomCreationMode.bind(this)}
                     onCreateTheoremStart={this.toggleTheoremCreationMode.bind(this)}

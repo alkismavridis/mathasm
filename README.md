@@ -1,5 +1,8 @@
 ### What the hell is this?
-This project is a tool for building mathematical theories and/or philosophical propositions.
+MathAsm is a mathematical paradigm.
+This project is a webapp that implements this paradigm.
+
+One can think of it as a tool for building mathematical theories and/or philosophical propositions.
 One can create statements from scratch (Axioms), or use existing statements to generate new statements (theorems) using **certain rules** of transformation.
 
 

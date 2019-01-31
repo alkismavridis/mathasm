@@ -4,54 +4,46 @@ import BackendMoveType from "../constants/BackendMoveType";
 import SelectionType from "../constants/SelectionType";
 
 export default class MathAsmProof {
-    //region GENERATOR FUNCTIONS
-
-    static emptyProof() {
-        return {
-            currentMove:0,
-            moves:[]
-        };
+    //region LIFE CYCLE
+    constructor() {
+        this.moves = [];
     }
-
 
     static fromBackendProof(backendProof) {
         //TODO
-        return MathAsmProof.emptyProof();
+        return new MathAsmProof();
     }
     //endregion
 
 
 
     //region MODIFIERS
-    static addMove(proof, newMove) {
+    addMove(newMove, indexToAdd) {
         //1. Slice the moves array, if move is not appended at the end.
-        if (proof.currentMove!=null && proof.currentMove !== proof.moves.length-1) {
-            proof.moves = proof.moves.slice(0, proof.currentMove+1);
+        if (indexToAdd!==-1 && indexToAdd !== this.moves.length-1) {
+            this.moves = this.moves.slice(0, indexToAdd+1);
         }
 
-        //2. Push the new move, and update the currentMove counter
-        proof.moves.push(newMove);
-        proof.currentMove = proof.moves.length-1;
+        //2. Push the new move
+        this.moves.push(newMove);
     }
 
-    static goToMove(proof, newMoveIndex, targets) {
-        if (proof.currentMove==null) return;
+    goToMove(currentIndex, newMoveIndex, targets) {
+        if (currentIndex===-1) return;
 
         //1. Update the targets
-        const difference = newMoveIndex - proof.currentMove;
+        const difference = newMoveIndex - currentIndex;
         if (difference>0) {
             //we perform moves
-            for (let i=proof.currentMove+1; i<=newMoveIndex; ++i) MathAsmMove.execute(proof.moves[i], targets);
+            for (let i=currentIndex+1; i<=newMoveIndex; ++i) this.moves[i].execute(targets);
         }
         else if (difference<0) {
             //we revert moves
-            for (let i=proof.currentMove; i>newMoveIndex; --i) MathAsmMove.revert(proof.moves[i], targets);
+            for (let i=currentIndex; i>newMoveIndex; --i) this.moves[i].revert(targets);
 
         }
 
         //2. We setup the current move
-        proof.currentMove = newMoveIndex;
-
         return targets.slice();
     }
     //endregion
@@ -60,73 +52,64 @@ export default class MathAsmProof {
 
 
     //region BACKEND-PROOF CONVERSION
-
-    /*private*/ static addReplaceMove(data, move) {
+    /*private*/ static toBackendReplacementMove(move) {
         switch (move.selectionType) {
-            case SelectionType.NONE: break;
+            case SelectionType.NONE: return null;
 
-            case SelectionType.ONE_IN_LEFT:
-                data.result.push({
-                    moveType:BackendMoveType.ONE_IN_LEFT,
-                    targetId: move.targetId,
-                    extBaseId:move.base._internalId==null? move.base.id : null,
-                    intBaseId:move.base._internalId,
-                    side: move.baseSide,
-                    pos: move.pos
-                });
-                break;
+            case SelectionType.ONE_IN_LEFT: return {
+                moveType:BackendMoveType.ONE_IN_LEFT,
+                targetId: move.targetId,
+                extBaseId:move.base._internalId==null? move.base.id : null,
+                intBaseId:move.base._internalId,
+                side: move.baseSide,
+                pos: move.pos
+            };
 
-            case SelectionType.ONE_IN_RIGHT:
-                data.result.push({
-                    moveType:BackendMoveType.ONE_IN_RIGHT,
-                    targetId: move.targetId,
-                    extBaseId:move.base._internalId==null? move.base.id : null,
-                    intBaseId:move.base._internalId,
-                    side: move.baseSide,
-                    pos: move.pos
-                });
-                break;
+            case SelectionType.ONE_IN_RIGHT: return {
+                moveType:BackendMoveType.ONE_IN_RIGHT,
+                targetId: move.targetId,
+                extBaseId:move.base._internalId==null? move.base.id : null,
+                intBaseId:move.base._internalId,
+                side: move.baseSide,
+                pos: move.pos
+            };
 
-            case SelectionType.LEFT:
-                data.result.push({
-                    moveType:BackendMoveType.REPLACE_LEFT,
-                    targetId:move.targetId,
-                    extBaseId:move.base._internalId==null? move.base.id : null,
-                    intBaseId:move.base._internalId,
-                    side:move.baseSide
-                });
-                break;
+            case SelectionType.LEFT: return {
+                moveType:BackendMoveType.REPLACE_LEFT,
+                targetId:move.targetId,
+                extBaseId:move.base._internalId==null? move.base.id : null,
+                intBaseId:move.base._internalId,
+                side:move.baseSide
+            };
 
-            case SelectionType.RIGHT:
-                data.result.push({
-                    moveType:BackendMoveType.REPLACE_RIGHT,
-                    targetId:move.targetId,
-                    extBaseId:move.base._internalId==null? move.base.id : null,
-                    intBaseId:move.base._internalId,
-                    side:move.baseSide
-                });
-                break;
+            case SelectionType.RIGHT: return {
+                moveType:BackendMoveType.REPLACE_RIGHT,
+                targetId:move.targetId,
+                extBaseId:move.base._internalId==null? move.base.id : null,
+                intBaseId:move.base._internalId,
+                side:move.baseSide
+            };
 
-            case SelectionType.ALL:
-                data.result.push({
-                    moveType:BackendMoveType.REPLACE_ALL,
-                    targetId:move.targetId,
-                    extBaseId:move.base._internalId==null? move.base.id : null,
-                    intBaseId:move.base._internalId,
-                    side:move.baseSide,
-                });
-                break;
+            case SelectionType.ALL: return {
+                moveType:BackendMoveType.REPLACE_ALL,
+                targetId:move.targetId,
+                extBaseId:move.base._internalId==null? move.base.id : null,
+                intBaseId:move.base._internalId,
+                side:move.baseSide,
+            };
+
+            default: return null;
         }
     }
 
-    static toBackendProof(proof) {
+    toBackendProof() {
         const data = {
             result:[],
             currentExtBaseId:null,     //used to indicate external selects
             currentIntBaseId:null   //used to indicate internal selects. At every moment, one of those 2 is set.
         };
 
-        proof.moves.forEach(move => {
+        this.moves.forEach(move => {
             switch (move.moveType) {
                 case MoveType.START:
                     data.result.push({
@@ -138,9 +121,12 @@ export default class MathAsmProof {
                     });
                     break;
 
-                case MoveType.REPLACE:
-                    MathAsmProof.addReplaceMove(data, move);
+                case MoveType.REPLACE: {
+                    const backendMove = MathAsmProof.toBackendReplacementMove(move);
+                    if (backendMove!=null) data.result.push(backendMove);
                     break;
+                }
+
 
                 case MoveType.SAVE:
                     data.result.push({

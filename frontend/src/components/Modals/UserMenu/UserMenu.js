@@ -24,9 +24,9 @@ export default class UserMenu extends Component {
 
     //region EVENT HANDLERS
     handleLogoutClick() {
-        GraphQL.run("mutation { logout }")
-            .then(resp => {
-                if (resp.logout) {
+        GraphQL.run("mutation { authWSector { logout } }")
+            .then(mutation => {
+                if (mutation && mutation.mutation && mutation.mutation.logout) {
                     QuickInfoService.makeSuccess("Bye, "+this.props.user.userName+".");
                     App.setUser(null);
                     ModalService.removeModal(this.props.modalId);

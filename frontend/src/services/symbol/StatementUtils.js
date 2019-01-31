@@ -136,8 +136,8 @@ export default class StatementUtils {
                 break;
             }
         }
-        return true;
 
+        return true;
     }
 
     /** Returns the default selection type for the given base-target pair. */
@@ -163,7 +163,7 @@ export default class StatementUtils {
         }
 
         //4. Try ALL selection
-        if (leftMatches.length!==0 || rightMatches.length!==0) {
+        if ((leftMatches.length!==0 || rightMatches.length!==0) && StatementUtils.isSelectionLegal(SelectionType.ALL, null, base, target, leftMatches, rightMatches)) {
             return SelectionType.ALL;
         }
 

@@ -3,7 +3,6 @@ package eu.alkismavridis.mathasm.api.resolvers
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import eu.alkismavridis.mathasm.api.GraphqlContext
 import eu.alkismavridis.mathasm.api.controller.security.SecurityService
-import eu.alkismavridis.mathasm.api.types.LoginResponse
 import eu.alkismavridis.mathasm.api.types.SavedTheoremInfo
 import eu.alkismavridis.mathasm.services.App
 import eu.alkismavridis.mathasm.core.error.ErrorCode
@@ -18,50 +17,11 @@ import eu.alkismavridis.mathasm.services.utils.SymbolUtils
 import graphql.schema.DataFetchingEnvironment
 import java.time.Instant
 
+/** The entry point of all Write events for the application. */
 class Mutation(private var app: App, private val secService:SecurityService) : GraphQLMutationResolver {
 
     //region FIELDS
-
-    //endregion
-
-
-
-
-    //region SESSION RELATED
-    fun logout(env:DataFetchingEnvironment): Boolean {
-        val session = env.getContext<GraphqlContext>().session
-        if (session==null) return false //no session to destroy!
-
-        return secService.destroySession(session.sessionKey) != null
-    }
-
-    fun login(username:String, password:String, env:DataFetchingEnvironment): LoginResponse {
-        val user = app.userService.get(username)
-
-        //1 check user name existence
-        if (user==null) throw MathAsmException(ErrorCode.USER_NOT_EXISTS, "User name does not exists")
-
-        //2. check password matching
-        if (password != user.password) throw MathAsmException(ErrorCode.WRONG_PASSWORD, "Incorrect password")
-
-        //3. all correct. setup the session and return the user
-        val sessionKey = secService.createSessionKeyFor(user)
-        return LoginResponse(user, sessionKey)
-    }
-
-    fun signin(username:String, password:String, env:DataFetchingEnvironment): LoginResponse {
-        var user = app.userService.get(username)
-
-        //1 check user name existence
-        if (user!=null) throw MathAsmException(ErrorCode.USER_ALREADY_EXISTS, "User name already exists")
-
-        //2. create new user and add to service
-        user = app.userService.save( User(username).setPassword(password) )
-
-        //3. all correct. setup the session and return the user
-        val sessionKey = secService.createSessionKeyFor(user)
-        return LoginResponse(user, sessionKey)
-    }
+    public val authWSector = AuthWSector(app)
     //endregion
 
 
@@ -102,7 +62,7 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
         //1. Check user permissions
         val requestingUser = env.getContext<GraphqlContext>().user
         if (requestingUser==null) throw MathAsmException(ErrorCode.UNAUTHORIZED, "No session.")
-        if (!requestingUser.cancreateDirs()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to create dirs.")
+        if (!requestingUser.canCreateDirs()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to create dirs.")
 
 
         //2. Get the parent
@@ -123,6 +83,47 @@ class Mutation(private var app: App, private val secService:SecurityService) : G
         app.dirRepo.save(parent, 2)
 
         return newObject
+    }
+
+    /**
+     * MathAsm filesystem move operation,
+     * It moves (and possible simultaneously renames) a directory under a new parent.
+     *
+     * @param newName Optional If not provided, the directory will not be renamed.
+     * @return true on success
+     * */
+    fun moveDir(dirIdToMove:Long, newParentId:Long, newName:String?, env:DataFetchingEnvironment) : Boolean {
+        //1. Check user permissions
+        val requestingUser = env.getContext<GraphqlContext>().user
+        if (requestingUser==null) throw MathAsmException(ErrorCode.UNAUTHORIZED, "No session.")
+        if (!requestingUser.canCreateDirs()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to create dirs.")
+
+
+        //2. Get the directory to move and the new carent
+        val dirToMove: MathAsmDirEntity? = app.dirRepo.findById(dirIdToMove, 1).orElse(null)
+        if (dirToMove==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Directory with id $dirIdToMove not found.")
+
+        val parentDir: MathAsmDirEntity? = app.dirRepo.findById(newParentId, 0).orElse(null)
+        if (parentDir==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Parent directory with id $dirIdToMove not found.")
+
+
+        //3. Check if its name is available
+        val nameToUse =
+                if(newName==null) dirToMove.name
+                else newName
+
+        if(app.dirRepo.hasChildWithName(newParentId, nameToUse)) {
+            throw MathAsmException(ErrorCode.NAME_ALREADY_EXISTS, "Directory with id $dirIdToMove already has a file with name $nameToUse.")
+        }
+
+        //4. Perform the move
+        app.dirRepo.deleteChild(dirToMove.parent!!.id, dirIdToMove) //delete the tie to the old parent.
+
+        dirToMove.name = nameToUse      //move to new parent
+        dirToMove.parent = parentDir
+        app.dirRepo.save(dirToMove)
+
+        return true
     }
 
     fun createAxiom(parentId:Long, name:String, left:List<Long>, grade:Short, isBidirectional:Boolean, right:List<Long>, env:DataFetchingEnvironment) : MathAsmStatementEntity {

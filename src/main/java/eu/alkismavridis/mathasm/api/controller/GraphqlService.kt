@@ -1,8 +1,9 @@
-package eu.alkismavridis.mathasm.api
+package eu.alkismavridis.mathasm.api.controller
 
 import com.coxautodev.graphql.tools.SchemaParser
 import com.fasterxml.jackson.databind.ObjectMapper
 import eu.alkismavridis.mathasm.MathAsmConfig
+import eu.alkismavridis.mathasm.api.GraphqlContext
 import eu.alkismavridis.mathasm.api.controller.security.SecurityService
 import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.api.resolvers.MathAsmDirResolver
@@ -42,7 +43,7 @@ class GraphqlService {
 
 
     var mainSchema: GraphQLSchema? = null
-    val exceptionHandler:MathAsmExceptionHandler
+    val exceptionHandler: MathAsmExceptionHandler
     val mutationStrategy:ExecutionStrategy
     val queryStrategy:ExecutionStrategy
     private val objectMapper = ObjectMapper()

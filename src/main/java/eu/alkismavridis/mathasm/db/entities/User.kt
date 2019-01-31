@@ -55,7 +55,7 @@ class User {
         return this.rights and UserRights_CAN_CREATE_AXIOMS != 0
     }
 
-    fun cancreateDirs() : Boolean {
+    fun canCreateDirs() : Boolean {
         return this.rights and UserRights_CAN_CREATE_DIRS != 0
     }
 

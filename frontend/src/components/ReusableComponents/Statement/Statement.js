@@ -20,6 +20,7 @@ export default class Statement extends Component {
 
         //actions
         onClick:PropTypes.func,
+        onSymbolClick:PropTypes.func, //accepts the symbol and the side of the statement that the clicked occurred.
 
         //styling
         style: PropTypes.object,
@@ -48,20 +49,24 @@ export default class Statement extends Component {
 
 
     //region EVENT HANDLERS
+    handleSymbolClick(sym, side, event) {
+        event.stopPropagation();
+        if (this.props.onSymbolClick) this.props.onSymbolClick(sym, side);
+    }
     //endregion
 
 
     //region RENDERING
-    addSentenceChunk(targetArray, symbols, fromIndex, toIndex, cssClass) {
+    addSentenceChunk(targetArray, symbols, fromIndex, toIndex, side, cssClass) {
         for (let i=fromIndex; i<toIndex; ++i) {
-            targetArray.push(this.renderStatementSymbol(symbols[i], cssClass, i));
+            targetArray.push(this.renderStatementSymbol(symbols[i], cssClass, side, i));
         }
     }
 
     /** Renders the symbol with the given id. Use this for statements. */
-    renderStatementSymbol(id, cssClass, key) {
+    renderStatementSymbol(id, cssClass, side, key) {
         const symbol = this.props.symbolMap[id];
-        if (symbol) return <div key={key} className={cssClass}>{symbol.text}</div>;
+        if (symbol) return <div key={key} className={cssClass} onClick={e=>this.handleSymbolClick(symbol, side, e)}>{symbol.text}</div>;
         else return <div key={key} className={cssClass}>?</div>;
     }
 
@@ -90,10 +95,10 @@ export default class Statement extends Component {
     }
 
     /** Renders a sentence, taking the match and selection info into account. */
-    renderSentence(sen, matches) {
+    renderSentence(sen, side, matches) {
         //1. If there is no matches, simply render all symbols
         if (matches==null || matches.length===0 || this.props.matchLength===0) {
-            return sen.map((s,index) => this.renderStatementSymbol(s,"Statement_sym",index));
+            return sen.map((s,index) => this.renderStatementSymbol(s,"Statement_sym", side, index));
         }
 
         //2. At this point, we have for sure a matches. Render the sentence chunks
@@ -105,17 +110,17 @@ export default class Statement extends Component {
             const cssClass = match.selected? "Statement_sym Statement_selected" : "Statement_sym Statement_matched";
 
             //2a. Add non-matched chunk, before the matched one (if any)
-            this.addSentenceChunk(ret, sen, chunkStart, matchIndex, "Statement_sym");
+            this.addSentenceChunk(ret, sen, chunkStart, matchIndex, side, "Statement_sym");
 
             //2b. Render the matched chunk
-            this.addSentenceChunk(ret, sen, matchIndex, matchIndex+this.props.matchLength, cssClass);
+            this.addSentenceChunk(ret, sen, matchIndex, matchIndex+this.props.matchLength, side, cssClass);
 
             //2c. Update next chunk start.
             chunkStart = matchIndex+this.props.matchLength;
         });
 
         //2d. Render the non-matched part after the last matched one (if any.)
-        this.addSentenceChunk(ret, sen, chunkStart, sen.length, "Statement_sym");
+        this.addSentenceChunk(ret, sen, chunkStart, sen.length, side, "Statement_sym");
         return ret;
     }
 
@@ -126,9 +131,9 @@ export default class Statement extends Component {
 
         return (
             <div className={cx("Statement_root", this.props.className)} style={this.props.style} onClick={this.props.onClick}>
-                {this.renderSentence(stmt.left, this.props.leftMatches)}
+                {this.renderSentence(stmt.left, StatementSide.LEFT, this.props.leftMatches)}
                 {this.renderStatementConnection(stmt)}
-                {this.renderSentence(stmt.right, this.props.rightMatches)}
+                {this.renderSentence(stmt.right, StatementSide.RIGHT, this.props.rightMatches)}
             </div>
         );
     }

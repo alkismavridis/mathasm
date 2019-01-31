@@ -1,19 +1,14 @@
 package eu.alkismavridis.mathasm.api.controller;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import eu.alkismavridis.mathasm.api.GraphqlService;
 import eu.alkismavridis.mathasm.core.error.MathAsmException;
 import eu.alkismavridis.mathasm.api.GraphqlContext;
 import eu.alkismavridis.mathasm.db.entities.User;
 import eu.alkismavridis.mathasm.services.App;
-import org.neo4j.ogm.model.Result;
-import org.neo4j.ogm.session.Session;
 import org.neo4j.ogm.session.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
 import java.util.Map;
 
 @RestController

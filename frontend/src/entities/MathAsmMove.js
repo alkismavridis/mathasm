@@ -4,30 +4,61 @@ import SelectionType from "../constants/SelectionType";
 import StatementSide from "../constants/StatementSide";
 
 export default class MathAsmMove {
-    //region START MOVE UTILS
-    static newStartMove(targetId, base, side, prevStatement) {
-        return {
-            moveType:MoveType.START,
-            targetId:targetId,        //null means: "append at the end of the array"
-            base:base,
-            baseSide:side,
-            prevStatement:prevStatement,
-        };
+    //region LIFE CYCLE
+    constructor(moveType) {
+        this.moveType = moveType;
     }
 
-    static executeStart(startMove, targets) {
-        const newStatement = StatementUtils.clone(startMove.base, startMove.baseSide, startMove.targetId);
-        const indexOfTarget = targets.findIndex(t => t._internalId === startMove.targetId);
+    static newStartMove(targetId, base, side, prevStatement) {
+        const ret = new MathAsmMove(MoveType.START);
+
+        ret.targetId = targetId;
+        ret.base = base;
+        ret.baseSide = side;
+        ret.prevStatement = prevStatement;
+
+        return ret;
+    }
+
+    static newReplaceMove(targetId, base, baseSide, selectionType, pos) {
+        const ret = new MathAsmMove(MoveType.REPLACE);
+
+        ret.targetId = targetId;
+        ret.base = base;
+        ret.baseSide = baseSide;
+        ret.selectionType = selectionType;
+        ret.pos = pos;
+
+        return ret;
+    }
+
+    static newSaveMove(targetId, name, parentId) {
+        const ret = new MathAsmMove(MoveType.SAVE);
+
+        ret.targetId = targetId;
+        ret.name = name;
+        ret.parentId = parentId;
+
+        return ret;
+    }
+    //endregion
+
+
+
+    //region START MOVE UTILS
+    executeStart(targets) {
+        const newStatement = StatementUtils.clone(this.base, this.baseSide, this.targetId);
+        const indexOfTarget = targets.findIndex(t => t._internalId === this.targetId);
 
         if (indexOfTarget>=0) targets[indexOfTarget] = newStatement;
         else targets.push(newStatement);
     }
 
-    static revertStart(startMove, targets) {
-        const indexOfTarget = targets.findIndex(t => t._internalId === startMove.targetId);
+    revertStart(targets) {
+        const indexOfTarget = targets.findIndex(t => t._internalId === this.targetId);
         if (indexOfTarget<0) return;
 
-        if (startMove.prevStatement) targets[indexOfTarget] = startMove.prevStatement;
+        if (this.prevStatement) targets[indexOfTarget] = this.prevStatement;
         else targets.splice(indexOfTarget, 1);
     }
     //endregion
@@ -36,25 +67,14 @@ export default class MathAsmMove {
 
 
     //region REPLACE MOVES UTILS
-    static newReplaceMove(targetId, base, baseSide, selectionType, pos) {
-        return {
-            moveType:MoveType.REPLACE,
-            targetId:targetId,
-            base:base,
-            baseSide:baseSide,
-            selectionType:selectionType,
-            pos:pos,
-        };
-    }
-
-    static executeReplace(repMove, targets) {
+    executeReplace(targets) {
         //1. Calculate useful parameters
-        const target = targets.find(t => t._internalId===repMove.targetId);
-        const sentenceToSearch = repMove.baseSide===StatementSide.LEFT? repMove.base.left : repMove.base.right;
-        const sentenceToWrite = repMove.baseSide===StatementSide.LEFT? repMove.base.right : repMove.base.left;
+        const target = targets.find(t => t._internalId===this.targetId);
+        const sentenceToSearch = this.baseSide===StatementSide.LEFT? this.base.left : this.base.right;
+        const sentenceToWrite = this.baseSide===StatementSide.LEFT? this.base.right : this.base.left;
 
         //2. Execute the move
-        switch (repMove.selectionType) {
+        switch (this.selectionType) {
             case SelectionType.ALL: {
                 const leftMatches = StatementUtils.findMatches(target.left, sentenceToSearch, true);
                 const rightMatches = StatementUtils.findMatches(target.right, sentenceToSearch, true);
@@ -75,27 +95,27 @@ export default class MathAsmMove {
             }
 
             case SelectionType.ONE_IN_LEFT: {
-                const leftMatches = [{index:repMove.pos, selected:true}];
+                const leftMatches = [{index:this.pos, selected:true}];
                 StatementUtils.performReplacement(target, sentenceToSearch, sentenceToWrite, leftMatches, []);
                 break;
             }
 
             case SelectionType.ONE_IN_RIGHT: {
-                const rightMatches = [{index:repMove.pos, selected:true}];
+                const rightMatches = [{index:this.pos, selected:true}];
                 StatementUtils.performReplacement(target, sentenceToSearch, sentenceToWrite, [], rightMatches);
                 break;
             }
         }
     }
 
-    static revertReplace(repMove, targets) {
+    revertReplace(targets) {
         //1. Calculate useful parameters
-        const target = targets.find(t => t._internalId===repMove.targetId);
-        const sentenceToSearch = repMove.baseSide===StatementSide.LEFT? repMove.base.right : repMove.base.left;
-        const sentenceToWrite = repMove.baseSide===StatementSide.LEFT? repMove.base.left : repMove.base.right;
+        const target = targets.find(t => t._internalId===this.targetId);
+        const sentenceToSearch = this.baseSide===StatementSide.LEFT? this.base.right : this.base.left;
+        const sentenceToWrite = this.baseSide===StatementSide.LEFT? this.base.left : this.base.right;
 
         //2. Execute the move
-        switch (repMove.selectionType) {
+        switch (this.selectionType) {
             case SelectionType.ALL: {
                 const leftMatches = StatementUtils.findMatches(target.left, sentenceToSearch, true);
                 const rightMatches = StatementUtils.findMatches(target.right, sentenceToSearch, true);
@@ -116,13 +136,13 @@ export default class MathAsmMove {
             }
 
             case SelectionType.ONE_IN_LEFT: {
-                const leftMatches = [{index:repMove.pos, selected:true}];
+                const leftMatches = [{index:this.pos, selected:true}];
                 StatementUtils.performReplacement(target, sentenceToSearch, sentenceToWrite, leftMatches, []);
                 break;
             }
 
             case SelectionType.ONE_IN_RIGHT: {
-                const rightMatches = [{index:repMove.pos, selected:true}];
+                const rightMatches = [{index:this.pos, selected:true}];
                 StatementUtils.performReplacement(target, sentenceToSearch, sentenceToWrite, [], rightMatches);
                 break;
             }
@@ -131,30 +151,20 @@ export default class MathAsmMove {
     //endregion
 
 
-    //region SAVE MOVE UTILS
-    static newSaveMove(targetId, name, parentId) {
-        return {
-            moveType:MoveType.SAVE,
-            targetId:targetId,
-            name:name,
-            parentId:parentId,
-        };
-    }
-    //endregion
-
 
     //region GENERAL API
-    static execute(move, targets) {
-        switch (move.moveType) {
-            case MoveType.START: MathAsmMove.executeStart(move, targets); break;
-            case MoveType.REPLACE: MathAsmMove.executeReplace(move, targets); break;
+    execute(targets) {
+        switch (this.moveType) {
+            case MoveType.START: this.executeStart(targets); break;
+            case MoveType.REPLACE: this.executeReplace(targets); break;
             case MoveType.SAVE: break; //do nothing
         }
     }
-    static revert(move, targets) {
-        switch (move.moveType) {
-            case MoveType.START: MathAsmMove.revertStart(move, targets); break;
-            case MoveType.REPLACE: MathAsmMove.revertReplace(move, targets); break;
+
+    revert(targets) {
+        switch (this.moveType) {
+            case MoveType.START: this.revertStart(targets); break;
+            case MoveType.REPLACE: this.revertReplace(targets); break;
             case MoveType.SAVE: break; //do nothing
         }
     }

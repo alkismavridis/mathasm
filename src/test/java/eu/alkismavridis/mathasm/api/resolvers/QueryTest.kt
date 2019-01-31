@@ -394,5 +394,29 @@ class QueryTest {
         //4. Test a non existing statement
         assertNull(query.statement(99999L, 0))
     }
+
+    @Test
+    fun getStatementsTest() {
+        //1. Make sure that a clean theory exists
+        app.dirRepo.deleteAll()
+        app.statementRepo.deleteAll()
+        app.theoryRepo.deleteAll()
+        app.postConstruct()
+
+        //2. Create a state
+        val state = BasicMathAsmState(app)
+
+        //3. Test the getter with depth 0
+        var result = query.statements(listOf(state.stmt1a.id!!, state.stmt2a.id!!), 0)
+        assertTrue(result.any{ it.id == state.stmt1a.id })
+        assertTrue(result.any{ it.id == state.stmt2a.id })
+        assertTrue(result.all{ it.author == null }) //depth 0 should NOT fetch the author
+
+        //3. Test the getter with depth 0
+        result = query.statements(listOf(state.stmt1a.id!!, state.stmt2a.id!!), 1)
+        assertTrue(result.any{ it.id == state.stmt1a.id })
+        assertTrue(result.any{ it.id == state.stmt2a.id })
+        assertTrue(result.all{ it.author != null }) //depth 1 should ALSO fetch the author
+    }
     //endregion
 }

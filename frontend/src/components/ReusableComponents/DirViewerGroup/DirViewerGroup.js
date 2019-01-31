@@ -16,8 +16,7 @@ export default class DirViewerGroup extends Component {
         onCreateTheoremStart: PropTypes.func, //accepts the parent dir of the new theorem. This will popup the axiom creator.
         onCreateSymbolStart: PropTypes.func, //accepts the parent dir of the new symbol. This will popup the symbol creator.
         onUpdateSymbolMap: PropTypes.func.isRequired, //accepts a map of symbols. This must be called every time new, unknown symbols have been loaded from the server.
-        onSymbolClicked: PropTypes.func, //accepts the clicked symbol.
-        onStatementClicked: PropTypes.func, //accepts the clicked statement.
+        onSelect: PropTypes.func, //accepts the MathAsmEvent of the selection.
         onShowDir: PropTypes.func, //accepts the directory. This function is called every time the displayed directory changes.
 
         //styling
@@ -168,11 +167,10 @@ export default class DirViewerGroup extends Component {
                             isOpen={this.state.selectedTabId === t.tabId}
                             onUpdateSymbolMap={this.props.onUpdateSymbolMap}
                             onDirChanged={this.handleDirChange.bind(this, t.tabId)}
-                            onSymbolClicked={this.props.onSymbolClicked}
+                            onSelect={this.props.onSelect}
                             onCreateAxiomStart={this.props.onCreateAxiomStart}
                             onCreateTheoremStart={this.props.onCreateTheoremStart}
-                            onCreateSymbolStart={this.props.onCreateSymbolStart}
-                            onStatementClicked={this.props.onStatementClicked}/>
+                            onCreateSymbolStart={this.props.onCreateSymbolStart}/>
                     )}
                 </div>
             </div>

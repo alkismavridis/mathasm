@@ -12,6 +12,7 @@ import Connection from "../../Connection/Connection";
 import Statement from "../../Statement/Statement";
 import StatementType from "../../../../constants/StatementType";
 import SortingUtils from "../../../../services/symbol/SortingUtils";
+import {MathAsmEvent} from "../../../../entities/MathAsmEvent";
 
 const q = {
     FETCH_PARENT: `query($id:Long!){
@@ -72,8 +73,7 @@ export default class DirViewer extends Component {
         onCreateTheoremStart: PropTypes.func, //accepts the parent dir of the new theorem. This will popup the axiom creator.
         onCreateSymbolStart: PropTypes.func, //accepts the parent dir of the new symbol. This will popup the symbol creator.
         onDirChanged: PropTypes.func.isRequired, //accepts the new directory.
-        onSymbolClicked: PropTypes.func, //accepts the clicked symbol.
-        onStatementClicked: PropTypes.func, //accepts the clicked statement.
+        onSelect: PropTypes.func, //accepts a MathAsmEvent with information on what has been clicked.
 
 
         //styling
@@ -231,11 +231,11 @@ export default class DirViewer extends Component {
     }
 
     handleSymbolClick(sym) {
-        if (this.props.onSymbolClicked) this.props.onSymbolClicked(sym);
+        if (this.props.onSelect) this.props.onSelect(MathAsmEvent.makeSymbolSelect(sym));
     }
 
     handleStatementClick(stmt) {
-        if (this.props.onStatementClicked) this.props.onStatementClicked(stmt);
+        if (this.props.onSelect) this.props.onSelect(MathAsmEvent.makeStatementSelect(stmt));
     }
 
     handleDirCreationTextSubmit(modalId, text) {
@@ -288,7 +288,12 @@ export default class DirViewer extends Component {
                 onClick={this.handleStatementClick.bind(this, stmt)}
                 title={"Id: "+stmt.id}>
                 <div className="DirViewer_stmtName">{stmt.name}</div>
-                <Statement statement={stmt} symbolMap={this.props.symbolMap}/>
+                <Statement
+                    statement={stmt}
+                    symbolMap={this.props.symbolMap}
+                    onSymbolClick={(sym, side) => {
+                        if (this.props.onSelect) this.props.onSelect(MathAsmEvent.makeSymbolSelect(sym, stmt, side));
+                    }}/>
             </div>
         );
     }
