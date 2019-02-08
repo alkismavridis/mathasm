@@ -5,9 +5,7 @@ import eu.alkismavridis.mathasm.core.enums.StatementSide_BOTH
 import eu.alkismavridis.mathasm.core.enums.StatementType_THEOREM
 import eu.alkismavridis.mathasm.core.error.ErrorCode
 import eu.alkismavridis.mathasm.core.error.MathAsmException
-import eu.alkismavridis.mathasm.core.proof.*
 import eu.alkismavridis.mathasm.core.sentence.MathAsmStatement
-import eu.alkismavridis.mathasm.db.entities.LogicMoveEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmStatementEntity
 import eu.alkismavridis.mathasm.db.entities.User
@@ -42,7 +40,7 @@ class ProofUtils {
 
             //2. Fetch parent and add the statement to it
             val parent: MathAsmDirEntity? = app.dirRepo.findById(parentId, 0).orElse(null)
-            if (parent==null) throw MathAsmException(ErrorCode.OBJECT_NOT_FOUND, "Object with id $parentId not found.")
+            if (parent==null) throw MathAsmException(ErrorCode.DIR_NOT_FOUND, "Object with id $parentId not found.")
 
             //3. Check name availability
             val isNameTaken = app.dirRepo.hasChildWithName(parentId, name)

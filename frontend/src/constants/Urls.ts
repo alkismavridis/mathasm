@@ -2,7 +2,6 @@ const FRONTEND_BASE = "/";
 const BACKEND_BASE = "http://localhost:8080/";
 
 export default {
-
   pages:{
       graphiql: FRONTEND_BASE+"graphiql",
       theory: FRONTEND_BASE+"theory",

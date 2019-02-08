@@ -86,6 +86,14 @@ html, body {
     max-height: 80vh;
     overflow: auto;
 }
+
+.Globals_menuItem {
+    border-bottom: dashed 1px black;
+    padding:8px 0;
+    cursor: pointer;
+}
+.Globals_menuItem:last-child{ border-bottom:none; }
+.Globals_menuItem:hover{ background-color: rgba(210, 214, 215, 0.99); }
 /*endregion*/
 
 

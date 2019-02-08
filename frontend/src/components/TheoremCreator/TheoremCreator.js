@@ -5,11 +5,11 @@ import "./TheoremCreator.scss";
 import Statement from "../ReusableComponents/Statement/Statement";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import StatementUtils from "../../services/symbol/StatementUtils";
-import SelectionType from "../../constants/SelectionType";
-import StatementSide from "../../constants/StatementSide";
+import SelectionType from "../../enums/SelectionType";
+import StatementSide from "../../enums/StatementSide";
 import QuickInfoService from "../../services/QuickInfoService";
 import MathAsmProof from "../../entities/MathAsmProof";
-import MathAsmMove from "../../entities/MathAsmMove";
+import MathAsmMove from "../../entities/MathAsmMove.ts";
 import ProofViewer from "./ProofViewer/ProofViewer";
 import ModalService from "../../services/ModalService";
 import GraphQL from "../../services/GraphQL";
@@ -17,10 +17,12 @@ import ProofPlayer from "../../entities/ProofPlayer";
 
 const q = {
     UPLOAD_PROOF: `mutation($moves:[LogicMove!]!) {
+      statementWSector {
         uploadProof(moves:$moves) {
             parentId
             theorem {id, name, type, left, right, isBidirectional, grade}
         }
+      }
     }`
 };
 
@@ -166,6 +168,8 @@ export default class TheoremCreator extends Component {
             targetToReplace._internalId;
 
         const cloneOfTargetToReplace = targetToReplace? StatementUtils.clone(targetToReplace, StatementSide.BOTH, targetToReplace._internalId) : null;
+
+        console.log(MathAsmMove);
         const move = MathAsmMove.newStartMove(
             newInternalId,
             this.state.player.getImmutableBase(),
@@ -360,9 +364,9 @@ export default class TheoremCreator extends Component {
 
         const dataToUpload = this.state.player.proof.toBackendProof();
         GraphQL.run(q.UPLOAD_PROOF, {moves:dataToUpload})
-            .then(resp => {
+            .then(mutation => {
                 QuickInfoService.makeSuccess("Proof successfully uploaded.");
-                if (this.props.onCreateStatements) this.props.onCreateStatements(resp.uploadProof);
+                if (this.props.onCreateStatements) this.props.onCreateStatements(mutation.statementWSector.uploadProof);
             })
             .catch(error => {
                 QuickInfoService.makeError("Error while uploading proof. Please note that parts of the proof may have been successfully saved.");

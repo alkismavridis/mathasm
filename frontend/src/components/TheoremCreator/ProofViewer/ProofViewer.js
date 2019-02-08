@@ -2,9 +2,9 @@ import React, {Component} from 'react';
 import PropTypes from "prop-types";
 import cx from 'classnames';
 import "./ProofViewer.scss";
-import MoveType from "../../../constants/MoveType";
-import StatementSide from "../../../constants/StatementSide";
-import SelectionType from "../../../constants/SelectionType";
+import MoveType from "../../../enums/MoveType";
+import StatementSide from "../../../enums/StatementSide";
+import SelectionType from "../../../enums/SelectionType";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 
 export default class ProofViewer extends Component {

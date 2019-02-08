@@ -4,13 +4,15 @@ import "./SymbolCreator.css";
 import QuickInfoService from "../../services/QuickInfoService";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import GraphQL from "../../services/GraphQL";
-import ErrorCode from "../../constants/ErrorCode";
+import ErrorCode from "../../enums/ErrorCode";
 import {SymbolRangeUtils} from "../../services/symbol/SymbolRangeUtils";
 import DomUtils from "../../services/DomUtils";
 
 
 const CREATE_SYMBOL = `mutation($text:String!, $uid:Long!, $parentId:Long!) {
-    createSymbol(parentId:$parentId, text:$text, uid:$uid) {uid,text}
+    symbolWSector {
+        createSymbol(parentId:$parentId, text:$text, uid:$uid) {uid,text}
+    }
 }`;
 
 class SymbolCreator extends Component {
@@ -67,7 +69,7 @@ class SymbolCreator extends Component {
                 QuickInfoService.makeSuccess(`Symbol "${this.state.text}" successfully created.`);
 
                 //add the saved symbol in the array
-                SymbolRangeUtils.addToSorted(this.state.savedSymbols, resp.createSymbol);
+                SymbolRangeUtils.addToSorted(this.state.savedSymbols, resp.symbolWSector.createSymbol);
 
                 this.setState({
                     isLoading:false,
@@ -76,7 +78,7 @@ class SymbolCreator extends Component {
                     savedSymbols:this.state.savedSymbols
                 });
 
-                this.props.onSymbolCreated(resp.createSymbol);
+                this.props.onSymbolCreated(resp.symbolWSector.createSymbol);
             })
             .catch(err => {
                 this.handleSubmitError(err);

@@ -1,7 +1,9 @@
 package eu.alkismavridis.mathasm.api.controller;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.*;
 import eu.alkismavridis.mathasm.core.error.MathAsmException;
 import eu.alkismavridis.mathasm.db.entities.*;
@@ -18,10 +20,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/cypher")
@@ -139,6 +138,15 @@ public class CypherController {
                 addNode(nodes, (long)val.hashCode(), asString, GraphNodeType.PRIMITIVE, new TextNode(asString));
             }
             else if (val instanceof Boolean) addNode(nodes, (long)val.hashCode(), val.toString(), GraphNodeType.PRIMITIVE, new TextNode(val.toString()));
+            else if (val instanceof Collection) {
+                final JsonNode node = new ObjectMapper().convertValue(val, new TypeReference<List>(){});
+                addNode(nodes, (long)val.hashCode(), val.hashCode()+"", GraphNodeType.PRIMITIVE, node);
+            }
+            else if (val.getClass().isArray()) {
+                final Object[] array = (Object[])val;
+                final JsonNode node = new ObjectMapper().valueToTree(array);
+                addNode(nodes, (long)val.hashCode(), val.hashCode()+"", GraphNodeType.PRIMITIVE, node);
+            }
 
             else if (val instanceof Edge) {
                 final Long id = ((Edge) val).getId();

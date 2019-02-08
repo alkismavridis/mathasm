@@ -1,6 +1,7 @@
 package eu.alkismavridis.mathasm.api.resolvers
 
 import eu.alkismavridis.mathasm.api.controller.security.SecurityService
+import eu.alkismavridis.mathasm.api.resolvers.write.Mutation
 import eu.alkismavridis.mathasm.api.test_utils.DummyFetchingEnvironment
 import eu.alkismavridis.mathasm.core.enums.MoveType_SAVE
 import eu.alkismavridis.mathasm.core.enums.StatementSide_BOTH
@@ -104,7 +105,7 @@ class MutationTest {
         user.rights = UserRights_MAX
 
         //assert response
-        var result = mutation.createSymbol(th.rootObj!!.id!!, "   hello   \t", 1, DummyFetchingEnvironment(user))
+        var result = mutation.symbolWSector.createSymbol(th.rootObj!!.id!!, "   hello   \t", 1, DummyFetchingEnvironment(user))
         assertNotNull(result.id)
         assertEquals(1, result.uid)
         assertEquals("hello", result.text)
@@ -126,7 +127,7 @@ class MutationTest {
         assertEquals(result.id, rootObjFromDb.symbols[0].id)
 
         //3. Create one more...
-        result = mutation.createSymbol(th.rootObj!!.id!!, "\nworld  \r\n \t", 2, DummyFetchingEnvironment(user))
+        result = mutation.symbolWSector.createSymbol(th.rootObj!!.id!!, "\nworld  \r\n \t", 2, DummyFetchingEnvironment(user))
         assertNotNull(result.id)
         assertEquals(2, result.uid)
         assertEquals("world", result.text)
@@ -166,7 +167,7 @@ class MutationTest {
 
         //2. Null user
         try {
-            mutation.createSymbol(th.rootObj!!.id!!, "hello", 1, DummyFetchingEnvironment(null))
+            mutation.symbolWSector.createSymbol(th.rootObj!!.id!!, "hello", 1, DummyFetchingEnvironment(null))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -177,7 +178,7 @@ class MutationTest {
         //3. User without permission to create symbols
         user.rights = UserRights_MIN
         try {
-            mutation.createSymbol(th.rootObj!!.id!!, "hello", 1, DummyFetchingEnvironment(user))
+            mutation.symbolWSector.createSymbol(th.rootObj!!.id!!, "hello", 1, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -188,7 +189,7 @@ class MutationTest {
 
         //4. Invalid symbol text
         try {
-            mutation.createSymbol(th.rootObj!!.id!!, "", 1, DummyFetchingEnvironment(user))
+            mutation.symbolWSector.createSymbol(th.rootObj!!.id!!, "", 1, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -199,7 +200,7 @@ class MutationTest {
         //5. Existing symbol text
         app.symbolRepo.save(MathAsmSymbol(user, "existing", 1))
         try {
-            mutation.createSymbol(th.rootObj!!.id!!, "existing", 2, DummyFetchingEnvironment(user))
+            mutation.symbolWSector.createSymbol(th.rootObj!!.id!!, "existing", 2, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -209,7 +210,7 @@ class MutationTest {
 
         //6. Existing symbol uid
         try {
-            mutation.createSymbol(th.rootObj!!.id!!, "newSymbol", 1, DummyFetchingEnvironment(user))
+            mutation.symbolWSector.createSymbol(th.rootObj!!.id!!, "newSymbol", 1, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -219,11 +220,11 @@ class MutationTest {
 
         //7. Non existing parent id
         try {
-            mutation.createSymbol(9999L, "newSymbol", 2, DummyFetchingEnvironment(user))
+            mutation.symbolWSector.createSymbol(9999L, "newSymbol", 2, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
-            assertEquals(ErrorCode.OBJECT_NOT_FOUND, e.code)
+            assertEquals(ErrorCode.DIR_NOT_FOUND, e.code)
             assertEquals("Object with uid 9999 not found.", e.message)
         }
     }
@@ -243,7 +244,7 @@ class MutationTest {
         assertEquals(0, app.symbolRepo.count())
         user.rights = UserRights_MAX
 
-        var result = mutation.createDir(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(user))
+        var result = mutation.fsWSector.createDir(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(user))
         assertNotNull(result.id)
         assertEquals("child1", result.name)
         assertEquals(user, result.author)
@@ -259,7 +260,7 @@ class MutationTest {
 
 
         //3. Create one more
-        result = mutation.createDir(parentObj.subDirs[0].id!!, "grandChild", DummyFetchingEnvironment(user)) //save the new object under the previous one.
+        result = mutation.fsWSector.createDir(parentObj.subDirs[0].id!!, "grandChild", DummyFetchingEnvironment(user)) //save the new object under the previous one.
         assertNotNull(result.id)
         assertEquals("grandChild", result.name)
         assertEquals(user, result.author)
@@ -287,7 +288,7 @@ class MutationTest {
 
         //2. Null user
         try {
-            mutation.createDir(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(null))
+            mutation.fsWSector.createDir(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(null))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -298,7 +299,7 @@ class MutationTest {
         //3. User without permission to create dirs
         user.rights = UserRights_MIN
         try {
-            mutation.createDir(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(user))
+            mutation.fsWSector.createDir(theory.rootObj!!.id!!, "child1", DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -309,18 +310,18 @@ class MutationTest {
 
         //4. Non existing parent id
         try {
-            mutation.createDir(9999L, "child1", DummyFetchingEnvironment(user))
+            mutation.fsWSector.createDir(9999L, "child1", DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
-            assertEquals(ErrorCode.OBJECT_NOT_FOUND, e.code)
+            assertEquals(ErrorCode.DIR_NOT_FOUND, e.code)
             assertEquals("Object with uid 9999 not found.", e.message)
         }
 
         //5. Save with a name of an existing object
         val state = BasicMathAsmState(app)
         try {
-            mutation.createDir(state.dir1_1.id!!, "dir1_1_1", DummyFetchingEnvironment(user))
+            mutation.fsWSector.createDir(state.dir1_1.id!!, "dir1_1_1", DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -330,7 +331,7 @@ class MutationTest {
 
         //6. Save with a name of an existing statement
         try {
-            mutation.createDir(state.dir1_1.id!!, "stmt1_1a", DummyFetchingEnvironment(user))
+            mutation.fsWSector.createDir(state.dir1_1.id!!, "stmt1_1a", DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -354,7 +355,7 @@ class MutationTest {
         assertEquals(0, app.symbolRepo.count())
         user.rights = UserRights_MAX
 
-        var result = mutation.createAxiom(theory.rootObj!!.id!!, "stmt1", listOf(1L,2L,3L), 2, false, listOf(8L,9L), DummyFetchingEnvironment(user))
+        var result = mutation.statementWSector.createAxiom(theory.rootObj!!.id!!, "stmt1", listOf(1L,2L,3L), 2, false, listOf(8L,9L), DummyFetchingEnvironment(user))
         assertNotNull(result.id)
         assertEquals("stmt1", result.name)
         assertEquals(user, result.author)
@@ -377,7 +378,7 @@ class MutationTest {
 
 
         //3. Create one more
-        result = mutation.createAxiom(theory.rootObj!!.id!!, "stmt2", listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+        result = mutation.statementWSector.createAxiom(theory.rootObj!!.id!!, "stmt2", listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
         assertNotNull(result.id)
         assertEquals("stmt2", result.name)
         assertEquals(user, result.author)
@@ -412,7 +413,7 @@ class MutationTest {
 
         //2. Null user
         try {
-            mutation.createAxiom(theory.rootObj!!.id!!, "stmt2", listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(null))
+            mutation.statementWSector.createAxiom(theory.rootObj!!.id!!, "stmt2", listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(null))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -423,7 +424,7 @@ class MutationTest {
         //3. User without permission to create dirs
         user.rights = UserRights_MIN
         try {
-            mutation.createAxiom(theory.rootObj!!.id!!, "stmt2", listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+            mutation.statementWSector.createAxiom(theory.rootObj!!.id!!, "stmt2", listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -434,18 +435,18 @@ class MutationTest {
 
         //4. Non existing parent id
         try {
-            mutation.createAxiom(99999L, "stmt2", listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+            mutation.statementWSector.createAxiom(99999L, "stmt2", listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
-            assertEquals(ErrorCode.OBJECT_NOT_FOUND, e.code)
+            assertEquals(ErrorCode.DIR_NOT_FOUND, e.code)
             assertEquals("Object with uid 99999 not found.", e.message)
         }
 
         //5. Save with a name of an existing object
         val state = BasicMathAsmState(app)
         try {
-            mutation.createAxiom(state.dir1_1.id!!, "dir1_1_1",  listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+            mutation.statementWSector.createAxiom(state.dir1_1.id!!, "dir1_1_1",  listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -455,7 +456,7 @@ class MutationTest {
 
         //6. Save with a name of an existing statement
         try {
-            mutation.createAxiom(state.dir1_1.id!!, "stmt1_1a",  listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+            mutation.statementWSector.createAxiom(state.dir1_1.id!!, "stmt1_1a",  listOf(7L,8L,9L), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -466,7 +467,7 @@ class MutationTest {
 
         //7. Try saving empty left sentence
         try {
-            mutation.createAxiom(state.dir1_1.id!!, "stmt1_1a",  listOf(), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
+            mutation.statementWSector.createAxiom(state.dir1_1.id!!, "stmt1_1a",  listOf(), 55, true, listOf(3L,3L), DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -476,7 +477,7 @@ class MutationTest {
 
         //8. Try saving empty left sentence
         try {
-            mutation.createAxiom(state.dir1_1.id!!, "stmt1_1a",  listOf(1L, 2L), 55, true, listOf(), DummyFetchingEnvironment(user))
+            mutation.statementWSector.createAxiom(state.dir1_1.id!!, "stmt1_1a",  listOf(1L, 2L), 55, true, listOf(), DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -526,7 +527,7 @@ class MutationTest {
         moves.add(LogicMove.makeSave(0, theory.rootObj!!.id!!, "dummyTheorem"))
 
         //4. Make the request
-        val result = mutation.uploadProof(moves, DummyFetchingEnvironment(user))
+        val result = mutation.statementWSector.uploadProof(moves, DummyFetchingEnvironment(user))
 
 
         //5. Assert result
@@ -609,7 +610,7 @@ class MutationTest {
         moves.add(LogicMove.makeSave(0, theory.rootObj!!.id!!, "dummyTheorem2"))
 
         //4. Make the request
-        val result = mutation.uploadProof(moves, DummyFetchingEnvironment(user))
+        val result = mutation.statementWSector.uploadProof(moves, DummyFetchingEnvironment(user))
 
 
         //5. Assert result
@@ -706,7 +707,7 @@ class MutationTest {
 
         //4. Null user
         try {
-            mutation.uploadProof(moves, DummyFetchingEnvironment(null))
+            mutation.statementWSector.uploadProof(moves, DummyFetchingEnvironment(null))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -717,7 +718,7 @@ class MutationTest {
         //5. User without permission to create dirs
         user.rights = UserRights_MIN
         try {
-            mutation.uploadProof(moves, DummyFetchingEnvironment(user))
+            mutation.statementWSector.uploadProof(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -730,11 +731,11 @@ class MutationTest {
         //6. Test invalid move (non existing parent id on save)
         moves.find{ e -> e.moveType == MoveType_SAVE}!!.parentId = 9999L
         try {
-            mutation.uploadProof(moves, DummyFetchingEnvironment(user))
+            mutation.statementWSector.uploadProof(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
-            assertEquals(ErrorCode.OBJECT_NOT_FOUND, e.code)
+            assertEquals(ErrorCode.DIR_NOT_FOUND, e.code)
             assertEquals("Object with id 9999 not found.", e.message)
         }
         moves.find{ e -> e.moveType == MoveType_SAVE}!!.parentId = theory.rootObj!!.id!!
@@ -742,7 +743,7 @@ class MutationTest {
         //7. Test invalid move
         moves[2] = LogicMove.makeReplaceOneInLeft(0, stmt3.id!!, null, StatementSide_LEFT, 999)
         try {
-            mutation.uploadProof(moves, DummyFetchingEnvironment(user))
+            mutation.statementWSector.uploadProof(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown!")
         }
         catch (e:MathAsmException) {
@@ -757,7 +758,7 @@ class MutationTest {
                 name = "dir1_1_1"
                 parentId = state.dir1_1.id!!
             }
-            mutation.uploadProof(moves, DummyFetchingEnvironment(user))
+            mutation.statementWSector.uploadProof(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
@@ -771,7 +772,7 @@ class MutationTest {
                 name = "stmt1_1a"
                 parentId = state.dir1_1.id!!
             }
-            mutation.uploadProof(moves, DummyFetchingEnvironment(user))
+            mutation.statementWSector.uploadProof(moves, DummyFetchingEnvironment(user))
             fail("Exception was not thrown")        }
         catch (e: MathAsmException) {
             assertEquals(ErrorCode.NAME_ALREADY_EXISTS, e.code)

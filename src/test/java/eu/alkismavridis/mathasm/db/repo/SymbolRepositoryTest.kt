@@ -66,17 +66,17 @@ class SymbolRepositoryTest {
 
 
         //2. Fetch by individual id
-        var fromDB = symboleRepo.findBySymbolId(1)
+        var fromDB = symboleRepo.findByUid(1, 0)
         assertNotNull(fromDB)
         assertEquals(1L, fromDB.uid)
         assertEquals("sym_1", fromDB.text)
 
-        fromDB = symboleRepo.findBySymbolId(5)
+        fromDB = symboleRepo.findByUid(5, 0)
         assertNotNull(fromDB)
         assertEquals(5L, fromDB.uid)
         assertEquals("sym_5", fromDB.text)
 
-        fromDB = symboleRepo.findBySymbolId(100)
+        fromDB = symboleRepo.findByUid(100, 0)
         assertNull(fromDB)
 
         //3. Fetch by id range

@@ -1,6 +1,10 @@
 {
   "compileOnSave": false,
+  "include": [
+    "src"
+  ],
   "compilerOptions": {
+    "jsx": "preserve",
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
     "declaration": false,
@@ -9,6 +13,9 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "es5",
+    "module": "esnext",
+    "strictPropertyInitialization": false,
+    "noImplicitAny": false,
     "typeRoots": [
       "node_modules/@types"
     ],
@@ -16,8 +23,13 @@
       "es2017",
       "dom"
     ],
-    "include": [
-      "./src/**/*"
-    ]
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true
   }
 }

@@ -5,7 +5,7 @@ import GraphiQL from "graphiql";
 import GraphQL from "../../../services/GraphQL";
 import Urls from "../../../constants/Urls";
 import App from "../../App/App";
-import ErrorCode from "../../../constants/ErrorCode";
+import ErrorCode from "../../../enums/ErrorCode";
 
 export default class GraphiqlPage extends Component {
     static propTypes = {

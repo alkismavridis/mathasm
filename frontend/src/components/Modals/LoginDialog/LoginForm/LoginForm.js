@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import PropTypes from "prop-types";
 import "./LoginForm.css";
 import GraphQL from "../../../../services/GraphQL";
-import ErrorCode from "../../../../constants/ErrorCode";
+import ErrorCode from "../../../../enums/ErrorCode";
 import ModalHeader from "../../ModalHeader/ModalHeader";
 import DomUtils from "../../../../services/DomUtils";
 

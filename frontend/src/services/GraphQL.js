@@ -1,5 +1,5 @@
 import Urls from "../constants/Urls";
-import ErrorCode from "../constants/ErrorCode";
+import ErrorCode from "../enums/ErrorCode";
 import App from "../components/App/App";
 import QuickInfoService from "./QuickInfoService";
 import ModalService from "./ModalService";

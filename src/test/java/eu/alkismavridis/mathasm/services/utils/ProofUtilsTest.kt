@@ -3,9 +3,7 @@ package eu.alkismavridis.mathasm.services.utils
 import eu.alkismavridis.mathasm.api.types.SavedTheoremInfo
 import eu.alkismavridis.mathasm.core.error.ErrorCode
 import eu.alkismavridis.mathasm.core.error.MathAsmException
-import eu.alkismavridis.mathasm.core.proof.*
 import eu.alkismavridis.mathasm.core.sentence.*
-import eu.alkismavridis.mathasm.db.entities.LogicMoveEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmDirEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmStatementEntity
 import eu.alkismavridis.mathasm.db.entities.User
@@ -190,7 +188,7 @@ class ProofUtilsTest {
             fail("Exception was not thrown")
         }
         catch (e: MathAsmException) {
-            assertEquals(ErrorCode.OBJECT_NOT_FOUND, e.code)
+            assertEquals(ErrorCode.DIR_NOT_FOUND, e.code)
             assertEquals("Object with id 9999999 not found.", e.message)
         }
 

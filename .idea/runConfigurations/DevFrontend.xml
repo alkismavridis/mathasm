@@ -6,7 +6,7 @@
       <script value="start" />
     </scripts>
     <node-interpreter value="project" />
-    <package-manager value="/usr/share/npm" />
+    <package-manager value="/opt/node/lib/node_modules/npm" />
     <envs />
     <method />
   </configuration>

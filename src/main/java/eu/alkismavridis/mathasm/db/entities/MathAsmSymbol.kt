@@ -24,6 +24,9 @@ class MathAsmSymbol {
 
     @Relationship(type = "AUTH", direction = Relationship.OUTGOING)
     var author:User? = null
+
+    @Relationship(type = "SYM", direction = Relationship.INCOMING)
+    var parent:MathAsmDirEntity? = null
     //endregion
 
 

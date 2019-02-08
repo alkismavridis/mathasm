@@ -10,7 +10,7 @@ import eu.alkismavridis.mathasm.api.resolvers.MathAsmDirResolver
 import eu.alkismavridis.mathasm.services.App
 import eu.alkismavridis.mathasm.api.resolvers.StatementResolver
 import eu.alkismavridis.mathasm.api.resolvers.UserResolver
-import eu.alkismavridis.mathasm.api.resolvers.Mutation
+import eu.alkismavridis.mathasm.api.resolvers.write.Mutation
 import eu.alkismavridis.mathasm.api.resolvers.Query
 import eu.alkismavridis.mathasm.core.error.MathAsmException
 import graphql.*
@@ -77,7 +77,7 @@ class GraphqlService {
         //2. SETUP RESOLVERS
         val resolvers = listOf(
             Query(app),
-            Mutation(app, secService),
+                Mutation(app, secService),
             UserResolver(),
             StatementResolver(app),
             MathAsmDirResolver()

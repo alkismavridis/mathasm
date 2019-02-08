@@ -30,18 +30,37 @@ type Query {
     statements(ids:[Long!]!, depth:Int = 1): [MathAsmStatementEntity!]!
 }
 
+# Mutations are divided into "write-sectors" for better semantics and code management.
 type Mutation {
     authWSector: AuthWSector
+    symbolWSector: SymbolWSector
+    statementWSector: StatementWSector
+    fsWSector: FileSystemWSector
+}
+#endregion
 
 
-    #symbol management
+#region WRITE SECTORS
+type AuthWSector {
+    login(username:String!, password:String!):LoginResponse
+    signin(username:String!, password:String!):LoginResponse
+    logout:Boolean!
+}
+
+type SymbolWSector {
     createSymbol(parentId:Long!, text:String!, uid:Long!) : MathAsmSymbol
+    move(symbolUidToMove:Long!, newParentId:Long!) : Boolean!
 
-    #axiom creation
+}
+
+type StatementWSector {
     createAxiom(parentId:Long!, name:String!, left:[Long!]!, grade:Int = 0, isBidirectional:Boolean = false, right:[Long!]!) : MathAsmStatementEntity!
-    createDir(parentId:Long!, name:String!) : MathAsmDirEntity!
     uploadProof(moves:[LogicMove!]!) : [SavedTheoremInfo!]!
+    move(statementIdToMove:Long!, newParentId:Long!, newName:String) : Boolean!
+}
 
+type FileSystemWSector {
+    createDir(parentId:Long!, name:String!) : MathAsmDirEntity!
     moveDir(dirIdToMove:Long!, newParentId:Long!, newName:String) : Boolean!
 }
 #endregion
@@ -116,16 +135,6 @@ type SavedTheoremInfo {
 
 
 
-
-
-
-#region WRITE SECTORS
-type AuthWSector {
-    login(username:String!, password:String!):LoginResponse
-    signin(username:String!, password:String!):LoginResponse
-    logout:Boolean!
-}
-#endregion
 
 input LogicMove {
     moveType:Int

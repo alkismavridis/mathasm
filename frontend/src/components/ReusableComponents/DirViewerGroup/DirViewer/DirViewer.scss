@@ -1,16 +1,40 @@
+//region REUSABLE STRUCTURES
+.DirViewer_menuBut {
+  position:absolute;
+  right:-10px;
+  top:-10px;
+  z-index: 1;
+
+  width:20px;
+  height:20px;
+  background-color: blue;
+  border-radius: 50%;
+  cursor: pointer;
+  display: none;
+}
+//endregion
+
+
 .DirViewer_subDir {
   padding:8px;
   background-color:orange;
   color:white;
   border-radius: 5px;
-  margin-right: 4px;
+  margin-right: 12px;
   cursor: pointer;
+
+  position:relative;
+
+  &:hover .DirViewer_menuBut {
+    display: block;
+  }
 }
 
 .DirViewer_symbolsDiv {
   display: flex;
   flex-wrap: wrap;
   margin-top: 24px;
+  margin-left: 8px;
 }
 
 
@@ -19,7 +43,10 @@
   background-color:cornflowerblue;
   color:white;
   border-radius: 5px;
-  margin-right: 4px;
+  margin-right: 8px;
+  position:relative;
+
+  &:hover .DirViewer_menuBut { display: block; }
 }
 
 .DirViewer_dirTitle {
@@ -38,7 +65,10 @@
   background-color: #2fbdc3;
   color:gray;
   border-radius: 5px;
-  margin: 8px 4px 0 0;
+  margin: 8px 12px 0 0;
+  position:relative;
+
+  &:hover .DirViewer_menuBut { display: block; }
 }
 
 .DirViewer_stmtName {

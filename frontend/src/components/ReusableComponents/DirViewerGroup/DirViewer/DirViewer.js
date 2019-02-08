@@ -10,9 +10,12 @@ import ModalService from "../../../../services/ModalService";
 import {SymbolRangeUtils} from "../../../../services/symbol/SymbolRangeUtils";
 import Connection from "../../Connection/Connection";
 import Statement from "../../Statement/Statement";
-import StatementType from "../../../../constants/StatementType";
+import StatementType from "../../../../enums/StatementType";
 import SortingUtils from "../../../../services/symbol/SortingUtils";
 import {MathAsmEvent} from "../../../../entities/MathAsmEvent";
+import DirectoryMenu from "../../../Modals/DirectoryMenu/DirectoryMenu.tsx";
+import StatementMenu from "../../../Modals/StatementMenu/StatementMenu";
+import SymbolMenu from "../../../Modals/SymbolMenu/SymbolMenu";
 
 const q = {
     FETCH_PARENT: `query($id:Long!){
@@ -43,12 +46,32 @@ const q = {
     }`,
 
     CREATE_DIR: `mutation($parentId:Long!, $name:String!) {
+      fsWSector {
         createDir(parentId:$parentId, name:$name) {
             id,name
             statements {id,name,type, left, right, isBidirectional, grade}
             subDirs {id,name}
             symbols {uid, text}
         }
+      }
+    }`,
+
+    MOVE_DIR: `mutation($dirIdToMove:Long!, $newParentId:Long!) {
+      fsWSector {
+        moveDir(dirIdToMove:$dirIdToMove, newParentId:$newParentId)
+      }
+    }`,
+
+    MOVE_STATEMENT: `mutation($statementIdToMove:Long!, $newParentId:Long!) {
+      statementWSector {
+        move(statementIdToMove:$statementIdToMove, newParentId:$newParentId)
+      }
+    }`,
+
+    MOVE_SYMBOL: `mutation($symbolUidToMove:Long!, $newParentId:Long!) {
+      symbolWSector {
+        move(symbolUidToMove:$symbolUidToMove, newParentId:$newParentId)
+      }
     }`,
 
     FETCH_SYMBOLS: `query($ids:[Long!]!) {
@@ -238,6 +261,79 @@ export default class DirViewer extends Component {
         if (this.props.onSelect) this.props.onSelect(MathAsmEvent.makeStatementSelect(stmt));
     }
 
+    handleDirMoveSubmit(dirToMove, modalId, idToGo) {
+        if (!DomUtils.isInt(idToGo)) {
+            QuickInfoService.makeError("Please provide an integer as id to move to.");
+            return;
+        }
+        if (idToGo===this.state.currentDir.id) return;
+
+
+        GraphQL.run(q.MOVE_DIR, {dirIdToMove: dirToMove.id, newParentId: idToGo})
+            .then(mutation => {
+                //1. Remove the moved directory from the current one.
+                const updatedCurrentDir = Object.assign({}, this.state.currentDir);
+                const indexToRemove = updatedCurrentDir.subDirs.findIndex(subDir => subDir.id === dirToMove.id);
+                if(indexToRemove>=0) updatedCurrentDir.subDirs.splice(indexToRemove, 1);
+                this.setState({currentDir: updatedCurrentDir});
+                this.props.onDirChanged(updatedCurrentDir);
+
+                QuickInfoService.makeSuccess(dirToMove.name+" successfully moved.");
+                ModalService.removeModal(modalId);
+
+            })
+            .catch(e => QuickInfoService.makeError("Could not move directory "+dirToMove.name));
+
+    }
+
+    handleStatementMoveSubmit(stmtToMove, modalId, idToGo) {
+        if (!DomUtils.isInt(idToGo)) {
+            QuickInfoService.makeError("Please provide an integer as id to move to.");
+            return;
+        }
+        if (idToGo===this.state.currentDir.id) return;
+
+
+        GraphQL.run(q.MOVE_STATEMENT, {statementIdToMove: stmtToMove.id, newParentId: idToGo})
+            .then(mutation => {
+                //1. Remove the moved directory from the current one.
+                const updatedCurrentDir = Object.assign({}, this.state.currentDir);
+                const indexToRemove = updatedCurrentDir.statements.findIndex(stmt => stmt.id === stmtToMove.id);
+                if(indexToRemove>=0) updatedCurrentDir.statements.splice(indexToRemove, 1);
+                this.setState({currentDir: updatedCurrentDir});
+                this.props.onDirChanged(updatedCurrentDir);
+
+                QuickInfoService.makeSuccess(stmtToMove.name+" successfully moved.");
+                ModalService.removeModal(modalId);
+
+            })
+            .catch(e => QuickInfoService.makeError("Could not move directory "+stmtToMove.name));
+    }
+
+    handleSymbolMoveSubmit(symbolToMove, modalId, idToGo) {
+        if (!DomUtils.isInt(idToGo)) {
+            QuickInfoService.makeError("Please provide an integer as id to move to.");
+            return;
+        }
+        if (idToGo===this.state.currentDir.id) return;
+
+
+        GraphQL.run(q.MOVE_SYMBOL, {symbolUidToMove: symbolToMove.uid, newParentId: idToGo})
+            .then(mutation => {
+                //1. Remove the moved directory from the current one.
+                const updatedCurrentDir = Object.assign({}, this.state.currentDir);
+                const indexToRemove = updatedCurrentDir.symbols.findIndex(sym => sym.uid === symbolToMove.uid);
+                if(indexToRemove>=0) updatedCurrentDir.symbols.splice(indexToRemove, 1);
+                this.setState({currentDir: updatedCurrentDir});
+                this.props.onDirChanged(updatedCurrentDir);
+
+                QuickInfoService.makeSuccess(symbolToMove.text+" successfully moved.");
+                ModalService.removeModal(modalId);
+
+            })
+                .catch(e => QuickInfoService.makeError("Could not move directory "+symbolToMove.text));
+    }
+
     handleDirCreationTextSubmit(modalId, text) {
         if (!text) {
             QuickInfoService.makeWarning("Please provide a name to submit.");
@@ -248,7 +344,7 @@ export default class DirViewer extends Component {
             .then(resp => {
                 //setup new directory object
                 const updatedCurrentDir = Object.assign({}, this.state.currentDir);
-                updatedCurrentDir.subDirs.push(resp.createDir);
+                updatedCurrentDir.subDirs.push(resp.fsWSector.createDir);
                 //update components
                 this.setState({currentDir: updatedCurrentDir});
                 this.props.onDirChanged(updatedCurrentDir);
@@ -260,13 +356,55 @@ export default class DirViewer extends Component {
                 QuickInfoService.makeError("Could not create directory " + text)
             });
     }
+
+    showDirMenu(dir, event) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        const modalId = ModalService.getNextId();
+        ModalService.addModal(modalId, <DirectoryMenu
+            modalId={modalId}
+            directory={dir}
+            onMoveClicked={()=> {
+                ModalService.showTextGetter("Move "+dir.name+" to...", "New parent id", this.handleDirMoveSubmit.bind(this, dir));
+            }}
+        />);
+    }
+
+    showStmtMenu(stmt, event) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        const modalId = ModalService.getNextId();
+        ModalService.addModal(modalId, <StatementMenu
+            modalId={modalId}
+            statement={stmt}
+            onMoveClicked={()=> {
+                ModalService.showTextGetter("Move "+stmt.name+" to...", "New parent id", this.handleStatementMoveSubmit.bind(this, stmt));
+            }}
+        />);
+    }
+
+    showSymbolMenu(sym, event) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        const modalId = ModalService.getNextId();
+        ModalService.addModal(modalId, <SymbolMenu
+            modalId={modalId}
+            symbol={sym}
+            onMoveClicked={()=> {
+                ModalService.showTextGetter("Move "+sym.text+" to...", "New parent id", this.handleSymbolMoveSubmit.bind(this, sym));
+            }}
+        />);
+    }
     //endregion
 
 
 
 
     //region RENDERING
-    //ITEM RENDERING
+    //item rendering
     renderSubDir(subDir) {
         return (
             <div
@@ -275,6 +413,7 @@ export default class DirViewer extends Component {
                 title={"Id: " + subDir.id}
                 onClick={this.navigateTo.bind(this, subDir.id)}>
                 {subDir.name}
+                <div className="DirViewer_menuBut" onClick={(event)=>this.showDirMenu(subDir, event)} />
             </div>
         );
     }
@@ -294,6 +433,7 @@ export default class DirViewer extends Component {
                     onSymbolClick={(sym, side) => {
                         if (this.props.onSelect) this.props.onSelect(MathAsmEvent.makeSymbolSelect(sym, stmt, side));
                     }}/>
+                <div className="DirViewer_menuBut" onClick={(event)=>this.showStmtMenu(stmt, event)} />
             </div>
         );
     }
@@ -306,11 +446,12 @@ export default class DirViewer extends Component {
                 className="DirViewer_sym"
                 onClick={this.handleSymbolClick.bind(this, sym)}>
                 {sym.text}
+                <div className="DirViewer_menuBut" onClick={(event)=>this.showSymbolMenu(sym, event)} />
             </div>
         );
     }
 
-    //SECTIONS RENDERING
+    //REGION RENDERING
     renderToolbar() {
         return (
             <div className="Globals_flexStart" style={{marginTop:"16px"}}>
@@ -368,7 +509,7 @@ export default class DirViewer extends Component {
         if (!statements || statements.length === 0) return null;
 
         return (
-            <div className="Globals_flexWrapDown" style={{marginTop:"8px"}}>
+            <div className="Globals_flexWrapDown" style={{margin:"8px 0 0 12px"}}>
                 {statements.map(this.renderStatement.bind(this))}
             </div>
         );
@@ -378,7 +519,7 @@ export default class DirViewer extends Component {
         const dirs = this.state.currentDir.subDirs;
 
         return (
-            <div className="Globals_flexWrapDown" style={{marginTop:"24px"}}>
+            <div className="Globals_flexWrapDown" style={{margin:"24px 0 0 12px"}}>
                 {dirs.map(this.renderSubDir.bind(this))}
             </div>
         );

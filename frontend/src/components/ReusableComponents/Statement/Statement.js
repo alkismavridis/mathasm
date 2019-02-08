@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import PropTypes from "prop-types";
 import cx from 'classnames';
 import "./Statement.scss";
-import StatementSide from "../../../constants/StatementSide";
+import StatementSide from "../../../enums/StatementSide";
 
 export default class Statement extends Component {
     //region STATIC

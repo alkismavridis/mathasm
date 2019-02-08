@@ -34,10 +34,11 @@ enum class ErrorCode {
     SYMBOL_UID_ALREADY_REGISTERED(1005),
     INVALID_SYMBOL_TEXT(1006),
     NOT_A_STATEMENT(1007),
-    NOT_AN_OBJECT(1008),
-    OBJECT_NOT_FOUND(1009),
+    NOT_A_DIR(1008),
+    DIR_NOT_FOUND(1009),
     WRONG_CLASS_INSTANCE(1010),
     FORBIDDEN(1011), //indicates lack of rights
+    SYMBOL_NOT_FOUND(1012),
     //endregion
     ;
 

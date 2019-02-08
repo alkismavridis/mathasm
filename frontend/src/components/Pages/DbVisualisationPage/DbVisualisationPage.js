@@ -30,6 +30,8 @@ const SAVED_COMMANDS = [
     {id:"9", name:"Delete Relationship", query:"match (parent)-[r]-(child) where ID(parent)=4 and ID(child)=3 delete r;"},
     {id:"10", name:"Statements depending on...", query:"match (o:stmt)<-[r:BS]-(move:move)<-[r2:MV]-(proof:proof)<-[r3:PRF]-(stmt:stmt) WHERE ID(o)=45 return  stmt;"},
     {id:"11", name:"Theorem proof...", query:"match (stmt:stmt)-[r:PRF]->(proof:proof)-[r2:MV]->(move:move)-[r3:BS]->(base:stmt) WHERE ID(stmt)=95 return  r, move, r2, proof, r3, base;"},
+    {id:"12", name:"Create relationship", query:"match (parent), (child) where ID(parent)=207 and ID(child)=16 create (parent)-[:STMT]->(child);"},
+    {id:"13", name:"Path to dir", query:`match p=(entryPoint)<-[:DIR*]-(parent) where ID(entryPoint)= 207 WITH entryPoint, COLLECT(parent.name) AS ret RETURN [entryPoint.name] + ret;`},
 ];
 
 class DbVisualisationPage extends Component {

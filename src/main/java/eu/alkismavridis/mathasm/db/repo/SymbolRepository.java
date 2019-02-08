@@ -2,6 +2,7 @@ package eu.alkismavridis.mathasm.db.repo;
 
 import eu.alkismavridis.mathasm.db.entities.MathAsmSymbol;
 import eu.alkismavridis.mathasm.db.entities.User;
+import org.springframework.data.neo4j.annotation.Depth;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.repository.query.Param;
@@ -10,8 +11,8 @@ import java.util.List;
 
 
 public interface SymbolRepository extends Neo4jRepository<MathAsmSymbol, Long> {
-    @Query("MATCH (m:symbol) where m.uid={id} RETURN m LIMIT 1")
-    MathAsmSymbol findBySymbolId(@Param("id") Long id);
+
+    MathAsmSymbol findByUid(long uid, @Depth int depth);
 
     @Query("MATCH (m:symbol) where m.uid>={idFrom} and m.uid<={idTo} RETURN m")
     List<MathAsmSymbol> findByIdRange(@Param("idFrom") Long idFrom, @Param("idTo") Long idTo);

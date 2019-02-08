@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import PropTypes from "prop-types";
 import "./SignInForm.css";
 import GraphQL from "../../../../services/GraphQL";
-import ErrorCode from "../../../../constants/ErrorCode";
+import ErrorCode from "../../../../enums/ErrorCode";
 import ModalHeader from "../../ModalHeader/ModalHeader";
 import DomUtils from "../../../../services/DomUtils";
 
@@ -65,7 +65,7 @@ export default class SignInForm extends Component {
 
         GraphQL.run(q.SIGN_IN, {userName:this.state.userName, password:this.state.password})
             .then(data => {
-                if (!data || !data.signin) return;
+                if (!data || !data.authWSector || !data.authWSector.signin) return;
                 this.props.onSuccessfulSignIn(data.signin);
             })
             .catch(err => this.setState({errorCode:err.code}));

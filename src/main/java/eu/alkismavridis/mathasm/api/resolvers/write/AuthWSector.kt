@@ -1,4 +1,4 @@
-package eu.alkismavridis.mathasm.api.resolvers
+package eu.alkismavridis.mathasm.api.resolvers.write
 
 import eu.alkismavridis.mathasm.api.GraphqlContext
 import eu.alkismavridis.mathasm.api.types.LoginResponse

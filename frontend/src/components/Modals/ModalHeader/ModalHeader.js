@@ -15,6 +15,8 @@ export default class ModalHeader extends Component {
 
         //styling
     };
+
+    props = {};
     //endregion
 
 

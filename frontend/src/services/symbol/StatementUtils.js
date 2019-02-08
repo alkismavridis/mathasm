@@ -1,6 +1,6 @@
-import SelectionType from "../../constants/SelectionType";
-import StatementSide from "../../constants/StatementSide";
-import StatementType from "../../constants/StatementType";
+import SelectionType from "../../enums/SelectionType";
+import StatementSide from "../../enums/StatementSide";
+import StatementType from "../../enums/StatementType";
 
 export default class StatementUtils {
     /**

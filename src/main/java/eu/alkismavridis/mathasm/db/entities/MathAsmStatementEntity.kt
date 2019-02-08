@@ -46,6 +46,10 @@ class MathAsmStatementEntity : MathAsmStatement {
     //3. bridge
     override var bidirectionalFlag: Boolean = false
     override var grade: Short = 0
+
+
+    @Relationship(type = "STMT", direction = Relationship.INCOMING)
+    var parent:MathAsmDirEntity? = null
     //endregion
 
 

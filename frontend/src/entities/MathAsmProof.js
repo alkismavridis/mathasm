@@ -1,7 +1,7 @@
-import MathAsmMove from "./MathAsmMove";
-import MoveType from "../constants/MoveType";
-import BackendMoveType from "../constants/BackendMoveType";
-import SelectionType from "../constants/SelectionType";
+import MathAsmMove from "./MathAsmMove.ts";
+import MoveType from "../enums/MoveType";
+import BackendMoveType from "../enums/BackendMoveType";
+import SelectionType from "../enums/SelectionType";
 
 export default class MathAsmProof {
     //region LIFE CYCLE

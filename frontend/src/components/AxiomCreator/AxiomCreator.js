@@ -13,9 +13,11 @@ import QuickInfoService from "../../services/QuickInfoService";
 
 const q = {
     MAKE_AXIOM : `mutation($parentId:Long!, $name:String!, $left:[Long!]!, $grade:Int, $isBidirectional: Boolean, $right:[Long!]!){
+      statementWSector {
         createAxiom(parentId:$parentId, name:$name, left:$left, grade:$grade, isBidirectional:$isBidirectional, right:$right) {
 	        id,name,type,left,right,grade,isBidirectional
         }
+      }
     }`
 };
 
@@ -152,7 +154,7 @@ export default class AxiomCreator extends Component {
         };
 
         GraphQL.run(q.MAKE_AXIOM, data).then(resp => {
-            this.props.onSave(resp.createAxiom);
+            this.props.onSave(resp.statementWSector.createAxiom);
             ModalService.removeModal(modalId);
         })
         .catch(err => {

@@ -1,5 +1,5 @@
-import StatementSide from "../constants/StatementSide";
-import SelectionType from "../constants/SelectionType";
+import StatementSide from "../enums/StatementSide";
+import SelectionType from "../enums/SelectionType";
 import MathAsmProof from "./MathAsmProof";
 import StatementUtils from "../services/symbol/StatementUtils";
 

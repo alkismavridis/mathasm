@@ -1,9 +1,20 @@
-import MoveType from "../constants/MoveType";
+import MoveType from "../enums/MoveType";
 import StatementUtils from "../services/symbol/StatementUtils";
-import SelectionType from "../constants/SelectionType";
-import StatementSide from "../constants/StatementSide";
+import SelectionType from "../enums/SelectionType";
+import StatementSide from "../enums/StatementSide";
 
 export default class MathAsmMove {
+    public moveType: number; //TODO enum!
+    public targetId: number;
+    public base: any; //TODO MathAsmStatement
+    public baseSide: number;
+    public prevStatement: any; //TODO MathAsmStatement
+    public selectionType: number; //TODO ENUM!
+    public pos: number;
+    public name: string;
+    public parentId: number ;
+
+
     //region LIFE CYCLE
     constructor(moveType) {
         this.moveType = moveType;

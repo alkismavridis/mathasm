@@ -196,7 +196,7 @@ export default class App extends Component {
         case Urls.pages.main: return <MainPage key="1" user={this.state.user}/>;
         case Urls.pages.dbVisualisation: return <DbVisualisationPage key="1"/>;
         case Urls.pages.about: return <AboutPage key="1"/>;
-        default: return <NotFoundPage key="1"/>;
+        default: return <MainPage user={this.state.user} key="1"/>;
     }
   }
 
