@@ -1,18 +1,15 @@
-import * as React from 'react';
-import "./DirectoryMenu.scss";
+import React, {Component} from 'react';
+import "./StatementMenu.scss";
 import ModalHeader from "../ModalHeader/ModalHeader";
 import ModalService from "../../../services/ModalService";
+import MathAsmStatement from "../../../entities/backend/MathAsmStatement";
 
-const q = {
-
-};
-
-
-export default class DirectoryMenu extends React.Component {
-    //region FIELDS
-    public props:{
+export default class StatementMenu extends Component {
+    //region STATIC
+    props : {
+        //data
         modalId?:number,
-        directory:any,
+        statement:MathAsmStatement,
 
         //actions
         onMoveClicked?:Function,
@@ -32,7 +29,7 @@ export default class DirectoryMenu extends React.Component {
         ModalService.removeModal(this.props.modalId);
     }
 
-    handleMoveClick = ()=> {
+    handleMoveClick = () => {
         this.closeDialog();
         if(this.props.onMoveClicked) this.props.onMoveClicked();
     };
@@ -44,14 +41,18 @@ export default class DirectoryMenu extends React.Component {
         return (
             <div className="Globals_window" style={{padding:"8px"}}>
                 <ModalHeader
-                    title={this.props.directory.name}
+                    title={this.props.statement.name}
                     onClose={()=>this.closeDialog()}/>
 
                 <div className="Globals_menuItem" onClick={this.handleMoveClick}>Move</div>
-                <div className="Globals_menuItem" onClick={()=>{
-                    window.alert("TODO not yet implemented");
-                    this.closeDialog();
-                }}>Rename</div>
+                <div
+                    className="Globals_menuItem"
+                    onClick={()=>{
+                        window.alert("TODO not yet implemented");
+                        this.closeDialog();
+                    }}>
+                    Rename
+                </div>
             </div>
         );
     }

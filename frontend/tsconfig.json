@@ -16,6 +16,7 @@
     "module": "esnext",
     "strictPropertyInitialization": false,
     "noImplicitAny": false,
+    "strictNullChecks": false,
     "typeRoots": [
       "node_modules/@types"
     ],

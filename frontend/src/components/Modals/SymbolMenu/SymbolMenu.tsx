@@ -1,21 +1,18 @@
-import * as React from 'react';
-import "./DirectoryMenu.scss";
+import React, {Component} from 'react';
+import "./SymbolMenu.scss";
 import ModalHeader from "../ModalHeader/ModalHeader";
 import ModalService from "../../../services/ModalService";
+import MathAsmSymbol from "../../../entities/backend/MathAsmSymbol";
 
-const q = {
-
-};
-
-
-export default class DirectoryMenu extends React.Component {
-    //region FIELDS
-    public props:{
+export default class SymbolMenu extends Component {
+    //region STATIC
+    props : {
+        //data
         modalId?:number,
-        directory:any,
+        symbol:MathAsmSymbol,
 
         //actions
-        onMoveClicked?:Function,
+        onMoveClicked:Function,
 
         //styling
     };
@@ -23,16 +20,12 @@ export default class DirectoryMenu extends React.Component {
 
 
 
-    //region LIFE CYCLE
-    //endregion
-
-
     //region EVENT HANDLERS
     closeDialog() {
         ModalService.removeModal(this.props.modalId);
     }
 
-    handleMoveClick = ()=> {
+    handleMoveClick = () => {
         this.closeDialog();
         if(this.props.onMoveClicked) this.props.onMoveClicked();
     };
@@ -44,14 +37,18 @@ export default class DirectoryMenu extends React.Component {
         return (
             <div className="Globals_window" style={{padding:"8px"}}>
                 <ModalHeader
-                    title={this.props.directory.name}
+                    title={this.props.symbol.text}
                     onClose={()=>this.closeDialog()}/>
 
                 <div className="Globals_menuItem" onClick={this.handleMoveClick}>Move</div>
-                <div className="Globals_menuItem" onClick={()=>{
-                    window.alert("TODO not yet implemented");
-                    this.closeDialog();
-                }}>Rename</div>
+                <div
+                    className="Globals_menuItem"
+                    onClick={()=>{
+                        window.alert("TODO not yet implemented");
+                        this.closeDialog();
+                    }}>
+                    Rename
+                </div>
             </div>
         );
     }
