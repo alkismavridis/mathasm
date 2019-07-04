@@ -90,14 +90,14 @@ export default class SignInForm extends Component {
                     onConfirm={formHandler}/>
 
                 <input
-                    className="Globals_inp SignInForm_inp"
+                    className="MA_inp SignInForm_inp"
                     value={this.state.userName}
                     placeholder={"Username"}
                     onKeyDown={DomUtils.handleEnter(formHandler)}
                     onChange={event => this.setState({userName:event.target.value, errorCode:null})}/>
 
                 <input
-                    className="Globals_inp SignInForm_inp"
+                    className="MA_inp SignInForm_inp"
                     type="password"
                     value={this.state.password}
                     placeholder={"Password"}

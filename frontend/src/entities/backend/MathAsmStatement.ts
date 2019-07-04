@@ -97,13 +97,13 @@ export default class MathAsmStatement {
      * Updates the target parameter, replacing everything that the selections indicate.
      * The selections are given by leftSelection and rightSelection parameters.
      * */
-    static performReplacement(target:MathAsmStatement, newSentence:number[], oldSentence:number[], leftSelection:SentenceMatch[], rightSelection:SentenceMatch[]) {
-        const leftIndexesToReplace = [];
+    static performReplacement(target:MathAsmStatement, oldSentence:number[], newSentence:number[], leftSelection:SentenceMatch[], rightSelection:SentenceMatch[]) {
+        const leftIndexesToReplace:number[] = [];
         leftSelection.forEach(match => {
             if(match.selected)  leftIndexesToReplace.push(match.index);
         });
 
-        const rightIndexesToReplace = [];
+        const rightIndexesToReplace:number[] = [];
         rightSelection.forEach(match => {
             if(match.selected)  rightIndexesToReplace.push(match.index);
         });

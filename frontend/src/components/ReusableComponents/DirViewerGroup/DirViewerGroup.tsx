@@ -4,6 +4,12 @@ import "./DirViewerGroup.scss";
 import DirViewer from "./DirViewer/DirViewer";
 import MathAsmDir from "../../../entities/backend/MathAsmDir";
 import MathAsmStatement from "../../../entities/backend/MathAsmStatement";
+import {AppNode} from "../../../entities/frontend/AppNode";
+import {AppEvent} from "../../../entities/frontend/AppEvent";
+import AppNodeReaction from "../../../enums/AppNodeReaction";
+import MapUtils from "../../../services/MapUtils";
+import AppEventType from "../../../enums/AppEventType";
+import {NONAME} from "dns";
 
 export class MathAsmTab {
     tabId:number;
@@ -12,20 +18,18 @@ export class MathAsmTab {
 }
 
 
-export default class DirViewerGroup extends Component {
+export default class DirViewerGroup extends Component implements AppNode {
     //region FIELDS
     props : {
         //data
         /** A cache of all loaded symbols. Used to display statements. */
+        parent:AppNode,
         symbolMap:any,
 
         //actions
         onCreateAxiomStart?: Function, //accepts the parent dir of the new axiom. This will popup the axiom creator.
         onCreateTheoremStart?: Function, //accepts the parent dir of the new theorem. This will popup the axiom creator.
         onCreateSymbolStart?: Function, //accepts the parent dir of the new symbol. This will popup the symbol creator.
-        onUpdateSymbolMap: Function, //accepts a map of symbols. This must be called every time new, unknown symbols have been loaded from the server.
-        onSelect?: Function, //accepts the FrontendEvent of the selection.
-        onShowDir?: Function, //accepts the directory. This function is called every time the displayed directory changes.
 
         //styling
         style?: CSSProperties,
@@ -38,6 +42,7 @@ export default class DirViewerGroup extends Component {
         ] as MathAsmTab[],
         selectedTabId:1
     };
+
 
     _tabRefs = [];
     //endregion
@@ -69,14 +74,40 @@ export default class DirViewerGroup extends Component {
     //endregion
 
 
-    //region API
-    /** Integrates a new statement into the group. */
-    statementCreated(stmt:MathAsmStatement, directoryId:number) {
-        this._tabRefs.forEach(tabRef => {
-            tabRef.statementCreated(stmt, directoryId);
-        });
+
+    //region APP NODE
+    getChildMap(): any {
+        const ret = {};
+        this._tabRefs.forEach((el, index)=>ret[index]= {current:el});
+        return ret;
+    }
+
+    getParent(): AppNode {
+        return this.props.parent;
+    }
+
+    handleChildEvent(event: AppEvent): AppNodeReaction {
+        switch (event.type) {
+            case AppEventType.DIR_TAB_UPDATED:
+                this.handleDirChange(event.data.tabId, event.data.newDir);
+                AppEvent.makeDirChange(event.data.newDir).travelAbove(this);
+                return AppNodeReaction.NONE;
+
+            default: return AppNodeReaction.UP;
+        }
+    }
+
+    handleParentEvent(event: AppEvent): AppNodeReaction {
+        switch (event.type) {
+            case AppEventType.STMT_UPDATED:
+            case AppEventType.PROOF_SAVED:
+                return AppNodeReaction.DOWN;
+
+            default: return AppNodeReaction.NONE;
+        }
     }
     //endregion
+
 
 
     //region EVENT HANDLERS
@@ -91,9 +122,6 @@ export default class DirViewerGroup extends Component {
 
         //3. Update the state
         this.setState({tabs:newTabs});
-
-        //4. Notify the parent
-        if (this.props.onShowDir) this.props.onShowDir(newDirectory);
     }
 
     appendTab(initDirId:number) {
@@ -131,7 +159,7 @@ export default class DirViewerGroup extends Component {
         if(event.shiftKey) this.removeTab(tabData.tabId);
         else {
             this.setState({selectedTabId:tabData.tabId});
-            if (this.props.onShowDir) this.props.onShowDir(tabData.currentDir);
+            AppEvent.makeDirChange(tabData.currentDir).travelAbove(this);
         }
     }
     //endregion
@@ -140,7 +168,7 @@ export default class DirViewerGroup extends Component {
 
     //region RENDERING
     renderTabs(selectedTabId:number) {
-        return <div className="Globals_flexStart DirViewerGroup_tabDiv">
+        return <div className="MA_flexStart DirViewerGroup_tabDiv">
             {this.state.tabs.map(t => this.renderTab(t, selectedTabId))}
             <div className="DirViewerGroup_addTab" onClick={this.appendTab.bind(this, null)}>+</div>
         </div>;
@@ -151,6 +179,7 @@ export default class DirViewerGroup extends Component {
         return <div
             key={tabData.tabId}
             onClick={this.handleTabClick.bind(this, tabData)}
+            title={tabData.currentDir? "Id: "+tabData.currentDir.id : ""}
             className={cx("DirViewerGroup_tab", tabData.tabId===selectedTabId? "DirViewerGroup_selectedTab" : null)}>
             {tabData.currentDir? tabData.currentDir.name : ""}
         </div>
@@ -165,14 +194,14 @@ export default class DirViewerGroup extends Component {
                 <div className="DirViewerGroup_main">
                     {this.state.tabs.map((t,index) => <DirViewer
                             ref={el => this._tabRefs[index]=el}
+                            parent={this}
+                            dir={t.currentDir}
                             style={{flex:1, overflow:"auto"}}
                             key={index}
                             symbolMap={this.props.symbolMap}
                             initDirId={t.initDirId}
+                            tabId={t.tabId}
                             isOpen={this.state.selectedTabId === t.tabId}
-                            onUpdateSymbolMap={this.props.onUpdateSymbolMap}
-                            onDirChanged={this.handleDirChange.bind(this, t.tabId)}
-                            onSelect={this.props.onSelect}
                             onCreateAxiomStart={this.props.onCreateAxiomStart}
                             onCreateTheoremStart={this.props.onCreateTheoremStart}
                             onCreateSymbolStart={this.props.onCreateSymbolStart}/>

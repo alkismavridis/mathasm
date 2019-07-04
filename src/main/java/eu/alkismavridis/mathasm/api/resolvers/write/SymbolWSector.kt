@@ -50,7 +50,7 @@ class SymbolWSector(private val app: App) {
         if (!requestingUser.canCreateDirs()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to move symbols.")
 
 
-        //2. Get the directory to move and the new carent
+        //2. Get the directory to move and the new parent
         val symbolToMove: MathAsmSymbol? = app.symbolRepo.findByUid(symbolUidToMove, 1)
         if (symbolToMove==null) throw MathAsmException(ErrorCode.SYMBOL_NOT_FOUND, "Symbol with id $symbolUidToMove not found.")
 
@@ -64,6 +64,31 @@ class SymbolWSector(private val app: App) {
         symbolToMove.parent = parentDir
         app.symbolRepo.save(symbolToMove, 1)
 
+        return true
+    }
+
+    fun rename(symbolUidToMove:Long, newText:String, env: DataFetchingEnvironment) : Boolean {
+        //1. Check user permissions
+        val requestingUser = env.getContext<GraphqlContext>().user
+        if (requestingUser==null) throw MathAsmException(ErrorCode.UNAUTHORIZED, "No session.")
+        if (!requestingUser.canCreateSymbols()) throw MathAsmException(ErrorCode.FORBIDDEN, "Not enough rights to rename symbols.")
+
+        //2. Sanitize and validate the incoming text
+        val textToUse = SymbolUtils.sanitizeSymbolTest(newText)
+
+        //3. Get the symbol to rename
+        val symbolToRename: MathAsmSymbol? = app.symbolRepo.findByUid(symbolUidToMove, 1)
+        if (symbolToRename==null) throw MathAsmException(ErrorCode.SYMBOL_NOT_FOUND, "Symbol with id $symbolUidToMove not found.")
+
+        //4. Check if the new name is available
+        val existingSymbol = app.symbolRepo.findByText(textToUse)
+        if (existingSymbol!=null && existingSymbol.uid != symbolToRename.uid) {
+            throw MathAsmException(ErrorCode.SYMBOL_TEXT_ALREADY_REGISTERED, "Symbol with text $textToUse already exists.")
+        }
+
+        //5. Perform the renaming
+        symbolToRename.text = textToUse
+        app.symbolRepo.save(symbolToRename, 1)
         return true
     }
 }

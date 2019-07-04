@@ -21,6 +21,9 @@ import "react-notifications-component/dist/theme.css";
 import ModalGroup from "../Modals/ModalGroup/ModalGroup";
 import GraphQL from "../../services/GraphQL";
 import User from "../../entities/backend/User";
+import {AppNode} from "../../entities/frontend/AppNode";
+import {AppEvent} from "../../entities/frontend/AppEvent";
+import AppNodeReaction from "../../enums/AppNodeReaction";
 
 library.add(fas);
 
@@ -87,7 +90,7 @@ let instance;
  *    This means that we have to control it. WE control it by putting it and managing it in one place.
  *    Ant this place is App.
  * */
-export default class App extends Component {
+export default class App extends Component implements AppNode {
   //region FIELDS
     state = {
         location:null,
@@ -106,6 +109,8 @@ export default class App extends Component {
     _modalGroupRef = null;
     _history = null;
     _eventListeners = [];
+
+    _children = {};
   //endregion
 
 
@@ -183,6 +188,8 @@ export default class App extends Component {
     //endregion
 
 
+
+
     //region MODALS
     static getModalGroup() { return instance._modalGroupRef; }
     //endregion
@@ -190,25 +197,209 @@ export default class App extends Component {
 
 
 
-  renderPage() {
-    if (this.state.location==null) return null;
-
-    switch (this.state.location.pathname) {
-        case Urls.pages.graphiql: return <GraphiqlPage key="1"/>;
-        case Urls.pages.theory: return <div key="1">Theory page!!</div>;
-        case Urls.pages.main: return <MainPage key="1" user={this.state.user}/>;
-        case Urls.pages.dbVisualisation: return <DbVisualisationPage key="1"/>;
-        case Urls.pages.about: return <AboutPage key="1"/>;
-        default: return <MainPage user={this.state.user} key="1"/>;
+    //region APP NODE
+    getChildMap(): any {
+        return this._children;
     }
-  }
+
+    getParent(): AppNode {
+        return null;
+    }
+
+    handleChildEvent(event: AppEvent) : AppNodeReaction {
+      return AppNodeReaction.BOTH;
+    }
+
+    handleParentEvent(event: AppEvent) : AppNodeReaction {
+        //there is no parent. This should be never called
+        console.error("app.handleParentEvent was called. THis is for sure an error. app has no parent.", event);
+        return AppNodeReaction.NONE;
+    }
+    //endregion
 
 
-  render() {
-      return [
+
+    //region RENDERING
+    renderPage() {
+        if (this.state.location==null) return null;
+
+        switch (this.state.location.pathname) {
+            case Urls.pages.graphiql: return <GraphiqlPage key="1"/>;
+            case Urls.pages.theory: return <div key="1">Theory page!!</div>;
+            case Urls.pages.main: return <MainPage parent={this} key="1" user={this.state.user}/>;
+            case Urls.pages.dbVisualisation: return <DbVisualisationPage key="1"/>;
+            case Urls.pages.about: return <AboutPage key="1"/>;
+            default: return <MainPage parent={this} user={this.state.user} key="1"/>;
+        }
+    }
+
+
+    render() {
+        return [
           this.renderPage(),
           <ModalGroup key="3" ref={el => this._modalGroupRef = el} />,
           <ReactNotification key="2" ref={el => this._notificationDOMRef = el}/>,
-      ];
-  }
+        ];
+    }
+    //endregion
 }
+//
+//
+//
+// class Concept {
+//     name:string;
+//     notes:string;
+//     layer:number;
+//
+//     isDirectlyStateful:boolean;
+//     isIndirectlyStateful:boolean;
+//
+//
+//     haveBusinessLogic:boolean;
+//     canAccessServices:boolean;
+// }
+//
+//
+//
+// const arch:Concept[] = [
+//     {
+//         name:"FooEntity",
+//         layer:1,
+//         isDirectlyStateful:true,        //entities are definatelly state holders
+//         isIndirectlyStateful:true,
+//         haveBusinessLogic:true,         //not sure if this should be true, to be honnest...
+//         canAccessServices:false,        //Only in its util functions!
+//
+//         notes:`
+//             private setters and immutable sub-fields, including lists and maps.
+//             All have an update function that accept the.
+//
+//             UTIL read-only functions that accept the App object would be useful and elegant semantically.
+//
+//         `,
+//     },
+//     {
+//         name:"FooService",
+//         layer:1,
+//         isDirectlyStateful:true,            //some include DB+cache, some only DB. In any case, they have state.
+//         isIndirectlyStateful:true,
+//         haveBusinessLogic: true,     //most of it goes here.
+//
+//         notes:`
+//             They Implement big part of the business logic.
+//             Have getter operations that implement THE AUTHORIZATION.
+//             Have setter operations that implement THE VALIDATION AND THE AUTHORIZATION.
+//             Save new entity. Update entity (all sorts of change functions eill be listed)/
+//
+//         `,
+//         canAccessServices:false, //only itself! Code that involves many services go to LAYER 2. (this is precisely why layer 2 exists)
+//     },
+//     {
+//         name:"App",
+//         layer:2,
+//         isDirectlyStateful:false,
+//         isIndirectlyStateful:true,
+//         haveBusinessLogic:true,         //Yes. a LOT of business logic goes here.
+//         canAccessServices:true,
+//         notes:`
+//             The only one to access services.
+//         `,
+//     },
+//
+//     {
+//         name:"FooGetRestController",
+//         layer:3,
+//         isDirectlyStateful:false,
+//         isIndirectlyStateful:true,
+//         haveBusinessLogic:false, //FOR ZEUS SHAKE! NO BUSINESS LOGIC HERE!!!
+//         canAccessServices:false, //WE ARE ON LAYER 3. WE ONLY ACCESS LAYER 2 STUFF, NEVER LAYER 1.
+//         notes:`
+//             Very small in code.
+//             Accepts a few parameters.
+//             DO NOT OVER-GENERALIZE you can write many, because they are so small.
+//             No exception handling! Free to throw Exceptions!
+//
+//
+//             It gets / requires the userAccessKey. (1 line of code)
+//             Fetches some result from the app (1 line of code: probably calling some layer-2 function)
+//             Serializes a response (1 line of code - Use global util functions, for example).
+//             Total: 3 lines of code.
+//
+//             IMPORTANT: They should be very small and easy-to-understand!!!!
+//             IMPORTANT: no business logic!!!
+//         `,
+//     },
+//
+//     {
+//         name:"FooUpdateRestController",
+//         layer:3,
+//         isDirectlyStateful:false,
+//         isIndirectlyStateful:true,
+//         haveBusinessLogic:true,
+//         canAccessServices:true,
+//         notes:`
+//             Very small in code.
+//             Accepts a few parameters.
+//             DO NOT OVER-GENERALIZE you can write many, because they are so small.
+//             No exception handling! Free to throw Exceptions!
+//
+//
+//             It requires the userAccessKey. (1 line of code)
+//             Fetches some result from the app (1 line of code: probably calling some layer-2 function)
+//             Serializes a response (1 line of code - Use global util functions, for example).
+//             Total: 3 lines of code.
+//
+//             IMPORTANT: They should be very small and easy-to-understand!!!!
+//             IMPORTANT: no business logic!!!
+//         `,
+//     },
+//
+//     {
+//         name:"FooView",
+//         layer:3,
+//         isDirectlyStateful:false, //Those are temporary objects. They are created on the fly and garbage collected just after that...
+//         isIndirectlyStateful:false,
+//         haveBusinessLogic:true,        //IT MUST BE VERY LIMITED: THEY DO NOT IMPLEMENT BUSINESS LOGIC, THEY JUST CALL FUNCTIONS WHO DO. For example, filter a list using an userAccessKey.
+//         canAccessServices:false,       //Layer 2 stuff only.
+//         notes:`
+//             Very small in code.
+//             Accepts a few parameters.
+//             DO NOT OVER-GENERALIZE you can write many, because they are so small.
+//             No exception handling! Free to throw Exceptions!
+//
+//
+//             It requires the userAccessKey. (1 line of code)
+//             Fetches some result from the app (1 line of code: probably calling some layer-2 function)
+//             Serializes a response (1 line of code - Use global util functions, for example).
+//             Total: 3 lines of code.
+//
+//             IMPORTANT: They should be very small and easy-to-understand!!!!
+//             IMPORTANT: no business logic!!!
+//         `,
+//
+//     },
+//     {
+//         name:"FooCreationView",
+//         layer:1,
+//         isDirectlyStateful:false,      //Those are temporary objects. They are created on the fly and garbage collected just after that...
+//         isIndirectlyStateful:false,
+//         haveBusinessLogic:false,       //No code here. Fields only.
+//         canAccessServices:false,       //No code here. Fields only.
+//         notes:`
+//             Almost no code.
+//             The actual job is done in some Layer 2 function
+//         `,
+//     },
+//     {
+//         name:"FooUpdateView",
+//         layer:1,
+//         isDirectlyStateful:false,      //Those are temporary objects. They are created on the fly and garbage collected just after that...
+//         isIndirectlyStateful:false,
+//         haveBusinessLogic:false,       //No code here. Fields only.
+//         canAccessServices:false,       //No code here. Fields only.
+//         notes:`
+//             Almost no code.
+//             The actual job is done in some Layer 2 function
+//         `,
+//     },
+// ];

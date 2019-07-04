@@ -16,8 +16,8 @@ export default class Statement extends Component {
         side?:number, //optional parameter to mark the side of a statement (that is used as a base, for example)
 
         //matches
-        leftMatches?:SentenceMatch[],
-        rightMatches?:SentenceMatch[],
+        leftMatches?:ReadonlyArray<SentenceMatch>,
+        rightMatches?:ReadonlyArray<SentenceMatch>,
         matchLength?:number,
 
         //actions
@@ -91,7 +91,7 @@ export default class Statement extends Component {
     }
 
     /** Renders a sentence, taking the match and selection info into account. */
-    renderSentence(sen:number[], side:StatementSide, matches:SentenceMatch[]) {
+    renderSentence(sen:number[], side:StatementSide, matches:ReadonlyArray<SentenceMatch>) {
         //1. If there is no matches, simply render all symbols
         if (matches==null || matches.length===0 || this.props.matchLength===0) {
             return sen.map((s,index) => this.renderStatementSymbol(s,"Statement_sym", side, index+""));

@@ -1,0 +1,19 @@
+.ProofViewer_root {
+  display: flex;
+  border: solid 2px #ad6c1b;
+  border-radius: 8px;
+}
+
+.ProofViewer_main {
+  flex:1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  padding: 8px 16px;
+  background-color: #728a6d17;
+  overflow: auto;
+
+  > * { flex-shrink: 0; }
+}

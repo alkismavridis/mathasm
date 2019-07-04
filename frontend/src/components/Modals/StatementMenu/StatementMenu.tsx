@@ -3,6 +3,7 @@ import "./StatementMenu.scss";
 import ModalHeader from "../ModalHeader/ModalHeader";
 import ModalService from "../../../services/ModalService";
 import MathAsmStatement from "../../../entities/backend/MathAsmStatement";
+import StatementType from "../../../enums/StatementType";
 
 export default class StatementMenu extends Component {
     //region STATIC
@@ -13,6 +14,9 @@ export default class StatementMenu extends Component {
 
         //actions
         onMoveClicked?:Function,
+        onRenameClicked?:Function,
+        onViewProof?:Function,
+
 
         //styling
     };
@@ -29,30 +33,37 @@ export default class StatementMenu extends Component {
         ModalService.removeModal(this.props.modalId);
     }
 
-    handleMoveClick = () => {
+    handleOptionClicked = (callback) => {
         this.closeDialog();
-        if(this.props.onMoveClicked) this.props.onMoveClicked();
+        if(callback) callback(this.props.statement);
     };
+
+    isTheorem() : boolean {
+        return this.props.statement && this.props.statement.type == StatementType.THEOREM;
+    }
     //endregion
 
 
     //region RENDERING
     render() {
         return (
-            <div className="Globals_window" style={{padding:"8px"}}>
+            <div className="MA_window" style={{padding:"8px", minWidth:"170px"}}>
                 <ModalHeader
                     title={this.props.statement.name}
                     onClose={()=>this.closeDialog()}/>
 
-                <div className="Globals_menuItem" onClick={this.handleMoveClick}>Move</div>
-                <div
-                    className="Globals_menuItem"
-                    onClick={()=>{
-                        window.alert("TODO not yet implemented");
-                        this.closeDialog();
-                    }}>
+                {this.isTheorem() && <button
+                    className="MA_menuItem"
+                    onClick={e=>this.handleOptionClicked(this.props.onViewProof)}>
+                        View Proof
+                    </button>
+                }
+                <button className="MA_menuItem" onClick={e=>this.handleOptionClicked(this.props.onMoveClicked)}>Move</button>
+                <button
+                    className="MA_menuItem"
+                    onClick={e=>this.handleOptionClicked(this.props.onRenameClicked)}>
                     Rename
-                </div>
+                </button>
             </div>
         );
     }

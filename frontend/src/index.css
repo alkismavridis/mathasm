@@ -24,38 +24,38 @@ html, body {
 
 
 /*region LAYOUT*/
-.Globals_flexCenter {
+.MA_flexCenter {
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 
-.Globals_flexStart {
+.MA_flexStart {
     display: flex;
     justify-content: flex-start;
     align-items: center;
 }
 
-.Globals_flexEnd {
+.MA_flexEnd {
     display: flex;
     justify-content: flex-end;
     align-items: center;
 }
 
-.Globals_flexAway {
+.MA_flexAway {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.Globals_flexStartDown {
+.MA_flexStartDown {
     display: flex;
     justify-content: flex-start;
     align-items: flex-end;
 }
 
-.Globals_flexWrapDown {
+.MA_flexWrapDown {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
@@ -63,23 +63,28 @@ html, body {
 /*endregion*/
 
 
+/*region FONT RELATED*/
+.MA_12px { font-size: 12px; }
+.MA_16px { font-size: 16px; }
+/*endregion*/
+
+
 
 /*region REUSABLE CLASSES*/
-
 /** Every page must include this class, along with more page-specific classes and styles, if desired. */
-.Globals_page {
+.MA_page {
     height: 100%;
 
     display: flex;
     flex-direction: column;
 }
 
-.Globals_pageMainContent {
+.MA_pageMainContent {
     flex:1;
     overflow: auto;
 }
 
-.Globals_window {
+.MA_window {
     background-color: #ffffff;
     border: solid #ffffff40 2px;
     box-shadow: black 5px 6px 4px;
@@ -87,30 +92,33 @@ html, body {
     overflow: auto;
 }
 
-.Globals_menuItem {
+.MA_menuItem {
+    display: block;
+    border:none;
     border-bottom: dashed 1px black;
-    padding:8px 0;
-    cursor: pointer;
+    width: 100%;
+    background: none;
+    padding: 8px 0;
 }
-.Globals_menuItem:last-child{ border-bottom:none; }
-.Globals_menuItem:hover{ background-color: rgba(210, 214, 215, 0.99); }
+.MA_menuItem:last-child{ border-bottom:none; }
+.MA_menuItem:hover{ background-color: rgba(210, 214, 215, 0.99); }
 /*endregion*/
 
 
 /*region INPUTS*/
-.Globals_inp {
+.MA_inp {
     border-radius: 8px;
     padding:8px 8px;
     font-size: 16px;
     outline: none;
     border-width: 2px;
 }
-.Globals_inp:focus {
+.MA_inp:focus {
     box-shadow: #5db969 0 0 4px;
     border: solid #5db969 2px;
 }
 
-.Globals_but {
+.MA_but {
     padding:8px 16px;
     border-radius: 8px;
     color:white;
@@ -119,11 +127,11 @@ html, body {
     outline: none;
     cursor:pointer;
 }
-.Globals_but:focus {
+.MA_but:focus {
     box-shadow: black 0 0 10px;
 }
 
-.Globals_roundBut {
+.MA_roundBut {
     line-height: 1;
     border-radius: 50%;
     border:none;
@@ -134,12 +142,16 @@ html, body {
     color: white;
     cursor:pointer;
     outline: none;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
-.Globals_roundBut:focus {
+.MA_roundBut:focus {
     box-shadow: black 0 0 10px;
 }
 
-.Globals_textBut {
+.MA_textBut {
     padding: 0;
     background: none;
     border: none;
@@ -147,6 +159,6 @@ html, body {
     color: #3810a6;
     font-size: 16px;
 }
-.Globals_textBut:hover { color: #7440ee; }
-.Globals_textBut:disabled { color: rgba(117, 119, 150, 0.6); }
+.MA_textBut:hover { color: #7440ee; }
+.MA_textBut:disabled { color: rgba(117, 119, 150, 0.6); }
 /*endregion*/

@@ -1,6 +1,7 @@
 package eu.alkismavridis.mathasm.api.resolvers
 
 import com.coxautodev.graphql.tools.GraphQLResolver
+import eu.alkismavridis.mathasm.api.types.MathAsmProofWrapper
 import eu.alkismavridis.mathasm.core.proof.LogicMove
 import eu.alkismavridis.mathasm.db.entities.LogicMoveEntity
 import eu.alkismavridis.mathasm.db.entities.MathAsmProof
@@ -38,9 +39,8 @@ class StatementResolver: GraphQLResolver<MathAsmStatementEntity> {
         return ret
     }
 
-    fun proof(stmt:MathAsmStatementEntity) : List<LogicMoveEntity>? {
-        val proof = app.proofRepo.findProofForTheoremId(stmt.id)
-        return if(proof==null) null else proof.moves
+    fun proof(stmt:MathAsmStatementEntity) : MathAsmProofWrapper? {
+        return if(stmt.proof==null) null else MathAsmProofWrapper(stmt.proof!!.moves)
     }
     //endregion
 }

@@ -7,10 +7,14 @@
 
   width:20px;
   height:20px;
-  background-color: blue;
+  background-color: #b9b9d0;
+  color:white;
   border-radius: 50%;
   cursor: pointer;
+
   display: none;
+  align-items: center;
+  justify-content: center;
 }
 //endregion
 
@@ -25,9 +29,7 @@
 
   position:relative;
 
-  &:hover .DirViewer_menuBut {
-    display: block;
-  }
+  &:hover .DirViewer_menuBut { display: flex; }
 }
 
 .DirViewer_symbolsDiv {
@@ -46,7 +48,7 @@
   margin-right: 8px;
   position:relative;
 
-  &:hover .DirViewer_menuBut { display: block; }
+  &:hover .DirViewer_menuBut { display: flex; }
 }
 
 .DirViewer_dirTitle {
@@ -68,7 +70,7 @@
   margin: 8px 12px 0 0;
   position:relative;
 
-  &:hover .DirViewer_menuBut { display: block; }
+  &:hover .DirViewer_menuBut { display: flex; }
 }
 
 .DirViewer_stmtName {

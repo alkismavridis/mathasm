@@ -50,7 +50,7 @@ type AuthWSector {
 type SymbolWSector {
     createSymbol(parentId:Long!, text:String!, uid:Long!) : MathAsmSymbol
     move(symbolUidToMove:Long!, newParentId:Long!) : Boolean!
-
+    rename(symbolUidToMove:Long!, newText:String!) : Boolean!
 }
 
 type StatementWSector {
@@ -86,7 +86,7 @@ type MathAsmStatementEntity {
     isBidirectional: Boolean!
     grade: Int!
 
-    proof:[LogicMoveEntity!]
+    proof:MathAsmProofWrapper
 }
 
 type MathAsmDirEntity {
@@ -123,6 +123,11 @@ type LogicMoveEntity {
 type LoginResponse {
     user:User!
     sessionKey:String!
+}
+
+type MathAsmProofWrapper {
+    moves:[LogicMoveEntity!]
+    bases:[MathAsmStatementEntity!]
 }
 
 

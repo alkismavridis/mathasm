@@ -5,6 +5,9 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import GraphQL from "../../services/GraphQL";
 import ErrorCode from "../../enums/ErrorCode";
 import DomUtils from "../../services/DomUtils";
+import {AppNode} from "../../entities/frontend/AppNode";
+import AppNodeReaction from "../../enums/AppNodeReaction";
+import {AppEvent} from "../../entities/frontend/AppEvent";
 
 
 const CREATE_SYMBOL = `mutation($text:String!, $uid:Long!, $parentId:Long!) {
@@ -13,9 +16,11 @@ const CREATE_SYMBOL = `mutation($text:String!, $uid:Long!, $parentId:Long!) {
     }
 }`;
 
-class SymbolCreator extends Component {
+class SymbolCreator extends Component implements AppNode {
+    //region FIELDS
     props : {
         //data
+        parent:AppNode,
         parentId:number,
 
         //actions
@@ -24,8 +29,6 @@ class SymbolCreator extends Component {
         //styling
     };
 
-
-    //region FIELDS
     state = {
         text:"",
         uid:"",
@@ -33,6 +36,26 @@ class SymbolCreator extends Component {
     };
     //endregion
 
+
+
+
+    //region APP NODE
+    getChildMap(): any {
+        return null;
+    }
+
+    getParent(): AppNode {
+        return this.props.parent;
+    }
+
+    handleChildEvent(event: AppEvent): AppNodeReaction {
+        return AppNodeReaction.UP;
+    }
+
+    handleParentEvent(event: AppEvent): AppNodeReaction {
+        return AppNodeReaction.NONE;
+    }
+    //endregion
 
 
 
@@ -98,13 +121,13 @@ class SymbolCreator extends Component {
                     value={this.state.text}
                     onKeyDown={DomUtils.handleEnter(this.submitSymbol.bind(this))}
                     onChange={e => this.setState({text:e.target.value})}
-                    className="Globals_inp" />
+                    className="MA_inp" />
                 <input
                     value={this.state.uid}
                     type="number"
                     onChange={e => this.setState({uid:e.target.value})}
                     onKeyDown={DomUtils.handleEnter(this.submitSymbol.bind(this))}
-                    className="Globals_inp" />
+                    className="MA_inp" />
                 {this.state.isLoading?
                     <FontAwesomeIcon icon="spinner" spin={true}/> :
                     <button onClick={this.submitSymbol.bind(this)}>Click me</button>

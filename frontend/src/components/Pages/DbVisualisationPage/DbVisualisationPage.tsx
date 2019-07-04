@@ -137,7 +137,7 @@ class DbVisualisationPage extends Component {
             else window.alert(resp.message);
         }
         catch (e) {
-            console.log("Error", e);
+            console.error("Error", e);
         }
 
         //3. Undo loading
@@ -201,7 +201,7 @@ class DbVisualisationPage extends Component {
 
     render() {
         return (
-            <div className="Globals_page">
+            <div className="MA_page">
                 <textarea
                     value={this.state.cypherCommand}
                     onKeyPress={this.handlerCypherCommandKeyPress.bind(this)}
@@ -220,7 +220,7 @@ class DbVisualisationPage extends Component {
                     toLabelFunc={v => v.name}
                     toValueFunc={v => v.id}
                     onChange={id => this.setSavedQuery(id)}/>
-                <div className="Globals_pageMainContent" style={{position:"relative"}}>
+                <div className="MA_pageMainContent" style={{position:"relative"}}>
                     <div className="DbVisualisationPage_canvasRoot" ref={el => this._canvasRoot=el}/>
                     {this.renderSelectedElement()}
                     {this.state.isLoading? this.renderLoadingIcon() : null}

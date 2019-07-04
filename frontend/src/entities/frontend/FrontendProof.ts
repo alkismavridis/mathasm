@@ -2,9 +2,10 @@ import FrontendMove from "./FrontendMove";
 import MoveType from "../../enums/MoveType";
 import BackendMoveType from "../../enums/BackendMoveType";
 import SelectionType from "../../enums/SelectionType";
-import LogicMove from "../backend/LogicMove";
 import MathAsmStatement from "../backend/MathAsmStatement";
 import LogicMoveInput from "../backend/inputs/LogicMoveInput";
+import MathAsmProofWrapper from "../backend/MathAsmProofWrapper";
+import MapUtils from "../../services/MapUtils";
 
 export default class FrontendProof {
     //region FIELDS
@@ -15,11 +16,6 @@ export default class FrontendProof {
     //region LIFE CYCLE
     constructor() {
         this.moves = [];
-    }
-
-    static fromBackendProof(backendProof:FrontendProof) : FrontendProof {
-        //TODO
-        return new FrontendProof();
     }
     //endregion
 
@@ -36,8 +32,12 @@ export default class FrontendProof {
         this.moves.push(newMove);
     }
 
-    goToMove(currentIndex:number, newMoveIndex:number, targets: MathAsmStatement[]) {
-        if (currentIndex===-1) return;
+    goToMove(currentIndex:number, newMoveIndex:number, targets: MathAsmStatement[]) : MathAsmStatement[] {
+        if (currentIndex===-1) {
+            if(this.moves==null && this.moves.length==0) return targets;
+            this.moves[0].execute(targets);
+            currentIndex=0;
+        };
 
         //1. Update the targets
         const difference = newMoveIndex - currentIndex;

@@ -23,8 +23,8 @@ export default class AboutDialog extends Component {
     //region RENDERING
     renderContributors() {
         //1. Create the list items
-        const contributorItems = CONTRIBUTORS.map(c =>
-            <li>
+        const contributorItems = CONTRIBUTORS.map((c,index) =>
+            <li key={index}>
                 <a target="_blank" href={c.link}>{c.name}</a>
             </li>
         );
@@ -60,7 +60,7 @@ export default class AboutDialog extends Component {
 
     render() {
         return (
-            <div className="Globals_window AboutDialog_root">
+            <div className="MA_window AboutDialog_root">
                 <ModalHeader
                     title="About..."
                     onConfirm={() => ModalService.removeModal(this.props.modalId)}/>

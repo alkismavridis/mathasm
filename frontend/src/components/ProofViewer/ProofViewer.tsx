@@ -1,41 +1,34 @@
 import React, {Component, CSSProperties} from 'react';
+import "./ProofViewer.scss";
 import cx from 'classnames';
-import "./TheoremCreator.scss";
-import Statement from "../ReusableComponents/Statement/Statement";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
-import SelectionType from "../../enums/SelectionType";
-import StatementSide from "../../enums/StatementSide";
-import QuickInfoService from "../../services/QuickInfoService";
-import FrontendMove from "../../entities/frontend/FrontendMove";
-import ProofStepsViewer from "../ReusableComponents/ProofStepsViewer/ProofStepsViewer";
+
 import ModalService from "../../services/ModalService";
-import GraphQL from "../../services/GraphQL";
-import ProofPlayer from "../../entities/frontend/ProofPlayer";
-import MathAsmStatement from "../../entities/backend/MathAsmStatement";
+import SelectionType from "../../enums/SelectionType";
+import QuickInfoService from "../../services/QuickInfoService";
+import StatementSide from "../../enums/StatementSide";
 import MathAsmDir from "../../entities/backend/MathAsmDir";
+import SentenceMatch from "../../entities/frontend/SentenceMatch";
+import GraphQL from "../../services/GraphQL";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import ProofStepsViewer from "../ReusableComponents/ProofStepsViewer/ProofStepsViewer";
+import Statement from "../ReusableComponents/Statement/Statement";
+import MathAsmStatement from "../../entities/backend/MathAsmStatement";
+import ProofPlayer from "../../entities/frontend/ProofPlayer";
 import {AppNode} from "../../entities/frontend/AppNode";
-import {AppEvent} from "../../entities/frontend/AppEvent";
 import AppNodeReaction from "../../enums/AppNodeReaction";
+import {AppEvent} from "../../entities/frontend/AppEvent";
+import q from "./ProofViewer.graphql";
 import AppEventType from "../../enums/AppEventType";
 
-const q = {
-    UPLOAD_PROOF: `mutation($moves:[LogicMove!]!) {
-      statementWSector {
-        uploadProof(moves:$moves) {
-            parentId
-            theorem {id, name, type, left, right, isBidirectional, grade}
-        }
-      }
-    }`
-};
 
-export default class TheoremCreator extends Component implements AppNode {
-    //region STATIC
+class ProofViewer extends Component implements AppNode {
+    //region FIELDS
     props : {
         //data
         parent:AppNode,
         symbolMap:any,
         parentDir:MathAsmDir,
+        statement:MathAsmStatement,
 
         //actions
 
@@ -46,11 +39,34 @@ export default class TheoremCreator extends Component implements AppNode {
 
     state = {
         player: new ProofPlayer(),
+
+        targets:[] as MathAsmStatement[],
+        selectedTargetIndex:null as number,
+
+
+        //selection
+        base:null as MathAsmStatement,
+        baseSide:StatementSide.LEFT,
+        leftMatches:[] as SentenceMatch[], //notNull
+        rightMatches:[] as SentenceMatch[], //notNull
+        selectionType:SelectionType.NONE,
     };
 
     _rootRef = null;
     //endregion
 
+
+    //region LIFE CYCLE
+    // constructor(props) { super(props); }
+    componentDidMount() {
+        if (this.props.statement==null) return;
+
+        GraphQL.run(q.FETCH_PROOF, {id:this.props.statement.id}).then(resp=> {
+            this.state.player.setupFrom(resp.statement.proof);
+            this.forceUpdate();
+        });
+    }
+    //endregion
 
 
 
@@ -68,18 +84,7 @@ export default class TheoremCreator extends Component implements AppNode {
     }
 
     handleParentEvent(event: AppEvent): AppNodeReaction {
-        switch(event.type) {
-            case AppEventType.STMT_SELECTED:
-                this.setBase(event.data);
-                this.focus();
-                return AppNodeReaction.NONE;
-
-            case AppEventType.SYMBOL_SELECTED:
-                if(!event.data.statement) return AppNodeReaction.NONE;
-                this.setBase(event.data.statement);
-                this.focus();
-                return AppNodeReaction.NONE;
-
+        switch (event.type) {
             case AppEventType.SYMBOL_RENAMED:
                 this.forceUpdate();
                 return AppNodeReaction.NONE;
@@ -92,19 +97,6 @@ export default class TheoremCreator extends Component implements AppNode {
 
 
     //region EVENT HANDLERS
-    focus() {
-        if (this._rootRef) this._rootRef.focus();
-    }
-
-    /**
-     * Sets the base to be the given base, and updates all related internal state.
-     * NOTE: base parameter can be null!
-     * */
-    setBase(base:MathAsmStatement) {
-        this.state.player.setBase(base);
-        this.setState({player:this.state.player});
-    }
-
     /**
      * Selects the given target and updates the internal state.
      * NOTE: index can be null, which means DESELECT
@@ -150,79 +142,11 @@ export default class TheoremCreator extends Component implements AppNode {
         else QuickInfoService.makeWarning("Illegal move: Could not perform single selection.");
     }
 
-    /** Moves the selection, staying on the current selectionType */
-    moveSelection(step:number) {
-        const didChange = this.state.player.moveSelection(step);
-        if (didChange) this.setState({player:this.state.player});
-    }
-
-    /**
-     * Clones the selected base, and appends the clone into the target list, if no target is selected.
-     * If a target is selected, this target will be overwritten instead.
-     * */
-    cloneBase(sideToClone:StatementSide) {
-        const success = this.state.player.addCloningMove(sideToClone);
-        if (success) this.setState({player:this.state.player});
-        else QuickInfoService.makeWarning("Cloning move not allowed. Please check base direction.");
-    }
-
-    /** Performs the replacement based on the current selection. */
-    performReplacement() {
-        const success = this.state.player.performReplacement();
-        if (success) this.setState({player:this.state.player});
-        // else QuickInfoService.makeWarning("Cloning move not allowed. Please check base direction.");
-    }
-
-
-    /** Navigates to the selected move of the proof. */
-    goToMove(index:number) {
-        this.state.player.goToMove(index);
-        this.setState({player:this.state.player});
-    }
-
-    handleSaveClicked() {
-        const target = this.state.player.getSelectedTarget();
-        if (target==null) return;
-
-        const onSave = (modalId, name) => {
-            if (!name) return;
-
-            //1. Create the save move
-            this.state.player.addSaveMove(target._internalId, name, this.props.parentDir.id);
-            this.setState({player: this.state.player});
-
-            //2. Perform the replacement
-            ModalService.removeModal(modalId);
-        };
-
-        ModalService.showTextGetter("Save under "+this.props.parentDir.name, "Theorem's name...", onSave);
-    }
-
-    /** Uploads the proof to the server. */
-    uploadProof() {
-        if(this.state.player.getMoveCount()===0) return;
-
-        const dataToUpload = this.state.player.makeBackendProof();
-        GraphQL.run(q.UPLOAD_PROOF, {moves:dataToUpload})
-            .then(mutation => {
-                QuickInfoService.makeSuccess("Proof successfully uploaded.");
-                AppEvent.makeProofSaved(mutation.statementWSector.uploadProof).travelAbove(this);
-            })
-            .catch(error => {
-                QuickInfoService.makeError("Error while uploading proof. Please note that parts of the proof may have been successfully saved.");
-                console.error(error);
-            });
-    }
-
     /** The user could interact with this component with the keyboard too. Here are the controls: */
     handleKeyPress(e:KeyboardEvent) {
         switch (e.keyCode) {
             case 32: //space bar (Action: switch base direction)
                 this.setBaseDir(this.state.player.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT);
-                break;
-
-            case 13: //enter key (Action: perform replacement)
-                this.performReplacement();
                 break;
 
             case 38: //arrow up (Action: change selected target)
@@ -243,14 +167,6 @@ export default class TheoremCreator extends Component implements AppNode {
                 else this.selectTarget(this.state.player.selectedTargetIndex+1);
                 break;
 
-            case 37: //arrow left (Action: moves the selection to the left)
-                this.moveSelection(-1);
-                break;
-
-            case 39: //arrow right (Action: moves the selection to the right)
-                this.moveSelection(1);
-                break;
-
             case 65: //"a" key (Action: Select all)
                 this.changeSelectionType(SelectionType.ALL);
                 break;
@@ -261,27 +177,6 @@ export default class TheoremCreator extends Component implements AppNode {
 
             case 68: //"d" key (Action: Select distinct)
                 this.switchToSingleSelectionMode();
-                break;
-
-            case 88: //"x" key (Action: clone base - left side)
-                this.cloneBase(StatementSide.LEFT);
-                break;
-
-            case 67: //"c" key (Action: clone base)
-                this.cloneBase(StatementSide.BOTH);
-                break;
-
-            case 86: //"v" key (Action: clone base - right side)
-                this.cloneBase(StatementSide.RIGHT);
-                break;
-
-            case 80: //"p" key (Action: persist selected template)
-                this.handleSaveClicked();
-                break;
-
-            case 66: //"b" key (Action: use target as base)
-                const selectedTarget = this.state.player.getSelectedTarget();
-                if (selectedTarget) this.setBase(selectedTarget);
                 break;
 
             case 27: //escape key (Action: Select none)
@@ -300,7 +195,14 @@ export default class TheoremCreator extends Component implements AppNode {
                 }
                 break;
             }
+
         }
+    }
+
+    /** Navigates to the selected move of the proof. */
+    goToMove(index:number) {
+        this.state.player.goToMove(index);
+        this.setState({player:this.state.player});
     }
     //endregion
 
@@ -315,32 +217,6 @@ export default class TheoremCreator extends Component implements AppNode {
         const player = this.state.player;
         const isSelected = player.selectedTargetIndex===index;
         return <div key={index} className="MA_flexStartDown">
-            <button
-                className="MA_textBut"
-                title="Use as base (b)"
-                style={{
-                    width: "16px",
-                    height: "16px",
-                    color:"green",
-                    marginRight:"8px"
-                }}
-                onClick={e => this.setBase(player.targets[index])}>
-                <FontAwesomeIcon icon="cog"/>
-            </button>
-            <button
-                className="MA_textBut"
-                title="Replace (enter)"
-                style={{
-                    visibility:!isSelected || player.base==null || player.selectedTargetIndex==null || player.selectionType===SelectionType.NONE? "hidden" : "visible",
-                    width: "16px",
-                    height: "16px",
-                    color:"red",
-                    backgroundColor:"transparent",
-                    marginRight:"8px"
-                }}
-                onClick={()=>this.performReplacement()}>
-                <FontAwesomeIcon icon="check"/>
-            </button>
             <button
                 className="MA_textBut"
                 title="Replace (enter)"
@@ -390,64 +266,7 @@ export default class TheoremCreator extends Component implements AppNode {
     renderButtons() {
         const player = this.state.player;
 
-        return <div style={{margin:"16px 0"}} className="MA_flexStart">
-            <button
-                className="MA_roundBut"
-                title="Clone left side of base (x)"
-                style={{
-                    visibility:player.base==null? "hidden" : "visible",
-                    backgroundColor: "cornflowerblue",
-                    width: "24px",
-                    height: "24px",
-                    fontSize: "14px",
-                    margin:"0 4px"
-                }}
-                onClick={()=>this.cloneBase(StatementSide.LEFT)}>
-                <FontAwesomeIcon icon="ruler-combined" flip="horizontal"/>
-            </button>
-            <button
-                className="MA_roundBut"
-                title="Clone base (c)"
-                style={{
-                    visibility:player.base==null? "hidden" : "visible",
-                    backgroundColor: "cornflowerblue",
-                    width: "24px",
-                    height: "24px",
-                    fontSize: "14px",
-                    margin:"0 4px"
-                }}
-                onClick={()=>this.cloneBase(StatementSide.BOTH)}>
-                <FontAwesomeIcon icon="bolt"/>
-            </button>
-            <button
-                className="MA_roundBut"
-                title="Clone right side of base (v)"
-                style={{
-                    visibility:player.base==null? "hidden" : "visible",
-                    backgroundColor: "cornflowerblue",
-                    width: "24px",
-                    height: "24px",
-                    fontSize: "14px",
-                    margin:"0 20px 0 4px"
-                }}
-                onClick={()=>this.cloneBase(StatementSide.RIGHT)}>
-                <FontAwesomeIcon icon="ruler-combined"/>
-            </button>
-
-            <button
-                className="MA_roundBut"
-                title="Move selection left (left arrow)"
-                style={{
-                    visibility:player.selectionType===SelectionType.ALL || player.leftMatches.length+player.rightMatches.length<=1? "hidden" : "visible",
-                    backgroundColor: "#e2b228",
-                    width: "24px",
-                    height: "24px",
-                    fontSize: "18px",
-                    margin:"0 4px"
-                }}
-                onClick={()=>this.moveSelection(-1)}>
-                <FontAwesomeIcon icon="caret-left"/>
-            </button>
+        return <div style={{margin:"16px 0"}}>
             <button
                 className="MA_roundBut"
                 title="Select all (a)"
@@ -490,50 +309,6 @@ export default class TheoremCreator extends Component implements AppNode {
                 onClick={()=>this.switchToSingleSelectionMode()}>
                 <FontAwesomeIcon icon="highlighter"/>
             </button>
-            <button
-                className="MA_roundBut"
-                title="Move selection right (right arrow)"
-                style={{
-                    visibility:player.selectionType===SelectionType.ALL || player.leftMatches.length+player.rightMatches.length<=1? "hidden" : "visible",
-                    backgroundColor: "#e2b228",
-                    width: "24px",
-                    height: "24px",
-                    fontSize: "18px",
-                    margin:"0 20px 0 4px"
-                }}
-                onClick={()=>this.moveSelection(1)}>
-                <FontAwesomeIcon icon="caret-right"/>
-            </button>
-
-            <button
-                className="MA_roundBut"
-                title={"Persist selected template under "+this.props.parentDir.name+" (p)"}
-                style={{
-                    visibility:player.selectedTargetIndex==null? "hidden" : "visible",
-                    backgroundColor: "#5db969",
-                    width: "24px",
-                    height: "24px",
-                    fontSize: "16px",
-                    margin:"0 4px"
-                }}
-                onClick={()=>this.handleSaveClicked()}>
-                <FontAwesomeIcon icon="save"/>
-            </button>
-            <button
-                className="MA_roundBut"
-                title="Upload proof"
-                style={{
-                    visibility:player.getMoveCount()===0? "hidden" : "visible",
-                    backgroundColor: "#5db969",
-                    width: "24px",
-                    height: "24px",
-                    fontSize: "16px",
-                    margin:"0 4px"
-                }}
-                onClick={()=>this.uploadProof()}>
-                <FontAwesomeIcon icon="cloud-upload-alt"/>
-            </button>
-
         </div>;
     }
 
@@ -567,12 +342,12 @@ export default class TheoremCreator extends Component implements AppNode {
     render() {
         return (
             <div
-                className={cx("TheoremCreator_root", this.props.className)}
+                className={cx("ProofViewer_root", this.props.className)}
                 style={this.props.style}
                 onKeyUp={(e:any)=>this.handleKeyPress(e)}
                 ref={el => this._rootRef = el}
                 tabIndex={0}>
-                <div className="TheoremCreator_main">
+                <div className="ProofViewer_main">
                     {this.renderBase()}
                     {this.renderButtons()}
                     <div>
@@ -590,3 +365,5 @@ export default class TheoremCreator extends Component implements AppNode {
 
     //endregion
 }
+
+export default ProofViewer;

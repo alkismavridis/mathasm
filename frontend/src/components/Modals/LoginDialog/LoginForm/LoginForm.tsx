@@ -78,7 +78,7 @@ class LoginForm extends Component {
                 this.props.onSuccessfulLogin(login);
             })
             .catch(err => {
-                console.log(err);
+                console.error(err);
                 this.setState({errorCode:err.code || ErrorCode.UNKNOWN})
             });
     }
@@ -106,14 +106,14 @@ class LoginForm extends Component {
                     onConfirm={formHandler}/>
                 <input
                     ref={el => this._userNameRef = el}
-                    className="Globals_inp LoginForm_inp"
+                    className="MA_inp LoginForm_inp"
                     value={this.state.userName}
                     placeholder={"Username"}
                     onKeyDown={DomUtils.handleEnter(formHandler)}
                     onChange={event => this.setState({userName:event.target.value, errorCode:null})}/>
 
                 <input
-                    className="Globals_inp LoginForm_inp"
+                    className="MA_inp LoginForm_inp"
                     type="password"
                     value={this.state.password}
                     placeholder={"Password"}

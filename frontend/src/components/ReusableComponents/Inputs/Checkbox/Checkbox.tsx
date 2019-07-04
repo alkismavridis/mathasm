@@ -38,7 +38,7 @@ export default class Checkbox extends Component {
     //region RENDERING
     render() {
         return (
-            <label className="Globals_flexStart Checkbox_root" style={this.props.style}>
+            <label className="MA_flexStart Checkbox_root" style={this.props.style}>
                 <input
                     type="checkbox"
                     checked={this.props.checked}

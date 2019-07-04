@@ -10,6 +10,10 @@ import GraphQL from "../../services/GraphQL";
 import QuickInfoService from "../../services/QuickInfoService";
 import MathAsmDir from "../../entities/backend/MathAsmDir";
 import MathAsmSymbol from "../../entities/backend/MathAsmSymbol";
+import {AppNode} from "../../entities/frontend/AppNode";
+import AppNodeReaction from "../../enums/AppNodeReaction";
+import {AppEvent} from "../../entities/frontend/AppEvent";
+import AppEventType from "../../enums/AppEventType";
 
 
 const q = {
@@ -27,11 +31,10 @@ export default class AxiomCreator extends Component {
     //region STATIC
     props : {
         //data
+        parent:AppNode,
         parentDir:MathAsmDir,
 
         //actions
-        onSave:Function,               //accepts: statement
-
 
         //styling
     };
@@ -54,15 +57,44 @@ export default class AxiomCreator extends Component {
     //endregion
 
 
+
     //region LIFE CYCLE
-
-
     // componentDidMount() {}
     // shouldComponentUpdate(nextProps, nextState) { return true; }
     // getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
     // componentDidUpdate(prevProps, prevState, snapshot) {}
     // componentWillUnmount() {}
     // componentDidCatch(error, info) { console.error("Exception caught"); }
+    //endregion
+
+
+
+    //region APP NODE
+    getChildMap(): any {
+        return null;
+    }
+
+    getParent(): AppNode {
+        return this.props.parent;
+    }
+
+    handleChildEvent(event: AppEvent): AppNodeReaction {
+        return AppNodeReaction.UP;
+    }
+
+    handleParentEvent(event: AppEvent): AppNodeReaction {
+        switch (event.type) {
+            case AppEventType.SYMBOL_SELECTED:
+                this.addSymbol(event.data.symbol);
+                this.focus();
+                break;
+
+            case AppEventType.SYMBOL_RENAMED:
+                this.forceUpdate();
+                break;
+        }
+        return AppNodeReaction.NONE;
+    }
     //endregion
 
 
@@ -157,7 +189,7 @@ export default class AxiomCreator extends Component {
         };
 
         GraphQL.run(q.MAKE_AXIOM, data).then(resp => {
-            this.props.onSave(resp.statementWSector.createAxiom);
+            AppEvent.makeStatementUpdate(resp.statementWSector.createAxiom, this.props.parentDir.id).travelAbove(this);
             ModalService.removeModal(modalId);
         })
         .catch(err => {
@@ -245,7 +277,7 @@ export default class AxiomCreator extends Component {
 
         return <div
             onClick={e => this.setState({cursor:sentence.length, isCursorLeft:isLeft})}
-            className="Globals_flexStart AxiomCreator_sen">
+            className="MA_flexStart AxiomCreator_sen">
             {symbolDivs}
         </div>;
     }
@@ -266,7 +298,7 @@ export default class AxiomCreator extends Component {
                 {this.renderSentence(this.state.right, this.state.isCursorLeft? null : this.state.cursor, false)}
                 <div>
                     <button
-                        className="Globals_roundBut"
+                        className="MA_roundBut"
                         style={{width:"32px", height:"32px", marginTop:"8px"}}
                         onClick={this.handleSaveClicked.bind(this)}>
                         <FontAwesomeIcon icon="save"/>

@@ -1,23 +1,28 @@
-import React, {Component, CSSProperties} from 'react';
+import React, {Component, createRef, CSSProperties} from 'react';
 import "./TheoryExplorer.css";
 import SymbolCreator from "../SymbolCreator/SymbolCreator";
 import AxiomCreator from "../AxiomCreator/AxiomCreator";
 import DirViewerGroup from "../ReusableComponents/DirViewerGroup/DirViewerGroup";
 import TheoremCreator from "../TheoremCreator/TheoremCreator";
-import {FrontendEvent, MathAsmEventType} from "../../entities/frontend/FrontendEvent";
 import MathAsmDir from "../../entities/backend/MathAsmDir";
+import ProofViewer from "../ProofViewer/ProofViewer";
 import MathAsmStatement from "../../entities/backend/MathAsmStatement";
+import {AppNode} from "../../entities/frontend/AppNode";
+import {AppEvent} from "../../entities/frontend/AppEvent";
+import AppNodeReaction from "../../enums/AppNodeReaction";
+import AppEventType from "../../enums/AppEventType";
 
 enum Mode {
     VIEW = 1,
     CREATE_SYMBOL = 2,
     CREATE_AXIOM = 3,
     CREATE_THEOREM = 4,
+    SHOW_PROOF = 5,
     //etc
 }
 
 
-export default class TheoryExplorer extends Component {
+export default class TheoryExplorer extends Component implements AppNode {
     //region FIELDS
     props : {
         //data
@@ -36,11 +41,16 @@ export default class TheoryExplorer extends Component {
         //axiom creator
         activeDir:null as MathAsmDir, //the directory currently shown on the dir viewer group
 
+        //proof viewer
+        statementForProof:null as MathAsmStatement,
     };
 
-    _axiomCreator = null;
-    _theoremCreator = null;
-    _dirViewerGroup = null;
+    childMap = {
+      dirViewerGroup: createRef<DirViewerGroup>(),
+      axiomCreator: createRef<AxiomCreator>(),
+      theoremCreator: createRef<TheoremCreator>(),
+      proofViewer : createRef<ProofViewer>(),
+    };
     //endregion
 
 
@@ -55,6 +65,43 @@ export default class TheoryExplorer extends Component {
     // componentDidCatch(error, info) { console.error("Exception caught"); }
     //endregion
 
+
+
+    //region APP NODE
+    getChildMap(): any { return this.childMap; }
+
+    getParent(): AppNode {
+        return null; //TODO connect this with page
+    }
+
+    handleChildEvent(event: AppEvent): AppNodeReaction {
+        switch (event.type) {
+            case AppEventType.STMT_SELECTED:
+            case AppEventType.SYMBOL_SELECTED:
+            case AppEventType.SYMBOL_RENAMED:
+            case AppEventType.STMT_UPDATED:
+                return AppNodeReaction.DOWN;
+
+            case AppEventType.SYMBOL_MAP_CHANGED:
+                this.setState({symbolMap:event.data});
+                return AppNodeReaction.NONE;
+
+            case AppEventType.SHOW_PROOF:
+                this.setState({mode:Mode.SHOW_PROOF, statementForProof:event.data});
+                return AppNodeReaction.NONE;
+
+            case AppEventType.DIR_CHANGED:
+                this.setState({activeDir:event.data});
+                return AppNodeReaction.NONE;
+
+            default: return AppNodeReaction.UP;
+        }
+    }
+
+    handleParentEvent(event: AppEvent): AppNodeReaction {
+        return AppNodeReaction.NONE;
+    }
+    //endregion
 
 
 
@@ -85,53 +132,6 @@ export default class TheoryExplorer extends Component {
 
         this.setState(changes);
     }
-
-
-
-    /** callback on symbol or statement click*/
-    handleSelection(event:FrontendEvent) {
-        debugger;
-        switch (this.state.mode) {
-            case Mode.CREATE_AXIOM:
-                if (this._axiomCreator && event.type===MathAsmEventType.SYMBOL_SELECTED) {
-                    this._axiomCreator.addSymbol(event.symbol);
-                    this._axiomCreator.focus();
-                }
-                break;
-
-            case Mode.CREATE_THEOREM:
-                if (!this._theoremCreator) break;
-                if (event.type===MathAsmEventType.SYMBOL_SELECTED && event.statement){
-                    this._theoremCreator.setBase(event.statement);
-                    this._theoremCreator.focus();
-                }
-                else if (event.type===MathAsmEventType.STATEMENT_SELECTED) {
-                    this._theoremCreator.setBase(event.statement);
-                    this._theoremCreator.focus();
-                }
-                break;
-        }
-    }
-
-    handleAxiomSaved(axiom:MathAsmStatement) {
-        if (this._dirViewerGroup && this.state.activeDir) {
-            this._dirViewerGroup.statementCreated(axiom, this.state.activeDir.id);
-        }
-    }
-
-    /** accepts an array of SavedTheoremInfo objects. Updates the keyboards. */
-    handleProofSaved(saveInfo:any[]) {
-        if (this._dirViewerGroup) {
-            saveInfo.forEach(si => {
-                this._dirViewerGroup.statementCreated(si.theorem, si.parentId)
-            });
-        }
-    }
-
-    handleSymbolMapUpdated(newMap) {
-        this.setState({symbolMap:newMap});
-    }
-
     //endregion
 
 
@@ -141,6 +141,7 @@ export default class TheoryExplorer extends Component {
     renderSymbolCreator() {
         return <SymbolCreator
             parentId={this.state.activeDir.id}
+            parent={this}
             onSymbolCreated={s => {
                 const newDir = Object.assign({}, this.state.activeDir);
                 newDir.symbols.push(s);
@@ -150,17 +151,28 @@ export default class TheoryExplorer extends Component {
 
     renderAxiomCreator() {
         return <AxiomCreator
-            ref={el => this._axiomCreator = el}
-            parentDir={this.state.activeDir}
-            onSave={this.handleAxiomSaved.bind(this)}/>;
+            ref={this.childMap.axiomCreator}
+            parent={this}
+            parentDir={this.state.activeDir}/>;
     }
 
     renderTheoremCreator() {
         return <TheoremCreator
-            ref={el => this._theoremCreator = el}
+            ref={this.childMap.theoremCreator}
+            parent={this}
             symbolMap={this.state.symbolMap}
-            onCreateStatements={info => this.handleProofSaved(info)}
             parentDir={this.state.activeDir}
+            style={{maxHeight:"50vh"}}
+        />;
+    }
+
+    renderProofViewer() {
+        return <ProofViewer
+            ref={this.childMap.proofViewer}
+            parent={this}
+            symbolMap={this.state.symbolMap}
+            parentDir={this.state.activeDir}
+            statement={this.state.statementForProof}
             style={{maxHeight:"50vh"}}
         />;
     }
@@ -171,13 +183,12 @@ export default class TheoryExplorer extends Component {
                 {this.state.mode === Mode.CREATE_SYMBOL && this.renderSymbolCreator()}
                 {this.state.mode === Mode.CREATE_AXIOM && this.renderAxiomCreator()}
                 {this.state.mode === Mode.CREATE_THEOREM && this.renderTheoremCreator()}
+                {this.state.mode === Mode.SHOW_PROOF && this.renderProofViewer()}
 
                 <DirViewerGroup
-                    ref={el => this._dirViewerGroup = el}
+                    ref={this.childMap.dirViewerGroup}
+                    parent={this}
                     symbolMap={this.state.symbolMap}
-                    onUpdateSymbolMap={this.handleSymbolMapUpdated.bind(this)}
-                    onShowDir={dir => this.setState({activeDir:dir})}
-                    onSelect={this.handleSelection.bind(this)}
                     onCreateSymbolStart={this.toggleSymbolCreationMode.bind(this)}
                     onCreateAxiomStart={this.toggleAxiomCreationMode.bind(this)}
                     onCreateTheoremStart={this.toggleTheoremCreationMode.bind(this)}

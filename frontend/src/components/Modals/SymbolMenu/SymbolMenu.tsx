@@ -13,6 +13,7 @@ export default class SymbolMenu extends Component {
 
         //actions
         onMoveClicked:Function,
+        onRenameClicked:Function,
 
         //styling
     };
@@ -29,29 +30,25 @@ export default class SymbolMenu extends Component {
         this.closeDialog();
         if(this.props.onMoveClicked) this.props.onMoveClicked();
     };
+
+    handleRenameClick = () => {
+        this.closeDialog();
+        if(this.props.onRenameClicked) this.props.onRenameClicked();
+    };
     //endregion
 
 
     //region RENDERING
     render() {
         return (
-            <div className="Globals_window" style={{padding:"8px"}}>
+            <div className="MA_window" style={{padding:"8px", minWidth:"170px"}}>
                 <ModalHeader
                     title={this.props.symbol.text}
                     onClose={()=>this.closeDialog()}/>
-
-                <div className="Globals_menuItem" onClick={this.handleMoveClick}>Move</div>
-                <div
-                    className="Globals_menuItem"
-                    onClick={()=>{
-                        window.alert("TODO not yet implemented");
-                        this.closeDialog();
-                    }}>
-                    Rename
-                </div>
+                <button className="MA_menuItem" onClick={this.handleMoveClick}>Move</button>
+                <button className="MA_menuItem" onClick={this.handleRenameClick}>Rename</button>
             </div>
         );
     }
-
     //endregion
 }

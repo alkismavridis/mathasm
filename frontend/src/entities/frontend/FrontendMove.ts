@@ -4,6 +4,7 @@ import SelectionType from "../../enums/SelectionType";
 import StatementSide from "../../enums/StatementSide";
 import MathAsmStatement from "../backend/MathAsmStatement";
 import LogicMove from "../backend/LogicMove";
+import BackendMoveType from "../../enums/BackendMoveType";
 
 export default class FrontendMove {
     //region FIELDS
@@ -60,9 +61,36 @@ export default class FrontendMove {
     //endregion
 
 
+    //region BACKEND MOVE UTILS
+    static getBaseForBackendMove(backendMove:LogicMove, baseMap:any, targets:MathAsmStatement[]) : MathAsmStatement {
+        //Case 1: External base. Just return it.
+        if (backendMove.extBase!=null) return baseMap[backendMove.extBase.id];
+
+        //Case 2: Internal base. Find it, clone it and return the clone.
+        const internalBase:MathAsmStatement = targets.find(s => s._internalId==backendMove.intBaseId);
+        if(!internalBase) return null;
+        return MathAsmStatement.clone(internalBase, StatementSide.BOTH, backendMove.intBaseId);
+    }
+
+    static getSelectionTypeForBackendMove(backendMove:LogicMove) : SelectionType {
+        switch (backendMove.moveType) {
+            case BackendMoveType.REPLACE_ALL: return SelectionType.ALL;
+            case BackendMoveType.REPLACE_LEFT: return SelectionType.LEFT;
+            case BackendMoveType.REPLACE_RIGHT: return SelectionType.RIGHT;
+            case BackendMoveType.ONE_IN_LEFT: return SelectionType.ONE_IN_LEFT;
+            case BackendMoveType.ONE_IN_RIGHT: return SelectionType.ONE_IN_RIGHT;
+            default:
+                console.error("Unexpected backendMove.moveType:", backendMove);
+                return null;
+        }
+    }
+    //endregion
+
+
+
 
     //region START MOVE UTILS
-    executeStart(targets) {
+    executeStart(targets:MathAsmStatement[]) {
         const newStatement = MathAsmStatement.clone(this.base, this.baseSide, this.targetId);
         const indexOfTarget = targets.findIndex(t => t._internalId === this.targetId);
 
@@ -70,7 +98,7 @@ export default class FrontendMove {
         else targets.push(newStatement);
     }
 
-    revertStart(targets) {
+    revertStart(targets:MathAsmStatement[]) {
         const indexOfTarget = targets.findIndex(t => t._internalId === this.targetId);
         if (indexOfTarget<0) return;
 

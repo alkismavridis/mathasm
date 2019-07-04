@@ -16,6 +16,7 @@ export default class DirectoryMenu extends React.Component {
 
         //actions
         onMoveClicked?:Function,
+        onRenameClicked?:Function,
 
         //styling
     };
@@ -36,22 +37,24 @@ export default class DirectoryMenu extends React.Component {
         this.closeDialog();
         if(this.props.onMoveClicked) this.props.onMoveClicked();
     };
+
+    handleRenameClick = ()=> {
+        this.closeDialog();
+        if(this.props.onRenameClicked) this.props.onRenameClicked();
+    };
     //endregion
 
 
     //region RENDERING
     render() {
         return (
-            <div className="Globals_window" style={{padding:"8px"}}>
+            <div className="MA_window DirectoryMenu_root" style={{padding:"8px"}}>
                 <ModalHeader
                     title={this.props.directory.name}
                     onClose={()=>this.closeDialog()}/>
 
-                <div className="Globals_menuItem" onClick={this.handleMoveClick}>Move</div>
-                <div className="Globals_menuItem" onClick={()=>{
-                    window.alert("TODO not yet implemented");
-                    this.closeDialog();
-                }}>Rename</div>
+                <button className="MA_menuItem" onClick={this.handleMoveClick}>Move</button>
+                <button className="MA_menuItem" onClick={this.handleRenameClick}>Rename</button>
             </div>
         );
     }

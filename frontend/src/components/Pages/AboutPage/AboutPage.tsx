@@ -28,7 +28,7 @@ export default class AboutPage extends Component {
     }
 
     renderSentence(symbols:string[]) {
-        return <div className="Globals_flexStart" style={{marginTop:"8px"}}>
+        return <div className="MA_flexStart" style={{marginTop:"8px"}}>
             {symbols.map((s,index) =>
                 <div key={index} className="AboutPage_symbol" style={{margin:"0 8px"}}>{s}</div>
             )}
@@ -38,7 +38,7 @@ export default class AboutPage extends Component {
     renderStatementFromSymbols(sen1:string[], grade:number, isBidirectional:boolean, sen2:string[], title?:string) {
         return <div style={{margin:"10px"}}>
             <div style={{fontWeight:"bold"}}>{title}</div>
-            <div className="Globals_flexStart" style={{marginTop:"8px"}}>
+            <div className="MA_flexStart" style={{marginTop:"8px"}}>
                 {sen1.map((s,index) =>
                     <div key={index} className="AboutPage_symbol" style={{margin:"0 2px"}}>{s}</div>
                 )}
@@ -53,7 +53,7 @@ export default class AboutPage extends Component {
     renderStatement(sen1:any, grade:number, isBidirectional:boolean, sen2:any, title:string) {
         return <div style={{margin:"10px"}}>
             <div style={{fontWeight:"bold"}}>{title}</div>
-            <div className="Globals_flexStart" style={{marginTop:"8px"}}>
+            <div className="MA_flexStart" style={{marginTop:"8px"}}>
                 {sen1}
                 {this.renderConnection(grade, isBidirectional)}
                 {sen2}
@@ -116,7 +116,7 @@ export default class AboutPage extends Component {
                         One can define as many symbol as needed in order to create a mathematical theory.<br/>
 
                         For example, if we would try to build the theory of boolean algebra, we would need to define symbols like:
-                        <div className="Globals_flexStart" style={{marginTop:"8px"}}>
+                        <div className="MA_flexStart" style={{marginTop:"8px"}}>
                             <div className="AboutPage_symbol" style={{margin:"0 8px"}}>true</div>
                             <div className="AboutPage_symbol" style={{margin:"0 8px"}}>false</div>
                             <div className="AboutPage_symbol" style={{margin:"0 8px"}}>!</div>
@@ -199,7 +199,7 @@ export default class AboutPage extends Component {
                         A statement essentially defines a <b>replace rule</b>:<br/>
                         two sentences that under certain circumstances can <b>replace</b> each other.<br/>
                         An example would be the sentences
-                        <div className="Globals_flexStart" style={{marginTop:"8px"}}>
+                        <div className="MA_flexStart" style={{marginTop:"8px"}}>
                             <div className="AboutPage_symbol" style={{margin:"0 8px"}}>(</div>
                             <div className="AboutPage_symbol" style={{margin:"0 8px"}}>1</div>
                             <div className="AboutPage_symbol" style={{margin:"0 8px"}}>+</div>

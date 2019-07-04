@@ -55,7 +55,7 @@ export default class GlobalHeader extends Component {
     renderUserMenu() {
         return (
             <div
-                className="Globals_flexStart GlobalHeader_userDiv"
+                className="MA_flexStart GlobalHeader_userDiv"
                 onClick={this.handleUserIconClick.bind(this)}>
                 <FontAwesomeIcon icon="user"/>
                 <div className="GlobalHeader_userName">{this.props.user && this.props.user.userName}</div>
@@ -74,7 +74,7 @@ export default class GlobalHeader extends Component {
 
     render() {
         return (
-            <div className="Globals_flexAway GlobalHeader_root">
+            <div className="MA_flexAway GlobalHeader_root">
                 {this.renderUserMenu()}
                 {this.renderAboutButton()}
             </div>

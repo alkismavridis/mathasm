@@ -8,7 +8,7 @@ export default class LogicMove {
     index:number;
     extBase:MathAsmStatement;
     intBaseId:number;
-    moveType:MoveType;
+    moveType:BackendMoveType;
     targetId:number;
     side:StatementSide;
     pos:number;

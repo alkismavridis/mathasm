@@ -53,14 +53,14 @@ export default class StringInputDialog extends Component {
     //region RENDERING
     render() {
         return (
-            <div className="Globals_window StringInputDialog_root">
+            <div className="MA_window StringInputDialog_root">
                 <ModalHeader
                     title={this.props.title}
                     onConfirm={this.onSubmitResult.bind(this)}/>
 
                 <input
                     ref={el => this._inpRef = el}
-                    className="Globals_inp"
+                    className="MA_inp"
                     placeholder={this.props.placeholder}
                     onKeyDown={DomUtils.handleEnter(this.onSubmitResult.bind(this))}
                     value={this.state.text}
