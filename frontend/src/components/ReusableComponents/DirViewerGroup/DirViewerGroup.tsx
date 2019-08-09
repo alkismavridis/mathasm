@@ -10,6 +10,7 @@ import AppNodeReaction from "../../../enums/AppNodeReaction";
 import MapUtils from "../../../services/MapUtils";
 import AppEventType from "../../../enums/AppEventType";
 import {NONAME} from "dns";
+import SortingUtils from "../../../services/symbol/SortingUtils";
 
 export class MathAsmTab {
     tabId:number;
@@ -49,19 +50,6 @@ export default class DirViewerGroup extends Component implements AppNode {
 
 
 
-
-    //region LIFE CYCLE
-    // constructor(props) { super(props); }
-    // componentDidMount() {}
-    // static getDerivedStateFromProps(nextProps, prevState) {}
-    // shouldComponentUpdate(nextProps, nextState) { return true; }
-    // getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
-    // componentDidUpdate(prevProps, prevState, snapshot) {}
-    // componentWillUnmount() {}
-    // componentDidCatch(error, info) { console.error("Exception caught"); }
-    //endregion
-
-
     //region UTILS
     /**
      * Useful function when deleting tabs. It accepts the new list of tabs, and will return the best suitable selected Tab.
@@ -93,6 +81,10 @@ export default class DirViewerGroup extends Component implements AppNode {
                 AppEvent.makeDirChange(event.data.newDir).travelAbove(this);
                 return AppNodeReaction.NONE;
 
+            case AppEventType.ADD_NEW_TAB:
+                this.appendTab(event.data.dirId, event.data.dirData, event.data.focus);
+                return AppNodeReaction.NONE;
+
             default: return AppNodeReaction.UP;
         }
     }
@@ -118,13 +110,16 @@ export default class DirViewerGroup extends Component implements AppNode {
         if(!tabToUpdate) return;
 
         //2. Update the tab
+        if(newDirectory.statements) {
+            newDirectory.statements = SortingUtils.sortByTypeAndId(newDirectory.statements);
+        }
         tabToUpdate.currentDir = newDirectory;
 
         //3. Update the state
         this.setState({tabs:newTabs});
     }
 
-    appendTab(initDirId:number) {
+    appendTab(initDirId:number, dirData:MathAsmDir, focus:boolean) {
         //1. Find the new tabID
         const maxTabId = this.state.tabs.reduce(
             (max, current) => (max==null || current.tabId>max ? current.tabId : max),
@@ -134,12 +129,12 @@ export default class DirViewerGroup extends Component implements AppNode {
         //2. Add the tab
         const tabs = this.state.tabs;
         const newTabId = maxTabId? maxTabId+1 : 1;
-        tabs.push({tabId:newTabId, initDirId:initDirId, currentDir:null});
+        tabs.push({tabId:newTabId, initDirId:initDirId, currentDir:dirData});
 
         //3. Update the state
         this.setState({
             tabs:tabs,
-            selectedTabId:newTabId
+            selectedTabId:focus? newTabId : this.state.selectedTabId
         });
     }
 
@@ -170,7 +165,7 @@ export default class DirViewerGroup extends Component implements AppNode {
     renderTabs(selectedTabId:number) {
         return <div className="MA_flexStart DirViewerGroup_tabDiv">
             {this.state.tabs.map(t => this.renderTab(t, selectedTabId))}
-            <div className="DirViewerGroup_addTab" onClick={this.appendTab.bind(this, null)}>+</div>
+            <div className="DirViewerGroup_addTab" onClick={this.appendTab.bind(this, null, null, true)}>+</div>
         </div>;
     }
 

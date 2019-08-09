@@ -38,7 +38,8 @@ export default class LogicMoveInput {
         ret.extBaseId = extBaseId;
         ret.intBaseId = intBaseId;
         ret.moveType = moveType;
-        ret.targetId = BackendMoveType.ONE_IN_LEFT;
+        ret.pos = pos;
+        ret.side = side;
 
         return ret;
     }

@@ -6,6 +6,7 @@ enum AppEventType {
     SYMBOL_MAP_CHANGED = 4, //event.data is a map of symbols. Send this event every time new, unknown symbols have been loaded from the server.
     SHOW_PROOF = 5,         //event.data is a statmenet for which the proof must be shown.
     DIR_TAB_UPDATED = 6,    //event.data is {tabId:number, newDir:MathAsmDir}
+    ADD_NEW_TAB,
 
 
 

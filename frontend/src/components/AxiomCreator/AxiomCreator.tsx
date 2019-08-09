@@ -293,6 +293,7 @@ export default class AxiomCreator extends Component {
     render() {
         return (
             <div ref={el => this._rootRef = el} className="AxiomCreator_root" onKeyDown={this.handleKeyPress.bind(this)} tabIndex={0}>
+                <div className="MA_14px MA_bold">New axiom:</div>
                 {this.renderSentence(this.state.left, this.state.isCursorLeft? this.state.cursor : null, true)}
                 {this.renderConnection()}
                 {this.renderSentence(this.state.right, this.state.isCursorLeft? null : this.state.cursor, false)}

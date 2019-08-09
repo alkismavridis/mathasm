@@ -24,6 +24,7 @@ import java.nio.file.Files
 import graphql.execution.DataFetcherExceptionHandlerParameters
 import graphql.language.SourceLocation
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.ResourceLoader
 import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
 
@@ -39,8 +40,6 @@ class GraphqlService {
 
     @Autowired
     lateinit var secService: SecurityService
-
-
 
     var mainSchema: GraphQLSchema? = null
     val exceptionHandler: MathAsmExceptionHandler

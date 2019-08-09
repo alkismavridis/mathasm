@@ -220,7 +220,7 @@ export default class ProofPlayer {
     //region LEVEL-2 SELECTION MANAGEMENT
     setSelection(selectionType:SelectionType, params:any) : boolean {
         const target = this.getSelectedTarget();
-        if (!target || this._base || !StatementUtils.isSelectionLegal(selectionType, params, this._base, target, this._leftMatches, this._rightMatches)) {
+        if (!target || !this._base || !StatementUtils.isSelectionLegal(selectionType, params, this._base, target, this._leftMatches, this._rightMatches)) {
             return false;
         }
 
@@ -315,6 +315,7 @@ export default class ProofPlayer {
 
         //3. Add the move.
         this.addAndExecuteMove(move);
+        if(targetToReplace==null) this._selectedTargetIndex = this._targets.length - 1;
         return true;
     }
 

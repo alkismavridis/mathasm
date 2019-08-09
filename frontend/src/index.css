@@ -65,7 +65,10 @@ html, body {
 
 /*region FONT RELATED*/
 .MA_12px { font-size: 12px; }
+.MA_14px { font-size: 14px; }
 .MA_16px { font-size: 16px; }
+
+.MA_bold { font-weight: bold; }
 /*endregion*/
 
 

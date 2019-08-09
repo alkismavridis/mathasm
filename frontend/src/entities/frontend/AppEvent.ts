@@ -99,6 +99,15 @@ export class AppEvent {
         return new AppEvent(AppEventType.DIR_TAB_UPDATED, data);
     }
 
+    static makeNewTab(dirId:number, dirData:MathAsmDir, focus:boolean) : AppEvent {
+        const data = {
+            dirId:dirId,
+            dirData:dirData,
+            focus:focus
+        };
+        return new AppEvent(AppEventType.ADD_NEW_TAB, data);
+    }
+
     /** sent by the DirViewer when a new directory is being shown. */
     static makeSymbolRenamed(symbol:MathAsmSymbol) : AppEvent {
         return new AppEvent(AppEventType.SYMBOL_RENAMED, symbol);

@@ -25,101 +25,89 @@ export default class ProofStepsViewer extends Component {
 
 
 
-
-    //region LIFE CYCLE
-    // constructor(props) { super(props); }
-    // componentDidMount() {}
-    // static getDerivedStateFromProps(nextProps, prevState) {}
-    // shouldComponentUpdate(nextProps, nextState) { return true; }
-    // getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
-    // componentDidUpdate(prevProps, prevState, snapshot) {}
-    // componentWillUnmount() {}
-    // componentDidCatch(error, info) { console.error("Exception caught"); }
-    //endregion
-
-
-    //region EVENT HANDLERS
-    //endregion
-
-
     //region RENDERING
-    renderStartMove(move:FrontendMove, index:number) {
+    renderIndexDiv(index:number, isSelected:boolean, handler:any) {
+        return <div
+            key={index}
+            onClick={handler}
+            className={cx("ProofStepsViewer_num", isSelected? "ProofStepsViewer_selected" : null)}>
+            {index+1}.
+        </div>;
+    }
+
+    appendStartMove(move:FrontendMove, index:number, targetArray:any[], handler:any) {
         const isSelected = index === this.props.proofPlayer.currentMoveIndex;
-        let message = "";
+        targetArray.push(this.renderIndexDiv(index, isSelected, handler));
+
         switch(move.baseSide) {
             case StatementSide.BOTH:
-                message = "Cloning at "+move.targetId;
+                targetArray.push(<FontAwesomeIcon key={index+"b"} icon="bolt" onClick={handler} className="ProofStepsViewer_startIcon"/>);
                 break;
 
             case StatementSide.LEFT:
-                message = "Cloning left at "+move.targetId;
+                targetArray.push(<FontAwesomeIcon key={index+"b"} icon="ruler-combined" onClick={handler} flip="horizontal" className="ProofStepsViewer_startIcon"/>);
                 break;
 
             case StatementSide.RIGHT:
-                message = "Cloning right at "+move.targetId;
+                targetArray.push(<FontAwesomeIcon key={index+"b"} icon="ruler-combined" onClick={handler} className="ProofStepsViewer_startIcon"/>);
                 break;
         }
 
-        return <div
-            key={index}
-            onClick={this.props.onNavigateAction && (() => this.props.onNavigateAction(index))}
-            className={isSelected? "ProofStepsViewer_move ProofStepsViewer_selected" : "ProofStepsViewer_move"}>
-            <span>{index}. {message}</span>
-        </div>;
+        targetArray.push(
+            <div
+                key={index+"c"}
+                onClick={handler}
+                className={isSelected? "ProofStepsViewer_move ProofStepsViewer_selected" : "ProofStepsViewer_move"}>
+                {move.base.name || ("Internal "+move.base._internalId)}
+            </div>
+        );
     }
 
-    renderReplacementMove(move:FrontendMove, index:number) {
+    appendReplacementMove(move:FrontendMove, index:number, targetArray:any[], handler:any) {
         const isSelected = index === this.props.proofPlayer.currentMoveIndex;
 
-        let message = "";
-        switch(move.selectionType) {
-            case SelectionType.ALL:
-                message = "Replace all at "+move.targetId;
-                break;
-
-            case SelectionType.LEFT:
-                message = "Replace left at "+move.targetId;
-                break;
-
-            case SelectionType.RIGHT:
-                message = "Replace right at "+move.targetId;
-                break;
-
-            case SelectionType.ONE_IN_LEFT:
-                message = "Replace one in left at "+move.targetId;
-                break;
-
-            case SelectionType.ONE_IN_RIGHT:
-                message = "Replace one in right at "+move.targetId;
-                break;
-        }
-
-        return <div
-            key={index}
-            onClick={this.props.onNavigateAction && (() => this.props.onNavigateAction(index))}
-            className={isSelected? "ProofStepsViewer_move ProofStepsViewer_selected" : "ProofStepsViewer_move"}>
-            <span>{index}. {message}</span>
-        </div>;
+        targetArray.push(this.renderIndexDiv(index, isSelected, handler));
+        targetArray.push(<FontAwesomeIcon key={index+"b"} onClick={handler} icon="check" className="ProofStepsViewer_repIcon"/>);
+        targetArray.push(
+            <div
+                key={index+"c"}
+                onClick={handler}
+                className={isSelected? "ProofStepsViewer_move ProofStepsViewer_selected" : "ProofStepsViewer_move"}>
+                {move.base.name || ("Internal "+move.base._internalId)}
+            </div>
+        );
     }
 
-    renderSaveMove(move:FrontendMove, index:number) {
+    appendSaveMove(move:FrontendMove, index:number, targetArray:any[], handler:any) {
         const isSelected = index === this.props.proofPlayer.currentMoveIndex;
 
-        return <div
-            key={index}
-            onClick={this.props.onNavigateAction && (() => this.props.onNavigateAction(index))}
-            className={isSelected? "ProofStepsViewer_move ProofStepsViewer_selected" : "ProofStepsViewer_move"}>
-            <span>{index}. Save {move.targetId} as {move.name}</span>
-        </div>;
+        targetArray.push(this.renderIndexDiv(index, isSelected, handler));
+        targetArray.push(<FontAwesomeIcon key={index+"b"} icon="save" onClick={handler} className="ProofStepsViewer_saveIcon"/>);
+        targetArray.push(
+            <div
+                key={index+"c"}
+                onClick={handler}
+                className={isSelected? "ProofStepsViewer_move ProofStepsViewer_selected" : "ProofStepsViewer_move"}>
+                {move.name}
+            </div>
+        );
     }
 
 
-    renderMove(move:FrontendMove, index:number) {
+    appendMoveMarkup(move:FrontendMove, index:number, targetArray:any[]) {
+        const handler = this.props.onNavigateAction && (() => this.props.onNavigateAction(index));
+
         switch(move.moveType) {
-            case MoveType.START: return this.renderStartMove(move, index);
-            case MoveType.REPLACE: return this.renderReplacementMove(move, index);
-            case MoveType.SAVE: return this.renderSaveMove(move, index);
+            case MoveType.START: return this.appendStartMove(move, index, targetArray, handler);
+            case MoveType.REPLACE: return this.appendReplacementMove(move, index, targetArray, handler);
+            case MoveType.SAVE: return this.appendSaveMove(move, index, targetArray, handler);
         }
+    }
+
+    renderSteps() {
+        const ret = [];
+        this.props.proofPlayer.getMoves().forEach((m,index) => this.appendMoveMarkup(m, index, ret));
+        return ret;
     }
 
     render() {
@@ -147,7 +135,7 @@ export default class ProofStepsViewer extends Component {
                     </button>
                 </div>
                 <div className="ProofStepsViewer_main">
-                    {this.props.proofPlayer.getMoves().map((m,index) => this.renderMove(m, index))}
+                    {this.renderSteps()}
                 </div>
             </div>
         );

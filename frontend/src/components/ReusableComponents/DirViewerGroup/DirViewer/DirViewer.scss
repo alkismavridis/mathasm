@@ -64,17 +64,27 @@
 /*region STATEMENT*/
 .DirViewer_stmtDiv {
   padding:8px;
-  background-color: #2fbdc3;
+  background-color: #fbfbfb;
   color:gray;
   border-radius: 5px;
   margin: 8px 12px 0 0;
   position:relative;
+  border:solid 2px black;
+
+  &.DirViewer_th {
+    //background-color: blue;
+  }
+  &.DirViewer_ax {
+    border-color: #0400ff;
+    background-color: #e7e8ff;
+  }
 
   &:hover .DirViewer_menuBut { display: flex; }
 }
 
 .DirViewer_stmtName {
   font-size: 12px;
-  color:White;
+  color: black;
+  font-weight: bold;
 }
 /*endregion*/

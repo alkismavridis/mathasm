@@ -27,5 +27,9 @@ export default {
                 }
             }
         }
-    `
+    `,
+
+    FETCH_SYMBOLS: `query($ids:[Long!]!) {
+        symbols(ids:$ids) { uid, text }
+    }`,
 }

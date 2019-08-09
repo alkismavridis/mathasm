@@ -1,5 +1,6 @@
 import MathAsmSymbol from "../../entities/backend/MathAsmSymbol";
 import MathAsmDir from "../../entities/backend/MathAsmDir";
+import MathAsmStatement from "../../entities/backend/MathAsmStatement";
 
 export class SymbolRangeUtils {
 
@@ -138,6 +139,13 @@ export class SymbolRangeUtils {
         });
     }
 
+    static addMissingIdsFromStatements(statements:MathAsmStatement[], symbolMap:any, target:Set<number>) {
+        statements.forEach(stmt => {
+            SymbolRangeUtils.addMissingIdsToList(target, symbolMap, stmt.left);
+            SymbolRangeUtils.addMissingIdsToList(target, symbolMap, stmt.right);
+        });
+    }
+
     /**
      * return a Set of symbol ids from the given directory, that are not present in symbolMap.
      * Both the statements and the symbols of the directory will be scanned.
@@ -147,15 +155,18 @@ export class SymbolRangeUtils {
         const ret = new Set();
 
         //2. Add all missing symbols from the left and right part of every statement
-        directory.statements.forEach(stmt => {
-           SymbolRangeUtils.addMissingIdsToList(ret, symbolMap, stmt.left);
-           SymbolRangeUtils.addMissingIdsToList(ret, symbolMap, stmt.right);
-        });
+        SymbolRangeUtils.addMissingIdsFromStatements(directory.statements, symbolMap, ret);
 
         //3. Add the directory's symbols, too.
         SymbolRangeUtils.addMissingIdsFromSymbolsToList(ret, symbolMap, directory.symbols);
 
         //4. Done
+        return ret;
+    }
+
+    static getMissingIdsFromStatements(statements:MathAsmStatement[], symbolMap:any) : Set<number> {
+        const ret = new Set();
+        SymbolRangeUtils.addMissingIdsFromStatements(statements, symbolMap, ret);
         return ret;
     }
     //endregion

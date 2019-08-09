@@ -162,7 +162,7 @@ export default class TheoryExplorer extends Component implements AppNode {
             parent={this}
             symbolMap={this.state.symbolMap}
             parentDir={this.state.activeDir}
-            style={{maxHeight:"50vh"}}
+            style={{maxHeight:"30vh"}}
         />;
     }
 

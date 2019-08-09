@@ -1,20 +1,49 @@
 .ProofStepsViewer_root {
-  padding:8px 16px;
+  padding:8px 0 0 16px;
 
   display: flex;
   flex-direction: column;
 }
 
 .ProofStepsViewer_main {
-  flex-grow: 1;
   overflow: auto;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  margin-top:8px;
 }
 
 .ProofStepsViewer_move {
   color:gray;
   cursor: pointer;
+  padding-right:24px;
+}
 
-  &.ProofStepsViewer_selected {
-    color:red;
-  }
+.ProofStepsViewer_selected {
+  color:red;
+}
+
+.ProofStepsViewer_num {
+  justify-self: end;
+  cursor: pointer;
+}
+
+.ProofStepsViewer_startIcon {
+  color:blue;
+  justify-self: center;
+  cursor: pointer;
+  margin: 0 8px;
+}
+
+.ProofStepsViewer_repIcon {
+  color:orange;
+  justify-self: center;
+  cursor: pointer;
+  margin: 0 8px;
+}
+
+.ProofStepsViewer_saveIcon {
+  color:green;
+  justify-self: center;
+  cursor: pointer;
+  margin: 0 8px;
 }

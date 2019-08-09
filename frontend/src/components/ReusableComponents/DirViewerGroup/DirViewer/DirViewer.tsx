@@ -114,15 +114,14 @@ export default class DirViewer extends Component  implements AppNode {
         style?: CSSProperties,
         className?: string,
     };
-
-    //static defaultProps = {};
     //endregion
 
 
 
     //region LIFE CYCLE
     componentDidMount() {
-        if (this.props.initDirId) this.navigateTo(this.props.initDirId);
+        if(this.props.dir) {/*do nothing*/}
+        else if (this.props.initDirId) this.navigateTo(this.props.initDirId);
         else this.navigateToRoot();
     }
     //endregion
@@ -178,11 +177,11 @@ export default class DirViewer extends Component  implements AppNode {
         });
     }
 
-    getColorForStatement(stmt:MathAsmStatement) : string {
+    getCssClassForStatement(stmt:MathAsmStatement) : string {
         switch(stmt.type) {
-            case StatementType.THEOREM: return "#23d289";
-            case StatementType.AXIOM: return "#2fbdc3";
-            default: return "#c7bb23";
+            case StatementType.THEOREM: return "DirViewer_th";
+            case StatementType.AXIOM: return "DirViewer_ax";
+            default: return "";
         }
     }
     //endregion
@@ -217,12 +216,15 @@ export default class DirViewer extends Component  implements AppNode {
     }
 
     /** Navigates to the parent directory of the current one. Data will be fetched from the server. */
-    goToParentDir() {
+    goToParentDir(event) {
+        const isCtrlDown = event && event.ctrlKey;
+
         if (!this.props.dir) return;
         GraphQL.run(q.FETCH_PARENT, {id: this.props.dir.id})
             .then(resp => {
                 if (resp.dirParent) {
-                    AppEvent.makeDirTabUpdated(this.props.tabId, resp.dirParent).travelAbove(this);
+                    if (isCtrlDown) AppEvent.makeNewTab(resp.dirParent.id, resp.dirParent,false).travelAbove(this);
+                    else AppEvent.makeDirTabUpdated(this.props.tabId, resp.dirParent).travelAbove(this);
                     this.checkForNewSymbols(resp.dirParent);
                 }
                 else QuickInfoService.makeInfo("This is the root directory.");
@@ -231,7 +233,13 @@ export default class DirViewer extends Component  implements AppNode {
     }
 
     /** Navigates to directory with teh given id. Data will be fetched from the server. */
-    navigateTo(id:number) {
+    navigateTo(id:number, event?) {
+        const isCtrlDown = event && event.ctrlKey;
+        if(isCtrlDown) {
+            AppEvent.makeNewTab(id, null, false).travelAbove(this);
+            return;
+        }
+
         GraphQL.run(q.FETCH_DIR, {id: id})
             .then(resp => {
                 if (resp.logicDir) {
@@ -513,8 +521,7 @@ export default class DirViewer extends Component  implements AppNode {
         return (
             <div
                 key={stmt.id}
-                className="DirViewer_stmtDiv"
-                style={{backgroundColor:this.getColorForStatement(stmt)}}
+                className={`DirViewer_stmtDiv ${this.getCssClassForStatement(stmt)}`}
                 onClick={this.handleStatementClick.bind(this, stmt)}
                 title={"Id: "+stmt.id}>
                 <div className="DirViewer_stmtName">{stmt.name}</div>
@@ -560,34 +567,34 @@ export default class DirViewer extends Component  implements AppNode {
                 <button
                     className="MA_roundBut"
                     title="Go to..."
-                    style={{backgroundColor: "#3e49d1", width: "32px", height: "32px", margin:"0 20px 0 4px"}}
+                    style={{backgroundColor: "#3e49d1", width: "32px", height: "32px", margin:"0 4px"}}
                     onClick={this.handleGoToDirClick.bind(this)}>
                     <FontAwesomeIcon icon="plane"/>
                 </button>
                 <button
                     className="MA_roundBut"
-                    title="New directory"
-                    style={{backgroundColor: "orange", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
+                    title="Create directory"
+                    style={{backgroundColor: "orange", width: "32px", height: "32px", fontSize: "18px", margin:"0 20px 0 4px"}}
                     onClick={this.handleCreateDirClick.bind(this)}>
                     <FontAwesomeIcon icon="folder-plus"/>
                 </button>
                 <button
                     className="MA_roundBut"
-                    title="New symbol"
+                    title="Create symbol"
                     style={{backgroundColor: "cornflowerblue", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
                     onClick={this.handleCreateSymbolClick.bind(this)}>
                     <FontAwesomeIcon icon="dollar-sign"/>
                 </button>
                 <button
                     className="MA_roundBut"
-                    title="New axiom"
+                    title="Create axiom"
                     style={{backgroundColor: "red", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
                     onClick={this.handleCreateAxiomClick.bind(this)}>
                     <FontAwesomeIcon icon="font" className="MA_16px"/>
                 </button>
                 <button
                     className="MA_roundBut"
-                    title="New Theorem"
+                    title="Create theorem"
                     style={{backgroundColor: "#24a033", width: "32px", height: "32px", fontSize: "18px", margin:"0 4px"}}
                     onClick={this.handleCreateTheoremClick.bind(this)}>
                     <FontAwesomeIcon icon="cubes"/>
@@ -597,7 +604,7 @@ export default class DirViewer extends Component  implements AppNode {
     }
 
     renderStatements() {
-        const statements = SortingUtils.sortStatementsById(this.props.dir.statements);
+        const statements = this.props.dir.statements;
         if (!statements || statements.length === 0) return null;
 
         return (

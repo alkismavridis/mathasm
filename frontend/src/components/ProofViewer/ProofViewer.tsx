@@ -2,7 +2,6 @@ import React, {Component, CSSProperties} from 'react';
 import "./ProofViewer.scss";
 import cx from 'classnames';
 
-import ModalService from "../../services/ModalService";
 import SelectionType from "../../enums/SelectionType";
 import QuickInfoService from "../../services/QuickInfoService";
 import StatementSide from "../../enums/StatementSide";
@@ -17,8 +16,10 @@ import ProofPlayer from "../../entities/frontend/ProofPlayer";
 import {AppNode} from "../../entities/frontend/AppNode";
 import AppNodeReaction from "../../enums/AppNodeReaction";
 import {AppEvent} from "../../entities/frontend/AppEvent";
-import q from "./ProofViewer.graphql";
 import AppEventType from "../../enums/AppEventType";
+import {SymbolRangeUtils} from "../../services/symbol/SymbolRangeUtils";
+import q from "./ProofViewer.graphql";
+
 
 
 class ProofViewer extends Component implements AppNode {
@@ -56,6 +57,19 @@ class ProofViewer extends Component implements AppNode {
     //endregion
 
 
+    //region EVENT HANDLERS
+    checkForMissingSymbols(statements:MathAsmStatement[]) {
+        const missingIds = SymbolRangeUtils.getMissingIdsFromStatements(statements, this.props.symbolMap);
+        if (missingIds.size === 0) return;
+
+        GraphQL.run(q.FETCH_SYMBOLS, {ids:Array.from(missingIds)}).then(resp => {
+            SymbolRangeUtils.addSymbolsToMap(this.props.symbolMap, resp.symbols);
+            new AppEvent(AppEventType.SYMBOL_MAP_CHANGED, this.props.symbolMap).travelAbove(this);
+        });
+    }
+    //endregion
+
+
     //region LIFE CYCLE
     // constructor(props) { super(props); }
     componentDidMount() {
@@ -63,6 +77,7 @@ class ProofViewer extends Component implements AppNode {
 
         GraphQL.run(q.FETCH_PROOF, {id:this.props.statement.id}).then(resp=> {
             this.state.player.setupFrom(resp.statement.proof);
+            this.checkForMissingSymbols(resp.statement.proof.bases);
             this.forceUpdate();
         });
     }
@@ -352,7 +367,7 @@ class ProofViewer extends Component implements AppNode {
                     {this.renderButtons()}
                     <div>
                         {this.state.player.targets.map((t,index) => this.renderTarget(t, index))}
-                        {this.renderEmptyStmtDiv()}
+                        {/*{this.renderEmptyStmtDiv()}*/}
                     </div>
                 </div>
                 <ProofStepsViewer

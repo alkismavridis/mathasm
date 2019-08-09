@@ -73,7 +73,7 @@ export default class FrontendProof {
                 move.pos
             );
 
-            case SelectionType.ONE_IN_RIGHT: LogicMoveInput.makeReplace(
+            case SelectionType.ONE_IN_RIGHT: return LogicMoveInput.makeReplace(
                 BackendMoveType.ONE_IN_RIGHT,
                 move.targetId,
                 move.base._internalId==null? move.base.id : null,
@@ -82,7 +82,7 @@ export default class FrontendProof {
                 move.pos
             );
 
-            case SelectionType.LEFT: LogicMoveInput.makeReplace(
+            case SelectionType.LEFT: return LogicMoveInput.makeReplace(
                 BackendMoveType.REPLACE_LEFT,
                 move.targetId,
                 move.base._internalId==null? move.base.id : null,
@@ -90,7 +90,7 @@ export default class FrontendProof {
                 move.baseSide
             );
 
-            case SelectionType.RIGHT: LogicMoveInput.makeReplace(
+            case SelectionType.RIGHT: return LogicMoveInput.makeReplace(
                 BackendMoveType.REPLACE_RIGHT,
                 move.targetId,
                 move.base._internalId==null? move.base.id : null,
@@ -98,7 +98,7 @@ export default class FrontendProof {
                 move.baseSide
             );
 
-            case SelectionType.ALL: LogicMoveInput.makeReplace(
+            case SelectionType.ALL: return LogicMoveInput.makeReplace(
                 BackendMoveType.REPLACE_ALL,
                 move.targetId,
                 move.base._internalId==null? move.base.id : null,
