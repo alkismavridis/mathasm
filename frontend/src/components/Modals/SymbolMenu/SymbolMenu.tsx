@@ -1,13 +1,14 @@
 import React, {Component} from 'react';
 import "./SymbolMenu.scss";
 import ModalHeader from "../ModalHeader/ModalHeader";
-import ModalService from "../../../services/ModalService";
 import MathAsmSymbol from "../../../entities/backend/MathAsmSymbol";
+import App from "../../../services/App";
 
 export default class SymbolMenu extends Component {
     //region STATIC
     props : {
         //data
+        app:App,
         modalId?:number,
         symbol:MathAsmSymbol,
 
@@ -23,7 +24,7 @@ export default class SymbolMenu extends Component {
 
     //region EVENT HANDLERS
     closeDialog() {
-        ModalService.removeModal(this.props.modalId);
+        this.props.app.modalService.removeModal(this.props.modalId);
     }
 
     handleMoveClick = () => {

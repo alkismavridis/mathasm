@@ -1,9 +1,9 @@
 import React, {Component, CSSProperties} from 'react';
 import "./LoginForm.css";
-import GraphQL from "../../../../services/GraphQL";
 import ErrorCode from "../../../../enums/ErrorCode";
 import ModalHeader from "../../ModalHeader/ModalHeader";
 import DomUtils from "../../../../services/DomUtils";
+import App from "../../../../services/App";
 
 
 
@@ -24,6 +24,7 @@ class LoginForm extends Component {
     //region FIELDS
     props : {
         //data
+        app:App,
 
         //actions
         onSuccessfulLogin: any,
@@ -66,7 +67,7 @@ class LoginForm extends Component {
     handleFormSubmit(event) {
         event.preventDefault();
 
-        GraphQL.run(q.LOGIN, {userName:this.state.userName, password:this.state.password})
+        this.props.app.graphql.run(q.LOGIN, {userName:this.state.userName, password:this.state.password})
             .then(mutation => {
                 let login;
                 try {

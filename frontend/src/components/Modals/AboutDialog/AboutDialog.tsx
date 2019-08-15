@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import "./AboutDialog.css";
 import ModalHeader from "../ModalHeader/ModalHeader";
-import ModalService from "../../../services/ModalService";
+import App from "../../../services/App";
 
 
 
@@ -15,6 +15,7 @@ export default class AboutDialog extends Component {
     //region STATIC
     props : {
         //data
+        app:App,
         modalId:number,
     };
     //endregion
@@ -63,7 +64,7 @@ export default class AboutDialog extends Component {
             <div className="MA_window AboutDialog_root">
                 <ModalHeader
                     title="About..."
-                    onConfirm={() => ModalService.removeModal(this.props.modalId)}/>
+                    onConfirm={() => this.props.app.modalService.removeModal(this.props.modalId)}/>
                 {this.renderTitle()}
                 {this.renderBlahBlah()}
                 {this.renderContributors()}

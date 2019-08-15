@@ -93,7 +93,6 @@ export default class ProofStepsViewer extends Component {
         );
     }
 
-
     appendMoveMarkup(move:FrontendMove, index:number, targetArray:any[]) {
         const handler = this.props.onNavigateAction && (() => this.props.onNavigateAction(index));
 
@@ -122,7 +121,7 @@ export default class ProofStepsViewer extends Component {
                         className="MA_textBut"
                         style={{marginRight:"8px"}}
                         title="Undo"
-                        disabled={moveCount===0 || currentIndex===0}
+                        disabled={moveCount===0 || currentIndex<=-1}
                         onClick={()=>this.props.onNavigateAction(currentIndex-1)}>
                         <FontAwesomeIcon icon="undo"/>
                     </button>

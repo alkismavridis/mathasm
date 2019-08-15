@@ -1,9 +1,9 @@
 import React, {Component, CSSProperties} from 'react';
 import "./SignInForm.css";
-import GraphQL from "../../../../services/GraphQL";
 import ErrorCode from "../../../../enums/ErrorCode";
 import ModalHeader from "../../ModalHeader/ModalHeader";
 import DomUtils from "../../../../services/DomUtils";
+import App from "../../../../services/App";
 
 
 
@@ -23,6 +23,7 @@ export default class SignInForm extends Component {
     //region FIELDS
     props : {
         //data
+        app:App,
 
         //actions
         onSuccessfulSignIn: any,
@@ -59,7 +60,7 @@ export default class SignInForm extends Component {
     handleFormSubmit(event) {
         event.preventDefault();
 
-        GraphQL.run(q.SIGN_IN, {userName:this.state.userName, password:this.state.password})
+        this.props.app.graphql.run(q.SIGN_IN, {userName:this.state.userName, password:this.state.password})
             .then(data => {
                 if (!data || !data.authWSector || !data.authWSector.signin) return;
                 this.props.onSuccessfulSignIn(data.signin);

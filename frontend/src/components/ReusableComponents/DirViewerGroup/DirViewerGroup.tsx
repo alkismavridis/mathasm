@@ -3,14 +3,9 @@ import cx from 'classnames';
 import "./DirViewerGroup.scss";
 import DirViewer from "./DirViewer/DirViewer";
 import MathAsmDir from "../../../entities/backend/MathAsmDir";
-import MathAsmStatement from "../../../entities/backend/MathAsmStatement";
-import {AppNode} from "../../../entities/frontend/AppNode";
-import {AppEvent} from "../../../entities/frontend/AppEvent";
-import AppNodeReaction from "../../../enums/AppNodeReaction";
-import MapUtils from "../../../services/MapUtils";
-import AppEventType from "../../../enums/AppEventType";
-import {NONAME} from "dns";
 import SortingUtils from "../../../services/symbol/SortingUtils";
+import App from "../../../services/App";
+import TheoryExplorerController from "../../TheoryExplorer/TheoryExplorerController";
 
 export class MathAsmTab {
     tabId:number;
@@ -19,12 +14,13 @@ export class MathAsmTab {
 }
 
 
-export default class DirViewerGroup extends Component implements AppNode {
+export default class DirViewerGroup extends Component {
     //region FIELDS
     props : {
         //data
         /** A cache of all loaded symbols. Used to display statements. */
-        parent:AppNode,
+        app:App,
+        controller:TheoryExplorerController,
         symbolMap:any,
 
         //actions
@@ -43,9 +39,6 @@ export default class DirViewerGroup extends Component implements AppNode {
         ] as MathAsmTab[],
         selectedTabId:1
     };
-
-
-    _tabRefs = [];
     //endregion
 
 
@@ -63,46 +56,12 @@ export default class DirViewerGroup extends Component implements AppNode {
 
 
 
-    //region APP NODE
-    getChildMap(): any {
-        const ret = {};
-        this._tabRefs.forEach((el, index)=>ret[index]= {current:el});
-        return ret;
-    }
-
-    getParent(): AppNode {
-        return this.props.parent;
-    }
-
-    handleChildEvent(event: AppEvent): AppNodeReaction {
-        switch (event.type) {
-            case AppEventType.DIR_TAB_UPDATED:
-                this.handleDirChange(event.data.tabId, event.data.newDir);
-                AppEvent.makeDirChange(event.data.newDir).travelAbove(this);
-                return AppNodeReaction.NONE;
-
-            case AppEventType.ADD_NEW_TAB:
-                this.appendTab(event.data.dirId, event.data.dirData, event.data.focus);
-                return AppNodeReaction.NONE;
-
-            default: return AppNodeReaction.UP;
-        }
-    }
-
-    handleParentEvent(event: AppEvent): AppNodeReaction {
-        switch (event.type) {
-            case AppEventType.STMT_UPDATED:
-            case AppEventType.PROOF_SAVED:
-                return AppNodeReaction.DOWN;
-
-            default: return AppNodeReaction.NONE;
-        }
-    }
-    //endregion
-
-
-
     //region EVENT HANDLERS
+    handleTabUpdated(tabId:number, newDir:MathAsmDir) {
+        this.handleDirChange(tabId, newDir);
+        if(tabId==this.state.selectedTabId) this.props.controller.onDirChanged.next(newDir);
+    }
+
     handleDirChange(tabId:number, newDirectory:MathAsmDir) {
         //1. Get the tab to update
         const newTabs = this.state.tabs;
@@ -126,12 +85,17 @@ export default class DirViewerGroup extends Component implements AppNode {
             0
         );
 
-        //2. Add the tab
+        //2. Sort the statements
+        if(dirData && dirData.statements) {
+            dirData.statements = SortingUtils.sortByTypeAndId(dirData.statements);
+        }
+
+        //3. Add the tab
         const tabs = this.state.tabs;
         const newTabId = maxTabId? maxTabId+1 : 1;
         tabs.push({tabId:newTabId, initDirId:initDirId, currentDir:dirData});
 
-        //3. Update the state
+        //4. Update the state
         this.setState({
             tabs:tabs,
             selectedTabId:focus? newTabId : this.state.selectedTabId
@@ -146,7 +110,15 @@ export default class DirViewerGroup extends Component implements AppNode {
         //2. Update the tabs and the state.
         const newTabs = this.state.tabs;
         newTabs.splice(indexToRemove, 1);
-        this.setState({tabs:newTabs, selectedTabId:this.calculateSelectedIdFor(newTabs)});
+
+        const selectedId = this.calculateSelectedIdFor(newTabs);
+        this.setState({tabs:newTabs, selectedTabId:selectedId});
+
+        if(selectedId!=null) {
+            const tabData = this.state.tabs.find(t => t.tabId==selectedId);
+            this.props.controller.onDirChanged.next(tabData.currentDir);
+        }
+        else this.props.controller.onDirChanged.next(null);
     }
 
     /** To be called when a tab is being clicked. If shift key was down, the tab will be deleted, otherwise selected*/
@@ -154,7 +126,7 @@ export default class DirViewerGroup extends Component implements AppNode {
         if(event.shiftKey) this.removeTab(tabData.tabId);
         else {
             this.setState({selectedTabId:tabData.tabId});
-            AppEvent.makeDirChange(tabData.currentDir).travelAbove(this);
+            this.props.controller.onDirChanged.next(tabData.currentDir);
         }
     }
     //endregion
@@ -181,15 +153,15 @@ export default class DirViewerGroup extends Component implements AppNode {
     }
 
     render() {
-        this._tabRefs = [];
-
         return (
             <div className={cx("DirViewerGroup_root", this.props.className)} style={this.props.style}>
                 {this.renderTabs(this.state.selectedTabId)}
                 <div className="DirViewerGroup_main">
                     {this.state.tabs.map((t,index) => <DirViewer
-                            ref={el => this._tabRefs[index]=el}
-                            parent={this}
+                            app={this.props.app}
+                            controller={this.props.controller}
+                            onAddTab={this.appendTab.bind(this)}
+                            onTabUpdated={this.handleTabUpdated.bind(this)}
                             dir={t.currentDir}
                             style={{flex:1, overflow:"auto"}}
                             key={index}

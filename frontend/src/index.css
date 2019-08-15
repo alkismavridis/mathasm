@@ -24,6 +24,8 @@ html, body {
 
 
 /*region LAYOUT*/
+.MA_block { display: block; }
+
 .MA_flexCenter {
     display: flex;
     justify-content: center;

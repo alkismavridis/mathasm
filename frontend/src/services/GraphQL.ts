@@ -1,14 +1,15 @@
 import Urls from "../constants/Urls";
 import ErrorCode from "../enums/ErrorCode";
-import App from "../components/App/App";
-import QuickInfoService from "./QuickInfoService";
-import ModalService from "./ModalService";
-import LoginDialog from "../components/Modals/LoginDialog/LoginDialog";
 import GraphqlError from "../entities/frontend/GraphqlError";
+import App from "./App";
 
 
 
 export default class GraphQL {
+    constructor(private app:App) {}
+
+
+
     //region HTTP RESPONSE GLOBAL HANDLING
     /**
      * Global response handler for the frontend app.
@@ -19,7 +20,7 @@ export default class GraphQL {
      * - If it was an error, an error object will be constructed, passed though our global error handler,
      *   and then passed on tp the caller's catch() method.
      * */
-    static resolveOrReject(data:any) : any {
+    private resolveOrReject = (data:any) : any => {
         //1. Check for errors
         if (data.errors) {
             const firstWithCode = data.errors.find(e => e.extensions && e.extensions.code);
@@ -29,13 +30,13 @@ export default class GraphQL {
                 data.errors
             );
 
-            GraphQL.handleGraphqlError(errorObject);
+            this.handleGraphqlError(errorObject);
             throw errorObject;
         }
 
         //2. Resolve the promise.
         else return data.data;
-    }
+    };
     //endregion
 
 
@@ -52,15 +53,15 @@ export default class GraphQL {
      *  code: the ErrorCode enum code that we found on graphqlErrors field. Most of the times, there is only one error, so this is the only thing that the local handler would care about.
      * }
      * */
-    static handleGraphqlError(error:GraphqlError) {
+    private handleGraphqlError(error:GraphqlError) {
         switch(error.code) {
             case ErrorCode.UNAUTHORIZED:
-                ModalService.showLogin();
+                this.app.modalService.showLogin();
                 error.handled = true; //this way we inform the caller that this error is already handled. Still, the called may choose to do more things with it.
                 break;
 
             case ErrorCode.CONNECTION_ERROR:
-                QuickInfoService.makeWarning(null, "Connection lost.");
+                this.app.quickInfoService.makeWarning(null, "Connection lost.");
                 error.handled = true; //this way we inform the caller that this error is already handled. Still, the called may choose to do more things with it.
                 break;
         }
@@ -68,12 +69,12 @@ export default class GraphQL {
     //endregion
 
     /** runs a graphql query*/
-    static run(query:string, params?:any, name?:string) : Promise<any> {
+    run(query:string, params?:any, name?:string) : Promise<any> {
         if (!params && !name) {
             return fetch(Urls.graphql.simple, {
                 method: 'post',
                 headers: {
-                    'Authorization': App.getSessionKey(),
+                    'Authorization': this.app.sessionKey,
                     'Content-Type': 'application/json'
                 },
                 body: query,
@@ -81,14 +82,14 @@ export default class GraphQL {
             .then(response => response.json(), () => {
                 throw {graphqlErrors:[], code:ErrorCode.CONNECTION_ERROR};
             })
-            .then(GraphQL.resolveOrReject);
+            .then(this.resolveOrReject);
         }
 
         else {
             return fetch(Urls.graphql.params, {
                 method: 'post',
                 headers: {
-                    'Authorization': App.getSessionKey(),
+                    'Authorization': this.app.sessionKey,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -100,16 +101,16 @@ export default class GraphQL {
             .then(response => response.json(), () => {
                 throw {code:ErrorCode.CONNECTION_ERROR};
             })
-            .then(GraphQL.resolveOrReject);
+            .then(this.resolveOrReject);
         }
     }
 
     /** calls a url. */
-    static runUrl(url:string, body:any) : Promise<any> {
+    runUrl(url:string, body:any) : Promise<any> {
         return fetch(url, {
             method: 'post',
             headers: {
-                'Authorization': App.getSessionKey(),
+                'Authorization': this.app.sessionKey,
                 'Content-Type': 'application/json'
             },
             body: body, //TODO chain one more promise to check various errors (network etc)

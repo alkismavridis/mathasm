@@ -3,7 +3,7 @@
  * Any property passed on addNotification will override those.
  * See https://www.npmjs.com/package/react-notifications-component for more info
  */
-import App from "../components/App/App";
+import App from "./App";
 
 
 const DEFAULT_NOTIFICATION_OPTIONS = {
@@ -18,52 +18,37 @@ const DEFAULT_NOTIFICATION_OPTIONS = {
 
 
 export default class QuickInfoService {
-    static makeSuccess(message:string, title?:string) {
-        const group = App.getNotificationGroup();
-        if (!group) return;
+    constructor(private app:App) {}
 
+
+    makeSuccess(message:string, title?:string) {
         const mergedNotification = Object.assign({}, DEFAULT_NOTIFICATION_OPTIONS, {title: title, message: message});
-        group.addNotification(mergedNotification);
+        this.app.onNotificationAdded.next(mergedNotification);
     }
 
-    static makeWarning(message:string, title?:string) {
-        const group = App.getNotificationGroup();
-        if (!group) return;
-
+    makeWarning(message:string, title?:string) {
         const mergedNotification = Object.assign({}, DEFAULT_NOTIFICATION_OPTIONS, {title: title, message: message, type:"warning"});
-        group.addNotification(mergedNotification);
+        this.app.onNotificationAdded.next(mergedNotification);
     }
 
-    static makeError(message:string, title?:string) {
-        const group = App.getNotificationGroup();
-        if (!group) return;
-
+    makeError(message:string, title?:string) {
         const mergedNotification = Object.assign({}, DEFAULT_NOTIFICATION_OPTIONS, {title: title, message: message, type:"danger"});
-        group.addNotification(mergedNotification);
+        this.app.onNotificationAdded.next(mergedNotification);
     }
 
-    static makeInfo(message:string, title?:string) {
-        const group = App.getNotificationGroup();
-        if (!group) return;
-
+    makeInfo(message:string, title?:string) {
         const mergedNotification = Object.assign({}, DEFAULT_NOTIFICATION_OPTIONS, {title: title, message: message, type:"info"});
-        group.addNotification(mergedNotification);
+        this.app.onNotificationAdded.next(mergedNotification);
     }
 
-    static makeDefault(message:string, title?:string) {
-        const group = App.getNotificationGroup();
-        if (!group) return;
-
+    makeDefault(message:string, title?:string) {
         const mergedNotification = Object.assign({}, DEFAULT_NOTIFICATION_OPTIONS, {title: title, message: message, type:"default"});
-        group.addNotification(mergedNotification);
+        this.app.onNotificationAdded.next(mergedNotification);
     }
 
     /** A bit lower level. It just merges the incoming object with default settings and passes it to react-notifications lib. */
-    static show(notification:any) {
-        const group = App.getNotificationGroup();
-        if (!group) return;
-
+    show(notification:any) {
         const mergedNotification = Object.assign({}, DEFAULT_NOTIFICATION_OPTIONS, notification);
-        group.addNotification(mergedNotification);
+        this.app.onNotificationAdded.next(mergedNotification);
     }
 }

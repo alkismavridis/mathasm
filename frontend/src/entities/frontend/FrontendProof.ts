@@ -37,7 +37,7 @@ export default class FrontendProof {
             if(this.moves==null && this.moves.length==0) return targets;
             this.moves[0].execute(targets);
             currentIndex=0;
-        };
+        }
 
         //1. Update the targets
         const difference = newMoveIndex - currentIndex;

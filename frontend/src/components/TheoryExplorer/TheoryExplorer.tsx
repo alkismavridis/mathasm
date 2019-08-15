@@ -1,4 +1,4 @@
-import React, {Component, createRef, CSSProperties} from 'react';
+import React, {Component, CSSProperties} from 'react';
 import "./TheoryExplorer.css";
 import SymbolCreator from "../SymbolCreator/SymbolCreator";
 import AxiomCreator from "../AxiomCreator/AxiomCreator";
@@ -7,10 +7,9 @@ import TheoremCreator from "../TheoremCreator/TheoremCreator";
 import MathAsmDir from "../../entities/backend/MathAsmDir";
 import ProofViewer from "../ProofViewer/ProofViewer";
 import MathAsmStatement from "../../entities/backend/MathAsmStatement";
-import {AppNode} from "../../entities/frontend/AppNode";
-import {AppEvent} from "../../entities/frontend/AppEvent";
-import AppNodeReaction from "../../enums/AppNodeReaction";
-import AppEventType from "../../enums/AppEventType";
+import App from "../../services/App";
+import {Subscription} from "rxjs/index";
+import TheoryExplorerController from "./TheoryExplorerController";
 
 enum Mode {
     VIEW = 1,
@@ -22,10 +21,11 @@ enum Mode {
 }
 
 
-export default class TheoryExplorer extends Component implements AppNode {
+export default class TheoryExplorer extends Component {
     //region FIELDS
     props : {
         //data
+        app:App,
 
         //actions
 
@@ -45,62 +45,55 @@ export default class TheoryExplorer extends Component implements AppNode {
         statementForProof:null as MathAsmStatement,
     };
 
-    childMap = {
-      dirViewerGroup: createRef<DirViewerGroup>(),
-      axiomCreator: createRef<AxiomCreator>(),
-      theoremCreator: createRef<TheoremCreator>(),
-      proofViewer : createRef<ProofViewer>(),
-    };
+    private subscriptions:Subscription[] = [];
+    private _controller = new TheoryExplorerController();
     //endregion
 
 
 
     //region LIFE CYCLE
-    // constructor(props) { super(props); }
+    constructor(props) {
+        super(props);
+
+        this.subscriptions.push(
+            this._controller.onSymbolRenamed.subscribe(s => this.forceUpdate())
+        );
+
+        this.subscriptions.push(
+            this._controller.onSymbolMapUpdated.subscribe(map => {
+                this.setState({symbolMap:map});
+            })
+        );
+
+        this.subscriptions.push(
+            this._controller.onShowProof.subscribe(stmt => {
+                this.setState({mode:Mode.SHOW_PROOF, statementForProof:stmt});
+            })
+        );
+
+        this.subscriptions.push(
+            this._controller.onDirChanged.subscribe(dir => {
+                this.setState({activeDir:dir});
+            })
+        );
+
+        this.subscriptions.push(
+            this._controller.onProofSaved.subscribe(info => {
+                this.setState({mode:Mode.VIEW});
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.subscriptions.forEach(s => s.unsubscribe());
+        this.subscriptions = [];
+    }
+
     // static getDerivedStateFromProps(nextProps, prevState) {}
     // shouldComponentUpdate(nextProps, nextState) { return true; }
     // getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
     // componentDidUpdate(prevProps, prevState, snapshot) {}
-    // componentWillUnmount() {}
     // componentDidCatch(error, info) { console.error("Exception caught"); }
-    //endregion
-
-
-
-    //region APP NODE
-    getChildMap(): any { return this.childMap; }
-
-    getParent(): AppNode {
-        return null; //TODO connect this with page
-    }
-
-    handleChildEvent(event: AppEvent): AppNodeReaction {
-        switch (event.type) {
-            case AppEventType.STMT_SELECTED:
-            case AppEventType.SYMBOL_SELECTED:
-            case AppEventType.SYMBOL_RENAMED:
-            case AppEventType.STMT_UPDATED:
-                return AppNodeReaction.DOWN;
-
-            case AppEventType.SYMBOL_MAP_CHANGED:
-                this.setState({symbolMap:event.data});
-                return AppNodeReaction.NONE;
-
-            case AppEventType.SHOW_PROOF:
-                this.setState({mode:Mode.SHOW_PROOF, statementForProof:event.data});
-                return AppNodeReaction.NONE;
-
-            case AppEventType.DIR_CHANGED:
-                this.setState({activeDir:event.data});
-                return AppNodeReaction.NONE;
-
-            default: return AppNodeReaction.UP;
-        }
-    }
-
-    handleParentEvent(event: AppEvent): AppNodeReaction {
-        return AppNodeReaction.NONE;
-    }
     //endregion
 
 
@@ -140,8 +133,9 @@ export default class TheoryExplorer extends Component implements AppNode {
     //region RENDERING
     renderSymbolCreator() {
         return <SymbolCreator
+            app={this.props.app}
             parentId={this.state.activeDir.id}
-            parent={this}
+            style={{marginLeft:"8px"}}
             onSymbolCreated={s => {
                 const newDir = Object.assign({}, this.state.activeDir);
                 newDir.symbols.push(s);
@@ -151,15 +145,15 @@ export default class TheoryExplorer extends Component implements AppNode {
 
     renderAxiomCreator() {
         return <AxiomCreator
-            ref={this.childMap.axiomCreator}
-            parent={this}
+            app={this.props.app}
+            controller={this._controller}
             parentDir={this.state.activeDir}/>;
     }
 
     renderTheoremCreator() {
         return <TheoremCreator
-            ref={this.childMap.theoremCreator}
-            parent={this}
+            app={this.props.app}
+            controller={this._controller}
             symbolMap={this.state.symbolMap}
             parentDir={this.state.activeDir}
             style={{maxHeight:"30vh"}}
@@ -168,8 +162,8 @@ export default class TheoryExplorer extends Component implements AppNode {
 
     renderProofViewer() {
         return <ProofViewer
-            ref={this.childMap.proofViewer}
-            parent={this}
+            app={this.props.app}
+            controller={this._controller}
             symbolMap={this.state.symbolMap}
             parentDir={this.state.activeDir}
             statement={this.state.statementForProof}
@@ -186,8 +180,8 @@ export default class TheoryExplorer extends Component implements AppNode {
                 {this.state.mode === Mode.SHOW_PROOF && this.renderProofViewer()}
 
                 <DirViewerGroup
-                    ref={this.childMap.dirViewerGroup}
-                    parent={this}
+                    controller={this._controller}
+                    app={this.props.app}
                     symbolMap={this.state.symbolMap}
                     onCreateSymbolStart={this.toggleSymbolCreationMode.bind(this)}
                     onCreateAxiomStart={this.toggleAxiomCreationMode.bind(this)}

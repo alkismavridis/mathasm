@@ -1,50 +1,57 @@
 import React from 'react';
 
-import App from "../components/App/App";
 import LoginDialog from "../components/Modals/LoginDialog/LoginDialog";
 import StringInputDialog from "../components/Modals/StringInputDialog/StringInputDialog";
 import ModalData from "../entities/frontend/ModalData";
+import App from "./App";
 
 export default class ModalService {
-    //region ADDING WINDOWS
-    /** Creates a modal window with the given content and id. If no id is provided, one will automatically created. */
-    static addModal(id:number, content:any) {
-        const modalGroup = App.getModalGroup();
-        if (!modalGroup) return;
+    private _modalData: ModalData[] = [];
+    constructor(private app:App) {}
 
-        modalGroup.addModal({content:content, id:id || modalGroup.getNextId()});
+
+
+
+    //region GETTERS
+    get modalData(): ReadonlyArray<ModalData> { return this._modalData; }
+
+    getNextId() : number {
+        const maxExistingId = this._modalData.reduce((prev, curr) =>  Math.max(prev, curr.id), 0);
+        return maxExistingId+1;
     }
 
-    /**
-     * Accepts a modalData object, as defined in ModalGroup.tsx
-     * If the given object does not contain an id, one will be automatically created.
-     *  */
-    static addModalData(data:ModalData) {
-        const modalGroup = App.getModalGroup();
-        if (!modalGroup) return;
+    get lastModalData() : ModalData {
+        return this._modalData[this._modalData.length - 1];
+    }
+    //endregion
 
-        if (!data.id) data.id = modalGroup.getNextId();
-        modalGroup.addModal(data);
+
+
+    //region ADDING WINDOWS
+    /** Creates a modal window with the given content and id. If no id is provided, one will automatically created. */
+    addModal(id:number, content:any) {
+        this._modalData.push({content:content, id:id || this.getNextId(), closeOnOutsideClick:true});
+        this.app.onModalChanged.next(this._modalData);
     }
     //endregion
 
 
 
     //region SHORTCUTS
-    static showLogin() {
-        const id = ModalService.getNextId();
-        ModalService.addModal(
+    showLogin() {
+        const id = this.getNextId();
+        this.addModal(
             id,
-            <LoginDialog onLogin={user => {
-                App.setUser(user);
-                ModalService.removeModal(id);
+            <LoginDialog app={this.app} onLogin={user => {
+                this.app.user = user;
+                this.app.modalService.removeModal(id);
             }}/>
         );
     }
 
-    static showTextGetter(title:string, placeholder:string, onSubmit:Function) {
-        const id = ModalService.getNextId();
-        ModalService.addModal(
+    showTextGetter(title:string, placeholder:string, onSubmit:Function) {
+        const id = this.getNextId();
+        this.addModal(
             id,
             <StringInputDialog
                 title={title}
@@ -57,18 +64,14 @@ export default class ModalService {
 
 
     //region MISC
-    static getNextId() : number {
-        const modalGroup = App.getModalGroup();
-        if (!modalGroup) return -1;
+    removeModal(id:number) {
+        //1. Local the modal to remove
+        const index = this._modalData.findIndex(m => m.id === id);
+        if (index<0) return;
 
-        return modalGroup.getNextId();
-    }
-
-    static removeModal(id:number) {
-        const modalGroup = App.getModalGroup();
-        if (!modalGroup) return;
-
-        modalGroup.removeModal(id);
+        //2. Remove the modal
+        this._modalData.splice(index, 1);
+        this.app.onModalChanged.next(this._modalData);
     }
     //endregion
 

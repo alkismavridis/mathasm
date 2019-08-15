@@ -1,6 +1,8 @@
 import React, {Component} from 'react';
 import "./ModalGroup.css";
 import ModalData from "../../../entities/frontend/ModalData";
+import App from "../../../services/App";
+import {Subscription} from "rxjs/index";
 
 
 /**
@@ -14,78 +16,65 @@ import ModalData from "../../../entities/frontend/ModalData";
  * */
 export default class ModalGroup extends Component {
     //region FIELDS
-    props : {};
+    props : {
+        app:App,
+    };
 
     state = {
-        modals:[] as ModalData[]
+        modalData: [] as ModalData[]
     };
 
     _keyHandler = null;
+    private subscriptions:Subscription[] = [];
     //endregion
 
 
 
     //region LIFE CYCLE
-    // constructor(props) { super(props); }
-    // componentDidMount() {}
-    // static getDerivedStateFromProps(nextProps, prevState) {}
-    // shouldComponentUpdate(nextProps, nextState) { return true; }
-    // getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
-    // componentDidUpdate(prevProps, prevState, snapshot) {}
-    // componentWillUnmount() {}
-    // componentDidCatch(error, info) { console.error("Exception caught"); }
+    constructor(props) {
+        super(props);
+        this.state.modalData = this.props.app.modalService.modalData.slice();
+
+        this.subscriptions.push(
+            this.props.app.onModalChanged.subscribe(data => this.handleModalChange(data))
+        );
+    }
+
+    componentWillUnmount() {
+        this.subscriptions.forEach(s => s.unsubscribe());
+        this.subscriptions = [];
+    }
     //endregion
 
 
+
+
     //region EVENT HANDLERS
+    handleModalChange(data:ReadonlyArray<ModalData>) {
+        if (data.length===0 && this._keyHandler) {
+            document.body.removeEventListener("keydown", this._keyHandler);
+            this._keyHandler = null;
+        }
+
+        if (this.state.modalData.length===0 && data.length>0) {
+            this._keyHandler = this.handleEscape.bind(this);
+            document.body.addEventListener("keydown", this._keyHandler);
+        }
+
+        this.setState({modalData:data});
+    }
+
     handleEscape(e) {
         if (e.keyCode !== 27) return; //we care only about escape key
-        const lastModal = this.state.modals[this.state.modals.length-1];
+        const lastModal = this.props.app.modalService.lastModalData;
         if (!lastModal) return;
-        this.removeModal(lastModal.id);
+        this.props.app.modalService.removeModal(lastModal.id);
     }
 
     handleOverlayClick(modalData:ModalData, event) {
         if (modalData.closeOnOutsideClick===false) return;
         if(!event.target.classList.contains("ModalGroup_overlay")) return; //internal window click
-        this.removeModal(modalData.id);
-    }
-    //endregion
-
-
-
-    //region API
-    addModal(modalData:ModalData) {
-        //1. Append handler to body if this is our first modal
-        if (this.state.modals.length===0) {
-            this._keyHandler = this.handleEscape.bind(this);
-            document.body.addEventListener("keydown", this._keyHandler);
-        }
-
-        //2. Add the modal in the state
-        this.setState({modals: [...this.state.modals, modalData]});
-    }
-
-    getNextId() :number {
-        const maxExistingId = this.state.modals.reduce((prev, curr) =>  Math.max(prev, curr.id), 0);
-        return maxExistingId+1;
-    }
-
-    removeModal(id) {
-        //1. Local the modal to remove
-        const index = this.state.modals.findIndex(m => m.id === id);
-        if (index<0) return;
-
-        //2. Remove the modal
-        const newList = this.state.modals;
-        newList.splice(index, 1);
-        this.setState({modals:newList});
-
-        //3. Remove the key handler from body, if this was our last modal.
-        if (newList.length===0 && this._keyHandler) {
-            document.body.removeEventListener("keydown", this._keyHandler);
-            this._keyHandler = null;
-        }
+        this.props.app.modalService.removeModal(modalData.id);
     }
     //endregion
 
@@ -106,7 +95,7 @@ export default class ModalGroup extends Component {
     }
 
     render() {
-        return this.state.modals.map(data => this.renderModal(data));
+        return this.state.modalData.map(data => this.renderModal(data));
     }
 
     //endregion

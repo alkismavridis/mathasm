@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
 import "./DbVisualisationPage.css";
-import GraphQL from "../../../services/GraphQL";
 import Urls from "../../../constants/Urls";
 import vis from "vis";
 import Dropdown from "../../ReusableComponents/Inputs/Dropdown/Dropdown";
+import App from "../../../services/App";
 
 
 enum GraphTypes {
@@ -35,6 +35,10 @@ const SAVED_COMMANDS = [
 
 class DbVisualisationPage extends Component {
     //region PROPS AND STATE
+    props: {
+        app:App,
+    };
+
     state = {
         cypherCommand: SAVED_COMMANDS[0].query,
         selectedNode:null ,
@@ -132,7 +136,7 @@ class DbVisualisationPage extends Component {
 
         //2. Do the request
         try {
-            const resp = await GraphQL.runUrl(Urls.cypher.raw, this.state.cypherCommand);
+            const resp = await this.props.app.graphql.runUrl(Urls.cypher.raw, this.state.cypherCommand);
             if (resp.data) this.integrateDBData(resp.data);
             else window.alert(resp.message);
         }

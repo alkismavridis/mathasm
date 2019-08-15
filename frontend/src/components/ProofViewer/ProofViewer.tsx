@@ -3,30 +3,27 @@ import "./ProofViewer.scss";
 import cx from 'classnames';
 
 import SelectionType from "../../enums/SelectionType";
-import QuickInfoService from "../../services/QuickInfoService";
 import StatementSide from "../../enums/StatementSide";
 import MathAsmDir from "../../entities/backend/MathAsmDir";
 import SentenceMatch from "../../entities/frontend/SentenceMatch";
-import GraphQL from "../../services/GraphQL";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import ProofStepsViewer from "../ReusableComponents/ProofStepsViewer/ProofStepsViewer";
 import Statement from "../ReusableComponents/Statement/Statement";
 import MathAsmStatement from "../../entities/backend/MathAsmStatement";
 import ProofPlayer from "../../entities/frontend/ProofPlayer";
-import {AppNode} from "../../entities/frontend/AppNode";
-import AppNodeReaction from "../../enums/AppNodeReaction";
-import {AppEvent} from "../../entities/frontend/AppEvent";
-import AppEventType from "../../enums/AppEventType";
 import {SymbolRangeUtils} from "../../services/symbol/SymbolRangeUtils";
 import q from "./ProofViewer.graphql";
+import App from "../../services/App";
+import TheoryExplorerController from "../TheoryExplorer/TheoryExplorerController";
 
 
 
-class ProofViewer extends Component implements AppNode {
+class ProofViewer extends Component {
     //region FIELDS
     props : {
         //data
-        parent:AppNode,
+        app:App,
+        controller:TheoryExplorerController,
         symbolMap:any,
         parentDir:MathAsmDir,
         statement:MathAsmStatement,
@@ -57,25 +54,20 @@ class ProofViewer extends Component implements AppNode {
     //endregion
 
 
-    //region EVENT HANDLERS
-    checkForMissingSymbols(statements:MathAsmStatement[]) {
-        const missingIds = SymbolRangeUtils.getMissingIdsFromStatements(statements, this.props.symbolMap);
-        if (missingIds.size === 0) return;
-
-        GraphQL.run(q.FETCH_SYMBOLS, {ids:Array.from(missingIds)}).then(resp => {
-            SymbolRangeUtils.addSymbolsToMap(this.props.symbolMap, resp.symbols);
-            new AppEvent(AppEventType.SYMBOL_MAP_CHANGED, this.props.symbolMap).travelAbove(this);
-        });
-    }
-    //endregion
-
-
     //region LIFE CYCLE
     // constructor(props) { super(props); }
     componentDidMount() {
+        this.fetchProof();
+    }
+
+    componentDidUpdate(prevProps) {
+        if(this.props.statement != prevProps.statement) this.fetchProof();
+    }
+
+    fetchProof() {
         if (this.props.statement==null) return;
 
-        GraphQL.run(q.FETCH_PROOF, {id:this.props.statement.id}).then(resp=> {
+        this.props.app.graphql.run(q.FETCH_PROOF, {id:this.props.statement.id}).then(resp=> {
             this.state.player.setupFrom(resp.statement.proof);
             this.checkForMissingSymbols(resp.statement.proof.bases);
             this.forceUpdate();
@@ -84,28 +76,15 @@ class ProofViewer extends Component implements AppNode {
     //endregion
 
 
+    //region EVENT HANDLERS
+    checkForMissingSymbols(statements:MathAsmStatement[]) {
+        const missingIds = SymbolRangeUtils.getMissingIdsFromStatements(statements, this.props.symbolMap);
+        if (missingIds.size === 0) return;
 
-    //region APP NODE
-    getChildMap(): any {
-        return null;
-    }
-
-    getParent(): AppNode {
-        return this.props.parent;
-    }
-
-    handleChildEvent(event: AppEvent): AppNodeReaction {
-        return AppNodeReaction.UP;
-    }
-
-    handleParentEvent(event: AppEvent): AppNodeReaction {
-        switch (event.type) {
-            case AppEventType.SYMBOL_RENAMED:
-                this.forceUpdate();
-                return AppNodeReaction.NONE;
-
-            default: return AppNodeReaction.NONE;
-        }
+        this.props.app.graphql.run(q.FETCH_SYMBOLS, {ids:Array.from(missingIds)}).then(resp => {
+            SymbolRangeUtils.addSymbolsToMap(this.props.symbolMap, resp.symbols);
+            this.props.controller.onSymbolMapUpdated.next(this.props.symbolMap);
+        });
     }
     //endregion
 
@@ -133,7 +112,7 @@ class ProofViewer extends Component implements AppNode {
         const didChange = this.state.player.setSelection(newSelectionType, null);
 
         if (didChange) this.setState({player:this.state.player});
-        else QuickInfoService.makeWarning("This selection is not allowed for the selected base and target.");
+        else this.props.app.quickInfoService.makeWarning("This selection is not allowed for the selected base and target.");
     }
 
     /** Attempt to switch to either LEFT or RIGHT selection. */
@@ -144,7 +123,7 @@ class ProofViewer extends Component implements AppNode {
 
         //2. Handle result
         if (success) this.setState({player:this.state.player});
-        else QuickInfoService.makeWarning("Illegal move: Could not perform sentence selection.");
+        else this.props.app.quickInfoService.makeWarning("Illegal move: Could not perform sentence selection.");
     }
 
     switchToSingleSelectionMode() {
@@ -154,7 +133,7 @@ class ProofViewer extends Component implements AppNode {
 
         //2. Handle result
         if (success) this.setState({player:this.state.player});
-        else QuickInfoService.makeWarning("Illegal move: Could not perform single selection.");
+        else this.props.app.quickInfoService.makeWarning("Illegal move: Could not perform single selection.");
     }
 
     /** The user could interact with this component with the keyboard too. Here are the controls: */
@@ -227,12 +206,10 @@ class ProofViewer extends Component implements AppNode {
     renderTarget(target:MathAsmStatement, index:number) {
         if (!target) return <div>Empty target</div>;
 
-        const changeHandler = () => this.selectTarget(this.state.player.selectedTargetIndex===index? null : index);
-
         const player = this.state.player;
         const isSelected = player.selectedTargetIndex===index;
         return <div key={index} className="MA_flexStartDown">
-            <button
+            <div
                 className="MA_textBut"
                 title="Replace (enter)"
                 style={{
@@ -241,117 +218,35 @@ class ProofViewer extends Component implements AppNode {
                     color:isSelected? "#001fff" : "#001fff73",
                     backgroundColor:"transparent",
                     marginRight:"8px"
-                }}
-                onClick={changeHandler}>
+                }}>
                 <FontAwesomeIcon icon="angle-right"/>
-            </button>
+            </div>
             <Statement
                 symbolMap={this.props.symbolMap}
                 statement={target}
                 leftMatches={isSelected? player.leftMatches : null}
                 rightMatches={isSelected? player.rightMatches : null}
-                matchLength={isSelected? player.getBaseSentenceLength() : 0}
-                onClick={changeHandler}/>
+                matchLength={isSelected? player.getBaseSentenceLength() : 0}/>
         </div>;
     }
 
     renderBase() {
         const player = this.state.player;
-        if (!player.base) return <div>Please select a base...</div>;
+        const prevBase = player.previousBase;
 
-        const isBidirectional = player.base && player.base.isBidirectional;
-        return <div className="MA_flexStartDown">
-            <button
-                className="MA_textBut"
-                title="Change base dir (space)"
-                style={{
-                    width: "16px",
-                    height: "16px",
-                    color: isBidirectional? "#38d0f3" : "#afb3d06e",
-                    marginRight:"8px"
-                }}
-                disabled={!isBidirectional}
-                onClick={()=>this.setBaseDir(player.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT)}>
-                <FontAwesomeIcon icon="exchange-alt"/>
-            </button>
-            <Statement symbolMap={this.props.symbolMap} statement={player.base} side={player.baseSide}/>
-        </div>
-    }
+        return <div className="ProofViewer_base">
+            <div>Base for next move:</div>
 
-    renderButtons() {
-        const player = this.state.player;
+            {/*{prevBase ?*/}
+                {/*<Statement symbolMap={this.props.symbolMap} statement={prevBase}/> :*/}
+                {/*<div>No prev base...</div>*/}
+            {/*}*/}
 
-        return <div style={{margin:"16px 0"}}>
-            <button
-                className="MA_roundBut"
-                title="Select all (a)"
-                style={{
-                    visibility:player.base==null || player.selectedTargetIndex==null? "hidden" : "visible",
-                    backgroundColor: player.selectionType===SelectionType.ALL? "#f1814c" : "#e2b228",
-                    width: "24px",
-                    height: "24px",
-                    fontSize: "14px",
-                    margin:"0 4px"
-                }}
-                onClick={()=>this.changeSelectionType(SelectionType.ALL)}>
-                <FontAwesomeIcon icon="asterisk"/>
-            </button>
-            <button
-                className="MA_roundBut"
-                title="Sentence selection (s)"
-                style={{
-                    visibility:player.base==null || player.selectedTargetIndex==null? "hidden" : "visible",
-                    backgroundColor: player.selectionType===SelectionType.LEFT || player.selectionType===SelectionType.RIGHT? "#f1814c" : "#e2b228",
-                    width: "24px",
-                    height: "24px",
-                    fontSize: "14px",
-                    margin:"0 4px"
-                }}
-                onClick={()=>this.switchToSelectSentenceMode()}>
-                <FontAwesomeIcon icon="balance-scale"/>
-            </button>
-            <button
-                className="MA_roundBut"
-                title="Distinct selection (d)"
-                style={{
-                    visibility:player.base==null || player.selectedTargetIndex==null? "hidden" : "visible",
-                    backgroundColor: player.selectionType===SelectionType.ONE_IN_LEFT || player.selectionType===SelectionType.ONE_IN_RIGHT? "#f1814c" : "#e2b228",
-                    width: "24px",
-                    height: "24px",
-                    fontSize: "14px",
-                    margin:"0 4px"
-                }}
-                onClick={()=>this.switchToSingleSelectionMode()}>
-                <FontAwesomeIcon icon="highlighter"/>
-            </button>
+            {player.base ?
+                <Statement symbolMap={this.props.symbolMap} statement={player.base} side={player.baseSide}/> :
+                <div>No base selected...</div>
+            }
         </div>;
-    }
-
-    renderEmptyStmtDiv() {
-        return (
-            <div
-                onClick={() => this.selectTarget(null)}
-                style={{
-                    marginLeft:"48px",
-                    marginTop:"16px",
-                    visibility:this.state.player.base==null? "hidden" : "visible"
-                }}>
-                <button
-                    className="MA_textBut"
-                    title="Replace (enter)"
-                    style={{
-                        width: "16px",
-                        height: "16px",
-                        color:this.state.player.selectedTargetIndex==null? "#001fff" : "#001fff73",
-                        backgroundColor:"transparent",
-                        marginRight:"8px"
-                    }}
-                    onClick={() => this.selectTarget(null)}>
-                    <FontAwesomeIcon icon="angle-right"/>
-                </button>
-                <span>New...</span>
-            </div>
-        );
     }
 
     render() {
@@ -362,18 +257,15 @@ class ProofViewer extends Component implements AppNode {
                 onKeyUp={(e:any)=>this.handleKeyPress(e)}
                 ref={el => this._rootRef = el}
                 tabIndex={0}>
-                <div className="ProofViewer_main">
-                    {this.renderBase()}
-                    {this.renderButtons()}
-                    <div>
-                        {this.state.player.targets.map((t,index) => this.renderTarget(t, index))}
-                        {/*{this.renderEmptyStmtDiv()}*/}
-                    </div>
-                </div>
                 <ProofStepsViewer
                     proofPlayer={this.state.player}
                     onNavigateAction={index => this.goToMove(index)}/>
-                {/*<div style={{whiteSpace:"pre"}}>{JSON.stringify(this.state, null, 2)}</div>*/}
+                <div className="ProofViewer_main">
+                    {this.renderBase()}
+                    <div>
+                        {this.state.player.targets.map((t,index) => this.renderTarget(t, index))}
+                    </div>
+                </div>
             </div>
         );
     }

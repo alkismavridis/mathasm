@@ -67,7 +67,7 @@ export default class ProofPlayer {
         }
 
         //3. Navigate to the beginning of the proof.
-        this.goToMove(0);
+        this.goToMove(-1);
     }
     //endregion
 
@@ -77,6 +77,12 @@ export default class ProofPlayer {
     get targets(): ReadonlyArray<MathAsmStatement> { return this._targets; }
     get selectedTargetIndex(): number { return this._selectedTargetIndex; }
     get base(): MathAsmStatement { return this._base; }
+
+    get previousBase() : MathAsmStatement {
+        const move = this.proof.moves[this._currentMoveIndex];
+        return move? move.base : null;
+    }
+
     get baseSide(): StatementSide { return this._baseSide; }
     get leftMatches(): ReadonlyArray<SentenceMatch> { return this._leftMatches; }
     get rightMatches(): ReadonlyArray<SentenceMatch> { return this._rightMatches; }
@@ -385,6 +391,10 @@ export default class ProofPlayer {
 
     /** Navigates to the given move. */
     goToMove(moveIndex:number) {
+        if(moveIndex<0) {
+            this.goToStart();
+            return;
+        }
         const moveToGoTo = this.proof.moves[moveIndex];
         const nextMove = this.proof.moves[moveIndex+1];
 
@@ -424,6 +434,20 @@ export default class ProofPlayer {
         }
 
         this._currentMoveIndex = moveIndex;
+    }
+
+    private goToStart() {
+        this._targets = [];
+        this._selectedTargetIndex = null;
+        this._leftMatches = [];
+        this._rightMatches = [];
+        this._selectionType = SelectionType.NONE;
+        this._currentMoveIndex = -1;
+
+        const firstMove = this.proof.moves[0];
+
+        this._base = firstMove? firstMove.base : null;
+        this._baseSide = firstMove? firstMove.baseSide : StatementSide.LEFT;
     }
 
     /** Returns the params to be given to StatementUtils.setupSelection. */

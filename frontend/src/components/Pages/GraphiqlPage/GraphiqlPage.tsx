@@ -1,11 +1,17 @@
-import React, {Component} from 'react';
+import React, {Component, CSSProperties} from 'react';
 import "./GraphiqlPage.css";
 import GraphiQL from "graphiql";
 import Urls from "../../../constants/Urls";
-import App from "../../App/App";
 import ErrorCode from "../../../enums/ErrorCode";
+import App from "../../../services/App";
 
 export default class GraphiqlPage extends Component {
+    props : {
+        //data
+        app:App
+    };
+
+
     //region LIFE CYCLE
     //constructor(props) {
     //    super(props);
@@ -44,7 +50,7 @@ export default class GraphiqlPage extends Component {
         return fetch(Urls.graphql.params, {
             method: 'post',
             headers: {
-                'Authorization': App.getSessionKey(),
+                'Authorization': this.props.app.sessionKey,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({

@@ -1,14 +1,15 @@
 import React, {Component} from 'react';
 import "./StatementMenu.scss";
 import ModalHeader from "../ModalHeader/ModalHeader";
-import ModalService from "../../../services/ModalService";
 import MathAsmStatement from "../../../entities/backend/MathAsmStatement";
 import StatementType from "../../../enums/StatementType";
+import App from "../../../services/App";
 
 export default class StatementMenu extends Component {
     //region STATIC
     props : {
         //data
+        app:App,
         modalId?:number,
         statement:MathAsmStatement,
 
@@ -30,7 +31,7 @@ export default class StatementMenu extends Component {
 
     //region EVENT HANDLERS
     closeDialog() {
-        ModalService.removeModal(this.props.modalId);
+        this.props.app.modalService.removeModal(this.props.modalId);
     }
 
     handleOptionClicked = (callback) => {

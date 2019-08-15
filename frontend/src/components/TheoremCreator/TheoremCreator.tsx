@@ -5,18 +5,14 @@ import Statement from "../ReusableComponents/Statement/Statement";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import SelectionType from "../../enums/SelectionType";
 import StatementSide from "../../enums/StatementSide";
-import QuickInfoService from "../../services/QuickInfoService";
-import FrontendMove from "../../entities/frontend/FrontendMove";
 import ProofStepsViewer from "../ReusableComponents/ProofStepsViewer/ProofStepsViewer";
-import ModalService from "../../services/ModalService";
-import GraphQL from "../../services/GraphQL";
 import ProofPlayer from "../../entities/frontend/ProofPlayer";
 import MathAsmStatement from "../../entities/backend/MathAsmStatement";
 import MathAsmDir from "../../entities/backend/MathAsmDir";
-import {AppNode} from "../../entities/frontend/AppNode";
-import {AppEvent} from "../../entities/frontend/AppEvent";
 import AppNodeReaction from "../../enums/AppNodeReaction";
-import AppEventType from "../../enums/AppEventType";
+import App from "../../services/App";
+import TheoryExplorerController from "../TheoryExplorer/TheoryExplorerController";
+import {Subscription} from "rxjs/index";
 
 const q = {
     UPLOAD_PROOF: `mutation($moves:[LogicMove!]!) {
@@ -29,11 +25,12 @@ const q = {
     }`
 };
 
-export default class TheoremCreator extends Component implements AppNode {
+export default class TheoremCreator extends Component {
     //region STATIC
     props : {
         //data
-        parent:AppNode,
+        app:App,
+        controller:TheoryExplorerController,
         symbolMap:any,
         parentDir:MathAsmDir,
 
@@ -49,46 +46,35 @@ export default class TheoremCreator extends Component implements AppNode {
     };
 
     _rootRef = null;
+
+    private subscriptions:Subscription[] = [];
     //endregion
 
 
 
-
-    //region APP NODE
-    getChildMap(): any {
-        return null;
-    }
-
-    getParent(): AppNode {
-        return this.props.parent;
-    }
-
-    handleChildEvent(event: AppEvent): AppNodeReaction {
-        return AppNodeReaction.UP;
-    }
-
-    handleParentEvent(event: AppEvent): AppNodeReaction {
-        switch(event.type) {
-            case AppEventType.STMT_SELECTED:
-                this.setBase(event.data);
+    //region LIFE CYCLE
+    componentDidMount() {
+        this.subscriptions.push(
+            this.props.controller.onStmtClicked.subscribe(stmt => {
+                this.setBase(stmt);
                 this.focus();
-                return AppNodeReaction.NONE;
+            })
+        );
 
-            case AppEventType.SYMBOL_SELECTED:
-                if(!event.data.statement) return AppNodeReaction.NONE;
-                this.setBase(event.data.statement);
+        this.subscriptions.push(
+            this.props.controller.onSymbolClicked.subscribe(info => {
+                if(!info.statement) return AppNodeReaction.NONE;
+                this.setBase(info.statement);
                 this.focus();
-                return AppNodeReaction.NONE;
+            })
+        );
+    }
 
-            case AppEventType.SYMBOL_RENAMED:
-                this.forceUpdate();
-                return AppNodeReaction.NONE;
-
-            default: return AppNodeReaction.NONE;
-        }
+    componentWillUnmount() {
+        this.subscriptions.forEach(s => s.unsubscribe());
+        this.subscriptions = [];
     }
     //endregion
-
 
 
     //region EVENT HANDLERS
@@ -126,7 +112,7 @@ export default class TheoremCreator extends Component implements AppNode {
         const didChange = this.state.player.setSelection(newSelectionType, null);
 
         if (didChange) this.setState({player:this.state.player});
-        else QuickInfoService.makeWarning("This selection is not allowed for the selected base and target.");
+        else this.props.app.quickInfoService.makeWarning("This selection is not allowed for the selected base and target.");
     }
 
     /** Attempt to switch to either LEFT or RIGHT selection. */
@@ -137,7 +123,7 @@ export default class TheoremCreator extends Component implements AppNode {
 
         //2. Handle result
         if (success) this.setState({player:this.state.player});
-        else QuickInfoService.makeWarning("Illegal move: Could not perform sentence selection.");
+        else this.props.app.quickInfoService.makeWarning("Illegal move: Could not perform sentence selection.");
     }
 
     switchToSingleSelectionMode() {
@@ -147,7 +133,7 @@ export default class TheoremCreator extends Component implements AppNode {
 
         //2. Handle result
         if (success) this.setState({player:this.state.player});
-        else QuickInfoService.makeWarning("Illegal move: Could not perform single selection.");
+        else this.props.app.quickInfoService.makeWarning("Illegal move: Could not perform single selection.");
     }
 
     /** Moves the selection, staying on the current selectionType */
@@ -163,7 +149,7 @@ export default class TheoremCreator extends Component implements AppNode {
     cloneBase(sideToClone:StatementSide) {
         const success = this.state.player.addCloningMove(sideToClone);
         if (success) this.setState({player:this.state.player});
-        else QuickInfoService.makeWarning("Cloning move not allowed. Please check base direction.");
+        else this.props.app.quickInfoService.makeWarning("Cloning move not allowed. Please check base direction.");
     }
 
     /** Performs the replacement based on the current selection. */
@@ -192,10 +178,10 @@ export default class TheoremCreator extends Component implements AppNode {
             this.setState({player: this.state.player});
 
             //2. Perform the replacement
-            ModalService.removeModal(modalId);
+            this.props.app.modalService.removeModal(modalId);
         };
 
-        ModalService.showTextGetter("Save under "+this.props.parentDir.name, "Theorem's name...", onSave);
+        this.props.app.modalService.showTextGetter("Save under "+this.props.parentDir.name, "Theorem's name...", onSave);
     }
 
     /** Uploads the proof to the server. */
@@ -203,13 +189,13 @@ export default class TheoremCreator extends Component implements AppNode {
         if(this.state.player.getMoveCount()===0) return;
 
         const dataToUpload = this.state.player.makeBackendProof();
-        GraphQL.run(q.UPLOAD_PROOF, {moves:dataToUpload})
+        this.props.app.graphql.run(q.UPLOAD_PROOF, {moves:dataToUpload})
             .then(mutation => {
-                QuickInfoService.makeSuccess("Proof successfully uploaded.");
-                AppEvent.makeProofSaved(mutation.statementWSector.uploadProof).travelAbove(this);
+                this.props.app.quickInfoService.makeSuccess("Proof successfully uploaded.");
+                this.props.controller.onProofSaved.next(mutation.statementWSector.uploadProof);
             })
             .catch(error => {
-                QuickInfoService.makeError("Error while uploading proof. Please note that parts of the proof may have been successfully saved.");
+                this.props.app.quickInfoService.makeError("Error while uploading proof. Please note that parts of the proof may have been successfully saved.");
                 console.error(error);
             });
     }
@@ -583,7 +569,6 @@ export default class TheoremCreator extends Component implements AppNode {
                 <ProofStepsViewer
                     proofPlayer={this.state.player}
                     onNavigateAction={index => this.goToMove(index)}/>
-                {/*<div style={{whiteSpace:"pre"}}>{JSON.stringify(this.state, null, 2)}</div>*/}
             </div>
         );
     }

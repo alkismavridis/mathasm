@@ -1,7 +1,7 @@
 import * as React from 'react';
 import "./DirectoryMenu.scss";
 import ModalHeader from "../ModalHeader/ModalHeader";
-import ModalService from "../../../services/ModalService";
+import App from "../../../services/App";
 
 const q = {
 
@@ -11,6 +11,7 @@ const q = {
 export default class DirectoryMenu extends React.Component {
     //region FIELDS
     public props:{
+        app:App,
         modalId?:number,
         directory:any,
 
@@ -30,7 +31,7 @@ export default class DirectoryMenu extends React.Component {
 
     //region EVENT HANDLERS
     closeDialog() {
-        ModalService.removeModal(this.props.modalId);
+        this.props.app.modalService.removeModal(this.props.modalId);
     }
 
     handleMoveClick = ()=> {

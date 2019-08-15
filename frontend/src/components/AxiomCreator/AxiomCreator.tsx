@@ -2,18 +2,13 @@ import React, {Component} from 'react';
 import "./AxiomCreator.scss";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import Connection from "../ReusableComponents/Connection/Connection";
-import ModalService from "../../services/ModalService";
-import ModalHeader from "../Modals/ModalHeader/ModalHeader";
 import ConnectionEditDialog from "../Modals/ConnectionEditDialog/ConnectionEditDialog";
 import StringInputDialog from "../Modals/StringInputDialog/StringInputDialog";
-import GraphQL from "../../services/GraphQL";
-import QuickInfoService from "../../services/QuickInfoService";
 import MathAsmDir from "../../entities/backend/MathAsmDir";
 import MathAsmSymbol from "../../entities/backend/MathAsmSymbol";
-import {AppNode} from "../../entities/frontend/AppNode";
-import AppNodeReaction from "../../enums/AppNodeReaction";
-import {AppEvent} from "../../entities/frontend/AppEvent";
-import AppEventType from "../../enums/AppEventType";
+import App from "../../services/App";
+import {Subscription} from "rxjs/index";
+import TheoryExplorerController from "../TheoryExplorer/TheoryExplorerController";
 
 
 const q = {
@@ -31,7 +26,8 @@ export default class AxiomCreator extends Component {
     //region STATIC
     props : {
         //data
-        parent:AppNode,
+        app:App,
+        controller:TheoryExplorerController,
         parentDir:MathAsmDir,
 
         //actions
@@ -54,47 +50,31 @@ export default class AxiomCreator extends Component {
     };
 
     _rootRef = null;
+
+    private subscriptions:Subscription[] = [];
     //endregion
 
 
 
     //region LIFE CYCLE
-    // componentDidMount() {}
+    componentDidMount() {
+        this.subscriptions.push(
+            this.props.controller.onSymbolClicked.subscribe(info => {
+                this.addSymbol(info.symbol);
+                this.focus();
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.subscriptions.forEach(s => s.unsubscribe());
+        this.subscriptions = [];
+    }
+
     // shouldComponentUpdate(nextProps, nextState) { return true; }
     // getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
     // componentDidUpdate(prevProps, prevState, snapshot) {}
-    // componentWillUnmount() {}
     // componentDidCatch(error, info) { console.error("Exception caught"); }
-    //endregion
-
-
-
-    //region APP NODE
-    getChildMap(): any {
-        return null;
-    }
-
-    getParent(): AppNode {
-        return this.props.parent;
-    }
-
-    handleChildEvent(event: AppEvent): AppNodeReaction {
-        return AppNodeReaction.UP;
-    }
-
-    handleParentEvent(event: AppEvent): AppNodeReaction {
-        switch (event.type) {
-            case AppEventType.SYMBOL_SELECTED:
-                this.addSymbol(event.data.symbol);
-                this.focus();
-                break;
-
-            case AppEventType.SYMBOL_RENAMED:
-                this.forceUpdate();
-                break;
-        }
-        return AppNodeReaction.NONE;
-    }
     //endregion
 
 
@@ -110,15 +90,15 @@ export default class AxiomCreator extends Component {
     //region EVENT HANDLERS
     /** opens a dialog in order to edit the connection. */
     handleConnectionClick() {
-        const id = ModalService.getNextId();
-        ModalService.addModal(
+        const id = this.props.app.modalService.getNextId();
+        this.props.app.modalService.addModal(
             id,
             <ConnectionEditDialog
                 isBidirectional={this.state.isBidirectional}
                 grade={this.state.grade}
                 onSubmit={(grade, isBd) => {
                     this.setState({grade:grade, isBidirectional:isBd});
-                    ModalService.removeModal(id);
+                    this.props.app.modalService.removeModal(id);
                 }}/>
         );
     }
@@ -188,19 +168,22 @@ export default class AxiomCreator extends Component {
             right: this.state.right.map(s => s.uid)
         };
 
-        GraphQL.run(q.MAKE_AXIOM, data).then(resp => {
-            AppEvent.makeStatementUpdate(resp.statementWSector.createAxiom, this.props.parentDir.id).travelAbove(this);
-            ModalService.removeModal(modalId);
+        this.props.app.graphql.run(q.MAKE_AXIOM, data).then(resp => {
+            this.props.controller.onAxiomSaved.next({
+                statement:resp.statementWSector.createAxiom,
+                parentDirId:this.props.parentDir.id
+            });
+            this.props.app.modalService.removeModal(modalId);
         })
         .catch(err => {
-            QuickInfoService.makeError("Error while creating axiom...")
+            this.props.app.quickInfoService.makeError("Error while creating axiom...")
         });
     }
 
     /** Fired when the save button is clicked. Will open a dialog to get the new axiom's name. */
     handleSaveClicked() {
-        const id = ModalService.getNextId();
-        ModalService.addModal(
+        const id = this.props.app.modalService.getNextId();
+        this.props.app.modalService.addModal(
             id,
             <StringInputDialog
                 title={"Save under "+this.props.parentDir.name}
