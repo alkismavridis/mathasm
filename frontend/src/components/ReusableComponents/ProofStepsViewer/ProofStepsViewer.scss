@@ -13,6 +13,7 @@
 }
 
 .ProofStepsViewer_move {
+  text-align: left;
   color:gray;
   cursor: pointer;
   padding-right:24px;
@@ -46,4 +47,10 @@
   justify-self: center;
   cursor: pointer;
   margin: 0 8px;
+}
+
+.ProofStepsViewer_end {
+  grid-column: 3/4;
+  margin: 4px 0;
+  text-align: left;
 }

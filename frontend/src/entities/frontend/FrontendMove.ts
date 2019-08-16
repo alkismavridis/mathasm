@@ -12,11 +12,15 @@ export default class FrontendMove {
     public targetId: number;
     public base: MathAsmStatement;
     public baseSide: number;
-    public prevStatement: MathAsmStatement;
     public selectionType: SelectionType;
     public pos: number;
     public name: string;
     public parentId: number;
+
+    //fields needed for reverting the move
+    public prevStatement: MathAsmStatement;     //used for reverting cloning moves.
+    private leftIndices:number[];               //used for reverting REPLACE moves (replace in statement and replace in sentence)
+    private rightIndices:number[];              //same ^
     //endregion
 
 
@@ -122,19 +126,23 @@ export default class FrontendMove {
             case SelectionType.ALL: {
                 const leftMatches = MathAsmStatement.findMatches(target.left, sentenceToSearch, true);
                 const rightMatches = MathAsmStatement.findMatches(target.right, sentenceToSearch, true);
-                MathAsmStatement.performReplacement(target, sentenceToSearch, sentenceToWrite, leftMatches, rightMatches);
+                this.leftIndices = MathAsmStatement.matchesToIndices(leftMatches);
+                this.rightIndices = MathAsmStatement.matchesToIndices(rightMatches);
+                MathAsmStatement.performReplacementByIndecies(target, sentenceToSearch, sentenceToWrite, this.leftIndices, this.rightIndices);
                 break;
             }
 
             case SelectionType.LEFT: {
                 const leftMatches = MathAsmStatement.findMatches(target.left, sentenceToSearch, true);
-                MathAsmStatement.performReplacement(target, sentenceToSearch, sentenceToWrite, leftMatches, []);
+                this.leftIndices = MathAsmStatement.matchesToIndices(leftMatches);
+                MathAsmStatement.performReplacementByIndecies(target, sentenceToSearch, sentenceToWrite, this.leftIndices, []);
                 break;
             }
 
             case SelectionType.RIGHT: {
                 const rightMatches = MathAsmStatement.findMatches(target.right, sentenceToSearch, true);
-                MathAsmStatement.performReplacement(target, sentenceToSearch, sentenceToWrite, [], rightMatches);
+                this.rightIndices = MathAsmStatement.matchesToIndices(rightMatches);
+                MathAsmStatement.performReplacementByIndecies(target, sentenceToSearch, sentenceToWrite, [], this.rightIndices);
                 break;
             }
 
@@ -157,25 +165,26 @@ export default class FrontendMove {
         const target = targets.find(t => t._internalId===this.targetId);
         const sentenceToSearch = this.baseSide===StatementSide.LEFT? this.base.right : this.base.left;
         const sentenceToWrite = this.baseSide===StatementSide.LEFT? this.base.left : this.base.right;
+        const diffPerMatch = sentenceToWrite.length - sentenceToSearch.length;
 
         //2. Execute the move
         switch (this.selectionType) {
             case SelectionType.ALL: {
-                const leftMatches = MathAsmStatement.findMatches(target.left, sentenceToSearch, true);
-                const rightMatches = MathAsmStatement.findMatches(target.right, sentenceToSearch, true);
-                MathAsmStatement.performReplacement(target, sentenceToSearch, sentenceToWrite, leftMatches, rightMatches);
+                const leftIndices = this.leftIndices.map((c, index) => c-diffPerMatch*index);
+                const rightIndices = this.rightIndices.map((c, index) => c-diffPerMatch*index);
+                MathAsmStatement.performReplacementByIndecies(target, sentenceToSearch, sentenceToWrite, leftIndices, rightIndices);
                 break;
             }
 
             case SelectionType.LEFT: {
-                const leftMatches = MathAsmStatement.findMatches(target.left, sentenceToSearch, true);
-                MathAsmStatement.performReplacement(target, sentenceToSearch, sentenceToWrite, leftMatches, []);
+                const leftIndices = this.leftIndices.map((c, index) => c-diffPerMatch*index);
+                MathAsmStatement.performReplacementByIndecies(target, sentenceToSearch, sentenceToWrite, leftIndices, []);
                 break;
             }
 
             case SelectionType.RIGHT: {
-                const rightMatches = MathAsmStatement.findMatches(target.right, sentenceToSearch, true    );
-                MathAsmStatement.performReplacement(target, sentenceToSearch, sentenceToWrite, [], rightMatches);
+                const rightIndices = this.rightIndices.map((c, index) => c-diffPerMatch*index);
+                MathAsmStatement.performReplacementByIndecies(target, sentenceToSearch, sentenceToWrite, [], rightIndices);
                 break;
             }
 

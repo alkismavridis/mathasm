@@ -77,12 +77,6 @@ export default class ProofPlayer {
     get targets(): ReadonlyArray<MathAsmStatement> { return this._targets; }
     get selectedTargetIndex(): number { return this._selectedTargetIndex; }
     get base(): MathAsmStatement { return this._base; }
-
-    get previousBase() : MathAsmStatement {
-        const move = this.proof.moves[this._currentMoveIndex];
-        return move? move.base : null;
-    }
-
     get baseSide(): StatementSide { return this._baseSide; }
     get leftMatches(): ReadonlyArray<SentenceMatch> { return this._leftMatches; }
     get rightMatches(): ReadonlyArray<SentenceMatch> { return this._rightMatches; }
@@ -395,45 +389,51 @@ export default class ProofPlayer {
             this.goToStart();
             return;
         }
-        const moveToGoTo = this.proof.moves[moveIndex];
         const nextMove = this.proof.moves[moveIndex+1];
-
-        //1. Update the targets
         this._targets = this.proof.goToMove(this._currentMoveIndex, moveIndex, this._targets);
-        this._selectedTargetIndex = this._targets.findIndex(t => t._internalId === moveToGoTo.targetId);
-        this._selectionType = SelectionType.NONE;
-        this._baseSide = nextMove && nextMove.baseSide!=null? nextMove.baseSide : StatementSide.LEFT;
+        this._currentMoveIndex = moveIndex;
+        this.setupSelectionFor(nextMove);
+    }
 
+    private setupSelectionFor(move:FrontendMove) {
+        //STEP Handle null base case
+        const base = move? move.base : null;
+        if(base==null) {
+            this._base = null;
+            this._baseSide = StatementSide.LEFT;
+            this._leftMatches = [];
+            this._rightMatches = [];
+            this._selectionType = SelectionType.NONE;
+            return;
+        }
 
-        //3. Update base, matches and selection in order to show the next move that will happen.
-        const nextBase = nextMove? nextMove.base : null;
-        if (nextBase) {
-            this._base = nextBase;
-            const sentenceToSearch = nextMove.baseSide===StatementSide.LEFT? nextBase.left : nextBase.right;
+        //STEP Setup statement and base selection
+        this._base = base;
+        this._baseSide = move.baseSide!=null? move.baseSide : StatementSide.LEFT;
 
-            //3a. matches
+        this._selectedTargetIndex = this._targets.findIndex(t => t._internalId === move.targetId);
+        this._selectionType = move.selectionType==null ? SelectionType.NONE : move.selectionType;
+
+        //STEP Setup matches
+        if(this._selectedTargetIndex>=0) {
+            const sentenceToSearch = move.baseSide===StatementSide.LEFT? base.left : base.right;
             this._leftMatches = MathAsmStatement.findMatches(this._targets[this._selectedTargetIndex].left, sentenceToSearch, false);
             this._rightMatches = MathAsmStatement.findMatches(this._targets[this._selectedTargetIndex].right, sentenceToSearch, false);
 
             //3b. selection
-            if (nextMove.selectionType!=null) {
-                this._selectionType = nextMove.selectionType;
+            if (move.selectionType!=null) {
                 StatementUtils.setupSelection(
                     this._leftMatches,
                     this._rightMatches,
                     this._selectionType,
-                    ProofPlayer.getReplacementParamsFor(this._selectionType, nextMove.pos, this._leftMatches, this._rightMatches)
+                    ProofPlayer.getReplacementParamsFor(this._selectionType, move.pos, this._leftMatches, this._rightMatches)
                 );
             }
         }
         else {
-            this._base = null;
             this._leftMatches = [];
             this._rightMatches = [];
-            this._selectionType = SelectionType.NONE;
         }
-
-        this._currentMoveIndex = moveIndex;
     }
 
     private goToStart() {

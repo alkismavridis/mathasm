@@ -36,7 +36,7 @@ export default class ProofStepsViewer extends Component {
     }
 
     appendStartMove(move:FrontendMove, index:number, targetArray:any[], handler:any) {
-        const isSelected = index === this.props.proofPlayer.currentMoveIndex;
+        const isSelected = index === this.props.proofPlayer.currentMoveIndex+1;
         targetArray.push(this.renderIndexDiv(index, isSelected, handler));
 
         switch(move.baseSide) {
@@ -54,47 +54,47 @@ export default class ProofStepsViewer extends Component {
         }
 
         targetArray.push(
-            <div
+            <button
                 key={index+"c"}
                 onClick={handler}
-                className={isSelected? "ProofStepsViewer_move ProofStepsViewer_selected" : "ProofStepsViewer_move"}>
+                className={cx("ProofStepsViewer_move MA_textBut", isSelected && "ProofStepsViewer_selected")}>
                 {move.base.name || ("Internal "+move.base._internalId)}
-            </div>
+            </button>
         );
     }
 
     appendReplacementMove(move:FrontendMove, index:number, targetArray:any[], handler:any) {
-        const isSelected = index === this.props.proofPlayer.currentMoveIndex;
+        const isSelected = index === this.props.proofPlayer.currentMoveIndex+1;
 
         targetArray.push(this.renderIndexDiv(index, isSelected, handler));
         targetArray.push(<FontAwesomeIcon key={index+"b"} onClick={handler} icon="check" className="ProofStepsViewer_repIcon"/>);
         targetArray.push(
-            <div
+            <button
                 key={index+"c"}
                 onClick={handler}
-                className={isSelected? "ProofStepsViewer_move ProofStepsViewer_selected" : "ProofStepsViewer_move"}>
+                className={cx("ProofStepsViewer_move MA_textBut", isSelected && "ProofStepsViewer_selected")}>
                 {move.base.name || ("Internal "+move.base._internalId)}
-            </div>
+            </button>
         );
     }
 
     appendSaveMove(move:FrontendMove, index:number, targetArray:any[], handler:any) {
-        const isSelected = index === this.props.proofPlayer.currentMoveIndex;
+        const isSelected = index === this.props.proofPlayer.currentMoveIndex+1;
 
         targetArray.push(this.renderIndexDiv(index, isSelected, handler));
         targetArray.push(<FontAwesomeIcon key={index+"b"} icon="save" onClick={handler} className="ProofStepsViewer_saveIcon"/>);
         targetArray.push(
-            <div
+            <button
                 key={index+"c"}
                 onClick={handler}
-                className={isSelected? "ProofStepsViewer_move ProofStepsViewer_selected" : "ProofStepsViewer_move"}>
+                className={cx("ProofStepsViewer_move MA_textBut", isSelected && "ProofStepsViewer_selected")}>
                 {move.name}
-            </div>
+            </button>
         );
     }
 
     appendMoveMarkup(move:FrontendMove, index:number, targetArray:any[]) {
-        const handler = this.props.onNavigateAction && (() => this.props.onNavigateAction(index));
+        const handler = this.props.onNavigateAction && (() => this.props.onNavigateAction(index-1));
 
         switch(move.moveType) {
             case MoveType.START: return this.appendStartMove(move, index, targetArray, handler);
@@ -107,6 +107,18 @@ export default class ProofStepsViewer extends Component {
         const ret = [];
         this.props.proofPlayer.getMoves().forEach((m,index) => this.appendMoveMarkup(m, index, ret));
         return ret;
+    }
+
+    renderEnd() {
+        const moveCount = this.props.proofPlayer.getMoveCount();
+        if(moveCount==0) return null;
+
+        const isSelected = moveCount==this.props.proofPlayer.currentMoveIndex+1;
+        return <button
+            className={cx("MA_textBut", "ProofStepsViewer_end", isSelected? "ProofStepsViewer_selected" : null)}
+            onClick={this.props.onNavigateAction && (() => this.props.onNavigateAction(moveCount-1))}>
+            End
+        </button>;
     }
 
     render() {
@@ -135,6 +147,7 @@ export default class ProofStepsViewer extends Component {
                 </div>
                 <div className="ProofStepsViewer_main">
                     {this.renderSteps()}
+                    {this.renderEnd()}
                 </div>
             </div>
         );

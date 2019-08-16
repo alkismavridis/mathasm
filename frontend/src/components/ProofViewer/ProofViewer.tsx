@@ -71,6 +71,7 @@ class ProofViewer extends Component {
             this.state.player.setupFrom(resp.statement.proof);
             this.checkForMissingSymbols(resp.statement.proof.bases);
             this.forceUpdate();
+            if(this._rootRef) this._rootRef.focus();
         });
     }
     //endregion
@@ -91,105 +92,22 @@ class ProofViewer extends Component {
 
 
     //region EVENT HANDLERS
-    /**
-     * Selects the given target and updates the internal state.
-     * NOTE: index can be null, which means DESELECT
-     * */
-    selectTarget(index:number) {
-        this.state.player.setTargetIndex(index);
-        this.setState({player:this.state.player});
-    }
-
-    /**
-     * Changes the direction of the base, if the move is allowed.
-     * */
-    setBaseDir(newDir:StatementSide) {
-        this.state.player.setBaseDir(newDir);
-        this.setState({player:this.state.player});
-    }
-
-    changeSelectionType(newSelectionType: SelectionType) {
-        const didChange = this.state.player.setSelection(newSelectionType, null);
-
-        if (didChange) this.setState({player:this.state.player});
-        else this.props.app.quickInfoService.makeWarning("This selection is not allowed for the selected base and target.");
-    }
-
-    /** Attempt to switch to either LEFT or RIGHT selection. */
-    switchToSelectSentenceMode() {
-        //1. Try to set LEFT or RIGHT selection.
-        let success = this.state.player.setSelection(SelectionType.LEFT, null);
-        if (!success) success = this.state.player.setSelection(SelectionType.RIGHT, null);
-
-        //2. Handle result
-        if (success) this.setState({player:this.state.player});
-        else this.props.app.quickInfoService.makeWarning("Illegal move: Could not perform sentence selection.");
-    }
-
-    switchToSingleSelectionMode() {
-        //1. Try to set LEFT or RIGHT selection.
-        let success = this.state.player.setSelection(SelectionType.ONE_IN_LEFT, null);
-        if (!success) success = this.state.player.setSelection(SelectionType.ONE_IN_RIGHT, null);
-
-        //2. Handle result
-        if (success) this.setState({player:this.state.player});
-        else this.props.app.quickInfoService.makeWarning("Illegal move: Could not perform single selection.");
-    }
-
     /** The user could interact with this component with the keyboard too. Here are the controls: */
     handleKeyPress(e:KeyboardEvent) {
         switch (e.keyCode) {
-            case 32: //space bar (Action: switch base direction)
-                this.setBaseDir(this.state.player.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT);
-                break;
-
-            case 38: //arrow up (Action: change selected target)
-                if (this.state.player.targets.length===0) break;
-
-                e.preventDefault();
-                if (this.state.player.selectedTargetIndex===0) this.selectTarget(null);
-                else if (this.state.player.selectedTargetIndex==null) this.selectTarget(this.state.player.targets.length-1);
-                else this.selectTarget(this.state.player.selectedTargetIndex-1);
-                break;
-
-            case 40: //arrow down (Action: change selected target)
-                if (this.state.player.targets.length===0) break;
-
-                e.preventDefault();
-                if (this.state.player.selectedTargetIndex===this.state.player.targets.length-1) this.selectTarget(null);
-                else if (this.state.player.selectedTargetIndex==null) this.selectTarget(0);
-                else this.selectTarget(this.state.player.selectedTargetIndex+1);
-                break;
-
-            case 65: //"a" key (Action: Select all)
-                this.changeSelectionType(SelectionType.ALL);
-                break;
-
-            case 83: //"s" key (Action: select sentence)
-                this.switchToSelectSentenceMode();
-                break;
-
-            case 68: //"d" key (Action: Select distinct)
-                this.switchToSingleSelectionMode();
-                break;
-
-            case 27: //escape key (Action: Select none)
-                this.changeSelectionType(SelectionType.NONE);
-                break;
-
-            case 90: { //z key
+            case 38: { //arrow up (Action: change selected target)
                 const currentMoveIndex = this.state.player.currentMoveIndex;
                 const moveCount = this.state.player.getMoveCount();
-
-                if (e.shiftKey && e.ctrlKey) { //redo.
-                    if (moveCount!==0 && currentMoveIndex!==moveCount-1) this.goToMove(currentMoveIndex+1);
-                }
-                else if (e.ctrlKey) { //undo
-                    if (moveCount!==0 && currentMoveIndex!==0) this.goToMove(currentMoveIndex-1);
-                }
+                if (moveCount!==0 && currentMoveIndex>=0) this.goToMove(currentMoveIndex-1);
                 break;
             }
 
+            case 40: { //arrow down (Action: change selected target)
+                const currentMoveIndex = this.state.player.currentMoveIndex;
+                const moveCount = this.state.player.getMoveCount();
+                if (moveCount!==0 && currentMoveIndex!==moveCount-1) this.goToMove(currentMoveIndex+1);
+                break;
+            }
         }
     }
 
@@ -232,20 +150,13 @@ class ProofViewer extends Component {
 
     renderBase() {
         const player = this.state.player;
-        const prevBase = player.previousBase;
 
         return <div className="ProofViewer_base">
-            <div>Base for next move:</div>
-
-            {/*{prevBase ?*/}
-                {/*<Statement symbolMap={this.props.symbolMap} statement={prevBase}/> :*/}
-                {/*<div>No prev base...</div>*/}
-            {/*}*/}
-
-            {player.base ?
-                <Statement symbolMap={this.props.symbolMap} statement={player.base} side={player.baseSide}/> :
-                <div>No base selected...</div>
-            }
+            <div>{player.base?
+                "Base for next move: "+MathAsmStatement.getDisplayName(player.base) :
+                "No base selected..."
+            }</div>
+            {player.base && <Statement symbolMap={this.props.symbolMap} statement={player.base} side={player.baseSide}/>}
         </div>;
     }
 

@@ -48,6 +48,16 @@ export default class MathAsmStatement {
 
 
 
+    //region GETTERS
+    static getDisplayName(stmt:MathAsmStatement) : string {
+        if(stmt.name) return stmt.name;
+        return "Internal "+stmt._internalId;
+    }
+    //endregion
+
+
+
+
 
     //region MATCHING
     /**
@@ -93,23 +103,28 @@ export default class MathAsmStatement {
 
 
     //region MODIFIERS
+    static matchesToIndices(matches:SentenceMatch[]) : number[] {
+        const ret:number[] = [];
+        matches.forEach(match => {
+            if(match.selected)  ret.push(match.index);
+        });
+        return ret;
+    }
+
     /**
      * Updates the target parameter, replacing everything that the selections indicate.
      * The selections are given by leftSelection and rightSelection parameters.
      * */
     static performReplacement(target:MathAsmStatement, oldSentence:number[], newSentence:number[], leftSelection:SentenceMatch[], rightSelection:SentenceMatch[]) {
-        const leftIndexesToReplace:number[] = [];
-        leftSelection.forEach(match => {
-            if(match.selected)  leftIndexesToReplace.push(match.index);
-        });
-
-        const rightIndexesToReplace:number[] = [];
-        rightSelection.forEach(match => {
-            if(match.selected)  rightIndexesToReplace.push(match.index);
-        });
-
+        const leftIndexesToReplace:number[] = MathAsmStatement.matchesToIndices(leftSelection);
+        const rightIndexesToReplace:number[] = MathAsmStatement.matchesToIndices(rightSelection);
         if (leftIndexesToReplace.length>0) target.left = MathAsmStatement.replaceInSentence(target.left, newSentence, oldSentence.length, leftIndexesToReplace);
         if (rightIndexesToReplace.length>0) target.right = MathAsmStatement.replaceInSentence(target.right, newSentence, oldSentence.length, rightIndexesToReplace);
+    }
+
+    static performReplacementByIndecies(target:MathAsmStatement, oldSentence:number[], newSentence:number[], leftSelection:number[], rightSelection:number[]) {
+        if (leftSelection && leftSelection.length>0) target.left = MathAsmStatement.replaceInSentence(target.left, newSentence, oldSentence.length, leftSelection);
+        if (rightSelection && rightSelection.length>0) target.right = MathAsmStatement.replaceInSentence(target.right, newSentence, oldSentence.length, rightSelection);
     }
 
     static copyChunk(targetArray:number[], source:number[], sourceFromIndex:number, sourceToIndex:number) {

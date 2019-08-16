@@ -282,7 +282,7 @@ export default class TheoremCreator extends Component {
                     if (moveCount!==0 && currentMoveIndex!==moveCount-1) this.goToMove(currentMoveIndex+1);
                 }
                 else if (e.ctrlKey) { //undo
-                    if (moveCount!==0 && currentMoveIndex!==0) this.goToMove(currentMoveIndex-1);
+                    if (moveCount!==0 && currentMoveIndex>=0) this.goToMove(currentMoveIndex-1);
                 }
                 break;
             }
