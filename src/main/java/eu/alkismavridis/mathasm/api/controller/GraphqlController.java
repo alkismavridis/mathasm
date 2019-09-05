@@ -79,7 +79,7 @@ public class GraphqlController {
     //region GRAPH-QL FUNCTIONS
     @RequestMapping(value="", method=RequestMethod.POST)
     public ResponseEntity simpleQuery(@RequestBody String query) {
-            final String result =  graphqlService.execute(query, null, null, this.makeContext());
+        final String result =  graphqlService.execute(query, null, null, this.makeContext());
         return ResponseEntity.ok(result);
     }
 

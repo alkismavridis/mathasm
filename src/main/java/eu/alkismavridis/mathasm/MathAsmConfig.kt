@@ -5,14 +5,12 @@ import java.nio.file.Path
 
 class MathAsmConfig {
     //region FIELDS
-    /** the resources path. This is the only property that is not read from the json node.*/
-    var resources: Path
-        private set
+    val dataDir:Path
 
     var defaultLanguage:String = "en"
         private set
 
-    var dbUri:String = "file:///home/alkis/data/MathAsm/db"
+    var dbDirName:String = "db"
         private set
 
     var rootUserPassword:String = "root"
@@ -20,17 +18,27 @@ class MathAsmConfig {
     //endregion
 
 
+
+
     //region LIFE CYCLE
     /** An optional json node may be provided in order to override default fields*/
-    constructor(resources: Path, json:JsonNode?) {
-        this.resources = resources
+    constructor(dataDir:Path, json:JsonNode?) {
+        this.dataDir = dataDir
         if (json!=null) load(json)
     }
 
     private fun load(json: JsonNode) {
         if (json.has("defaultLanguage")) this.defaultLanguage = json["defaultLanguage"].asText()
-        if (json.has("dbUri")) this.dbUri = json["dbUri"].asText()
+        if (json.has("dbDir")) this.dbDirName = json["dbDir"].asText()
         if (json.has("rootUserPassword")) this.rootUserPassword = json["rootUserPassword"].asText()
+    }
+    //endregion
+
+
+
+    //region GETTERS
+    fun getDBDir() : Path {
+        return this.dataDir.resolve(this.dbDirName)
     }
     //endregion
 

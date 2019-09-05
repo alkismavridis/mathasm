@@ -23,10 +23,14 @@ import graphql.schema.GraphQLScalarType
 import java.nio.file.Files
 import graphql.execution.DataFetcherExceptionHandlerParameters
 import graphql.language.SourceLocation
+import org.apache.commons.io.IOUtils
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ResourceLoader
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.core.io.Resource
 import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
+
+
 
 
 @Component
@@ -46,6 +50,9 @@ class GraphqlService {
     val mutationStrategy:ExecutionStrategy
     val queryStrategy:ExecutionStrategy
     private val objectMapper = ObjectMapper()
+
+    @Value("classpath:static/schemas/main.graphqls")
+    var resourceFile: Resource? = null
     //endregion
 
 
@@ -76,15 +83,14 @@ class GraphqlService {
         //2. SETUP RESOLVERS
         val resolvers = listOf(
             Query(app),
-                Mutation(app, secService),
+            Mutation(app, secService),
             UserResolver(),
             StatementResolver(app),
             MathAsmDirResolver()
         )
 
         //3. Create the schema
-        val schemaPath = conf.resources.resolve("schemas/main.graphqls")
-        val schemaString = String(Files.readAllBytes(schemaPath))
+        val schemaString = IOUtils.toString(resourceFile!!.inputStream)
         mainSchema = SchemaParser.newParser()
                 .dictionary("MathAsmDirEntity", MathAsmDirEntity::class)
                 .schemaString(schemaString)

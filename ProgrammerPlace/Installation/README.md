@@ -30,12 +30,12 @@ This is the most important one. It must be a json file that holds all the config
 The both linux and windows configuration examples lie on this directory (linuxConfig.json and winConfig.json).
 
 The configuration file can be wherever on your pc. The app will find it though a java option that must de provided:
--DmathAsmConfigFile="APP_ROOT/config1.json".
+-DmathAsmDataDir="APP_ROOT/".
 
 Please note that APP_ROOT is just an alias.
 In my system, for example this is:
 
--DmathAsmConfigFile="/home/alkis/data/MathAsm/config1.json"
+-DmathAsmDataDir="/home/alkis/data/MathAsm/production"
 
 You have to change this configuration, and replace APP_ROOT with the directory of your preference.
 The json file name is also freely chosen. Just put the configuration file name that really exists on your system.
@@ -83,3 +83,16 @@ APP_ROOT
 
 Please note that config.json has **dbUri:APP_ROOT/db**,
 but the testConfig.json has **dbUri:APP_ROOT/test_db**
+
+
+
+### 6. Production build
+To generate the jars go to project root folder and run
+- mvn clean
+- mvn -Dmaven.test.skip=true package
+
+This will produce the target folder and some .jars in it.
+The application is in target/mathasm-0.0.1-SNAPSHOT.jar
+
+Run the app:
+- java -jar -DmathAsmDataDir="/home/alkis/data/MathAsm/production"

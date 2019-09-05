@@ -3,6 +3,7 @@ package eu.alkismavridis.mathasm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.neo4j.ogm.session.SessionFactory;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.ApplicationContext;
@@ -27,8 +28,11 @@ public class MathAsmConfigurationHolder {
         final MathAsmConfig config = (MathAsmConfig)appContext.getBean("mathAsmConfig");
         if (config==null) throw new Exception("Neo4jConfiguration: could not load MathAsmConfig.");
 
+
+        System.out.println(config.getDBDir().toUri().toString());
+
         return new org.neo4j.ogm.config.Configuration.Builder()
-                .uri(config.getDbUri())
+                .uri(config.getDBDir().toUri().toString())
                 .build();
     }
 
@@ -47,46 +51,61 @@ public class MathAsmConfigurationHolder {
      * Fields value may be overridden by a configuration json file.
      * The configuration file may be provided with the following JVM option:
      *
-     * -DmathAsmConfigFile="/path/to/my/file.json"
+     * -DmathAsmDataDir="/path/to/my/file.json"
      * when the application starts, the file wil be scanned, and every option that matches one of the
      * configuration field's names will be loaded.
      * The configuration fields that will be not mentioned in the given json file will keep their default values.
-     *
-     * It is totally ok to omit -DmathAsmConfigFile option.
-     * In this case, all fields will have their default values.
      *
      * */
     @Bean
     MathAsmConfig mathAsmConfig() {
         try {
             //1. Check if a json configuration file is provided.
-            final String pathToConfFile = System.getProperty("mathAsmConfigFile");
-            final Path configFile = pathToConfFile==null? null : Paths.get(pathToConfFile).toAbsolutePath().normalize();
+            final String pathToConfFile = System.getProperty("mathAsmDataDir");
+            if(pathToConfFile==null) throw new Exception(
+                "\n\n\nMathASM needs a directory in your file system in order to work!\n"+
+                "Please define it using -DmathAsmDataDir=\"/path/to/my/dir\" in your java command.\n"+
+                "Don't worry if the directory does not exists, MathAsm will create it.\n"+
+                "You just have to define where this will be.\n\n\n"
+            );
+
+
+
+            final Path dataDir = Paths.get(pathToConfFile).toAbsolutePath().normalize();
 
             //2. If it is provided, assert its existence
-            if (configFile!=null && !Files.exists(configFile)) {
-                throw new FileNotFoundException("Could not find configuration file "+pathToConfFile);
+            if (!Files.exists(dataDir)) {
+                System.out.println("Data directory "+dataDir.toString()+" does not extist. Attempt to create it.");
+
+                Files.createDirectories(dataDir);
+                System.out.println("Data directory "+dataDir.toString()+" successfully created.");
             }
 
-            //3. Parse its json
+            //3. Parse its configuration json
+            final Path configFile = dataDir.resolve("config.json");
+
+            JsonNode json;
             final ObjectMapper mapper = new ObjectMapper();
-            JsonNode json = configFile==null? null : mapper.readTree(Files.newInputStream(configFile));
-            if (configFile!=null && json==null) {
-                throw new Exception("MathAsmApplication: file  "+configFile.toString()+" does not contain a valid json. Please check the contents of this file.");
+            if(Files.exists(configFile)) {
+                json = mapper.readTree(Files.newInputStream(configFile));
+                if(json!=null) {
+                    System.out.println("\n\n\nMathAsmApplication: configuration was loaded:\n");
+                    System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json));
+                    System.out.println("\n\n\n");
+                }
+                else throw new Exception(
+                        "MathAsmApplication: file  "+configFile.toString()+
+                        " does not contain a valid json. Please check the contents of this file."
+                );
             }
+            else {
+                System.out.println("No config.json was found in data directory. Default values will be used.");
+                json = JsonNodeFactory.instance.objectNode();
+            }
+
 
             //4. Log the configuration loading, or the absence of it
-            if (json!=null) {
-                System.out.println("\n\n\nMathAsmApplication: configuration was loaded:\n");
-                System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json));
-                System.out.println("\n\n\n");
-            }
-            else System.out.println("MathAsmApplication: no configuration was provided. Default will be used.");
-
-            return new MathAsmConfig(
-                    ResourceUtils.getFile("classpath:static").getAbsoluteFile().toPath(),
-                    json
-            );
+            return new MathAsmConfig(dataDir, json);
         }
         catch (Exception ex) {
             ex.printStackTrace();
