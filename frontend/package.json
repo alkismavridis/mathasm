@@ -21,6 +21,7 @@
     "react-notifications-component": "^1.0.1",
     "react-scripts": "2.1.0",
     "rxjs": "^6.5.2",
+    "url-router": "^9.0.1",
     "vis": "^4.21.0"
   },
   "scripts": {

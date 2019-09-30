@@ -24,7 +24,7 @@ class UserService {
 
 
     //region FIELDS
-    var users = mutableMapOf<Long, User>(); private set
+    //var users = mutableMapOf<Long, User>(); private set
     //endregion
 
 
@@ -40,20 +40,21 @@ class UserService {
         println("Initializing user service...")
 
         //1. Fetch all users from DB
-        val usersFromDb = userRepo.findAll()
-        for (u in usersFromDb) this.users[u.id!!] = u
+        //val usersFromDb = userRepo.findAll()
+        //for (u in usersFromDb) this.users[u.id!!] = u
 
-        println("${this.users.size} Users where loaded")
+        //println("${this.users.size} Users where loaded")
     }
 
 
-    fun createRootUser() {
+    fun getOrCreateRootUser() : User {
+        val existingRoot = this.userRepo.findByUserName("root")
+        if(existingRoot!=null) return existingRoot
+
         println("No users where found. Creating root user...")
-        val rootUser = userRepo.save(
+        return userRepo.save(
             User("root").setPassword(conf.rootUserPassword).withRights(UserRights_MAX)
         )
-
-        this.users[rootUser.id!!] = rootUser
     }
     //endregion
 
@@ -61,26 +62,16 @@ class UserService {
 
     //region GETTERS
     fun get(id:Long): User? {
-        return users.get(id)
+        return this.userRepo.findById(id).orElse(null)
     }
 
     fun get(login:String): User? {
-        return users.filter{(id,u) -> u.userName.equals(login, true)}.values.firstOrNull()
+        return this.userRepo.findByUserName(login)
     }
 
-    fun getAll():Collection<User> {
-        return users.values
+    fun getAll():List<User> {
+        return this.userRepo.findAll().iterator().asSequence().toList()
     }
-
-    fun userStream() : Stream<User> {
-        return this.users.values.stream()
-    }
-
-    fun find(condition: (User)->Boolean) : User? {
-        return this.users.values.stream().filter(condition).findAny().orElse(null)
-    }
-
-    fun filter(condition: (User)->Boolean) : Collection<User> { return this.users.values.stream().filter(condition).collect(Collectors.toList()) }
     //endregion
 
 
@@ -88,9 +79,7 @@ class UserService {
 
     //region SAVING
     fun save(user: User) : User {
-        val persisted = userRepo.save(user)
-        this.users[persisted.id!!] = persisted
-        return persisted
+        return userRepo.save(user)
     }
     //endregion
 
@@ -99,12 +88,10 @@ class UserService {
     //region DELETS
     fun delete(user: User) {
         userRepo.delete(user)
-        this.users.remove(user.id!!)
     }
 
     fun deleteAll() {
         userRepo.deleteAll()
-        this.users.clear()
     }
     //endregion
 }

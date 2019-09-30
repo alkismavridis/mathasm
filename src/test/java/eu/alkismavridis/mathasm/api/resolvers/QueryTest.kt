@@ -62,22 +62,6 @@ class QueryTest {
     }
 
     @Test
-    fun getAllUsersTest() {
-        //1. Create a couple of users
-        app.userService.deleteAll()
-        app.userService.save(User("user1"))
-        app.userService.save(User("user2"))
-        app.userService.save(User("user3"))
-
-        //1. Create an entity
-        val result = query.users(DummyFetchingEnvironment(null))
-        assertEquals(3, result.size)
-        assertTrue(result.find { u -> u.userName == "user1" } != null)
-        assertTrue(result.find { u -> u.userName == "user2" } != null)
-        assertTrue(result.find { u -> u.userName == "user3" } != null)
-    }
-
-    @Test
     fun getUserTest() {
         //1. Create a couple of users
         app.userService.deleteAll()

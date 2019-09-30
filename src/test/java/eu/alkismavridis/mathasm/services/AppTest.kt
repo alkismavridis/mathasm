@@ -70,7 +70,7 @@ class AppTest {
         Assert.assertTrue(usersFromRepo[0].rights == UserRights_MAX)
 
         //4. Assert that the root user is created in service
-        val usersFromService = app.userService.userStream().collect(Collectors.toList())
+        val usersFromService = app.userService.getAll()
         assertEquals(1, usersFromService.size)
         assertEquals("root", usersFromService[0].userName)
         Assert.assertTrue(usersFromService[0].rights == UserRights_MAX)
@@ -80,6 +80,6 @@ class AppTest {
         assertEquals(1, theories.size)
         assertEquals("root", theories[0].name)
         assertNotNull(theories[0].id)
-        assertEquals(app.userService.find{u -> u.userName == "root"}!!.id, theories[0].rootObj!!.author!!.id)
+        assertEquals(app.userService.get("root")!!.id, theories[0].rootObj!!.author!!.id)
     }
 }

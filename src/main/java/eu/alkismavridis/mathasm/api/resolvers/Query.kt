@@ -27,10 +27,6 @@ class Query: GraphQLQueryResolver {
         return listOf("en", "de")
     }
 
-    fun users(env:DataFetchingEnvironment): Collection<User> {
-        return app.userService.getAll()
-    }
-
     fun user(id:Long?, env:DataFetchingEnvironment): User? {
        if (id != null) return app.userService.get(id)
        return (env.getContext() as GraphqlContext).user

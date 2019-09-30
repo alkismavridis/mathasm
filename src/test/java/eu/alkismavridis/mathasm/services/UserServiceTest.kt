@@ -56,7 +56,7 @@ class UserServiceTest {
         //1. Start from zero
         app.userService.deleteAll()
         assertEquals(0, userRepo.count())
-        assertEquals(0, app.userService.users.size)
+        assertEquals(0, app.userService.getAll().size)
 
         //2. Create a user
         val user1 = app.userService.save(
@@ -65,7 +65,7 @@ class UserServiceTest {
         assertNotNull(user1.id)
         assertEquals(1, userRepo.count())
         assertTrue(userRepo.existsById(user1.id!!))
-        assertTrue(user1 === app.userService.get(user1.id!!))
+        assertEquals(user1.id, app.userService.get(user1.id!!)!!.id)
 
         //3. Create one more user
         val user2 = app.userService.save(
@@ -74,7 +74,7 @@ class UserServiceTest {
         assertNotNull(user2.id)
         assertEquals(2, userRepo.count())
         assertTrue(userRepo.existsById(user2.id!!))
-        assertTrue(user2 === app.userService.get(user2.id!!))
+        assertEquals(user2.id, app.userService.get(user2.id!!)!!.id)
 
 
         //4. Update user1
@@ -90,7 +90,7 @@ class UserServiceTest {
         assertFalse(userRepo.existsById(user1.id!!))
         assertTrue(userRepo.existsById(user2.id!!)) //this should still be here
 
-        assertEquals(1, app.userService.users.size)
+        assertEquals(1, app.userService.getAll().size)
         assertNull(app.userService.get(user1.id!!))
         assertNotNull(app.userService.get(user2.id!!))
     }

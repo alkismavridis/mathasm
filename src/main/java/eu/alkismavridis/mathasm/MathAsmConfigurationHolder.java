@@ -103,8 +103,7 @@ public class MathAsmConfigurationHolder {
                 json = JsonNodeFactory.instance.objectNode();
             }
 
-
-            //4. Log the configuration loading, or the absence of it
+            //4. Create the configuration object
             return new MathAsmConfig(dataDir, json);
         }
         catch (Exception ex) {
