@@ -6,74 +6,35 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import SelectionType from "../../../core/enums/SelectionType";
 import StatementSide from "../../../core/enums/StatementSide";
 import ProofStepsViewer from "../ReusableComponents/ProofStepsViewer/ProofStepsViewer";
-import ProofPlayer from "../../../core/entities/frontend/ProofPlayer";
 import MathAsmStatement from "../../../core/entities/backend/MathAsmStatement";
-import MathAsmDir from "../../../core/entities/backend/MathAsmDir";
-import App from "../../../core/app/App";
 import {Subscription} from "rxjs/index";
-import TextGetterState from "../../../core/app/modals/TextGetterState";
-import MainPageController from "../../../core/app/pages/MainPageController";
-import MathAsmSymbol from "../../../core/entities/backend/MathAsmSymbol";
+import TheoremCreatorController from "../../../core/app/pages/main_page/content/TheoremCreatorController";
+import {unsubscribeAll, updateOn} from "../../utils/SubscriptionUtils";
 
-const q = {
-    UPLOAD_PROOF: `mutation($moves:[LogicMove!]!) {
-      statementWSector {
-        uploadProof(moves:$moves) {
-            parentId
-            theorem {id, name, type, left, right, isBidirectional, grade}
-        }
-      }
-    }`
-};
+
 
 export default class TheoremCreator extends Component {
     //region STATIC
     props : {
-        //data
-        app:App,
-        controller:MainPageController,
-        symbolMap:Map<number, MathAsmSymbol>,
-        parentDir:MathAsmDir,
-
-        //actions
-
-        //styling
+        ctrl:TheoremCreatorController;
         style?: CSSProperties,
         className?: string,
     };
 
-    state = {
-        player: new ProofPlayer(),
-    };
 
     _rootRef = null;
-
-    private subscriptions:Subscription[] = [];
+    subscriptions:Subscription[] = [];
     //endregion
 
 
 
     //region LIFE CYCLE
     componentDidMount() {
-        this.subscriptions.push(
-            this.props.controller.onStmtClicked.subscribe(stmt => {
-                this.setBase(stmt);
-                this.focus();
-            })
-        );
-
-        this.subscriptions.push(
-            this.props.controller.onSymbolClicked.subscribe(info => {
-                if(!info.statement) return;
-                this.setBase(info.statement);
-                this.focus();
-            })
-        );
+        updateOn(this.props.ctrl.onChange, this);
     }
 
     componentWillUnmount() {
-        this.subscriptions.forEach(s => s.unsubscribe());
-        this.subscriptions = [];
+        unsubscribeAll(this);
     }
     //endregion
 
@@ -83,208 +44,74 @@ export default class TheoremCreator extends Component {
         if (this._rootRef) this._rootRef.focus();
     }
 
-    /**
-     * Sets the base to be the given base, and updates all related internal state.
-     * NOTE: base parameter can be null!
-     * */
-    setBase(base:MathAsmStatement) {
-        this.state.player.setBase(base);
-        this.setState({player:this.state.player});
-    }
-
-    /**
-     * Selects the given target and updates the internal state.
-     * NOTE: index can be null, which means DESELECT
-     * */
-    selectTarget(index:number) {
-        this.state.player.setTargetIndex(index);
-        this.setState({player:this.state.player});
-    }
-
-    /**
-     * Changes the direction of the base, if the move is allowed.
-     * */
-    setBaseDir(newDir:StatementSide) {
-        this.state.player.setBaseDir(newDir);
-        this.setState({player:this.state.player});
-    }
-
-    changeSelectionType(newSelectionType: SelectionType) {
-        const didChange = this.state.player.setSelection(newSelectionType, null);
-
-        if (didChange) this.setState({player:this.state.player});
-        else this.props.app.quickInfos.makeWarning("This selection is not allowed for the selected base and target.");
-    }
-
-    /** Attempt to switch to either LEFT or RIGHT selection. */
-    switchToSelectSentenceMode() {
-        //1. Try to set LEFT or RIGHT selection.
-        let success = this.state.player.setSelection(SelectionType.LEFT, null);
-        if (!success) success = this.state.player.setSelection(SelectionType.RIGHT, null);
-
-        //2. Handle result
-        if (success) this.setState({player:this.state.player});
-        else this.props.app.quickInfos.makeWarning("Illegal move: Could not perform sentence selection.");
-    }
-
-    switchToSingleSelectionMode() {
-        //1. Try to set LEFT or RIGHT selection.
-        let success = this.state.player.setSelection(SelectionType.ONE_IN_LEFT, null);
-        if (!success) success = this.state.player.setSelection(SelectionType.ONE_IN_RIGHT, null);
-
-        //2. Handle result
-        if (success) this.setState({player:this.state.player});
-        else this.props.app.quickInfos.makeWarning("Illegal move: Could not perform single selection.");
-    }
-
-    /** Moves the selection, staying on the current selectionType */
-    moveSelection(step:number) {
-        const didChange = this.state.player.moveSelection(step);
-        if (didChange) this.setState({player:this.state.player});
-    }
-
-    /**
-     * Clones the selected base, and appends the clone into the target list, if no target is selected.
-     * If a target is selected, this target will be overwritten instead.
-     * */
-    cloneBase(sideToClone:StatementSide) {
-        const success = this.state.player.addCloningMove(sideToClone);
-        if (success) this.setState({player:this.state.player});
-        else this.props.app.quickInfos.makeWarning("Cloning move not allowed. Please check base direction.");
-    }
-
-    /** Performs the replacement based on the current selection. */
-    performReplacement() {
-        const success = this.state.player.performReplacement();
-        if (success) this.setState({player:this.state.player});
-        // else QuickInfoService.makeWarning("Cloning move not allowed. Please check base direction.");
-    }
-
-
-    /** Navigates to the selected move of the proof. */
-    goToMove(index:number) {
-        this.state.player.goToMove(index);
-        this.setState({player:this.state.player});
-    }
-
-    handleSaveClicked() {
-        const target = this.state.player.getSelectedTarget();
-        if (target==null) return;
-
-        const onSave = (name:string, state:TextGetterState) => {
-            if (!name) return;
-
-            //1. Create the save move
-            this.state.player.addSaveMove(target._internalId, name, this.props.parentDir.id);
-            this.setState({player: this.state.player});
-
-            //2. Perform the replacement
-            this.props.app.modals.removeModal(state.modalId);
-        };
-
-        this.props.app.modals.showTextGetter("Save under "+this.props.parentDir.name, "Theorem's name...", onSave);
-    }
-
-    /** Uploads the proof to the server. */
-    uploadProof() {
-        if(this.state.player.getMoveCount()===0) return;
-
-        const dataToUpload = this.state.player.makeBackendProof();
-        this.props.app.graphql.run(q.UPLOAD_PROOF, {moves:dataToUpload})
-            .then(mutation => {
-                this.props.app.quickInfos.makeSuccess("Proof successfully uploaded.");
-                this.props.controller.proofSaved(mutation.statementWSector.uploadProof);
-            })
-            .catch(error => {
-                this.props.app.quickInfos.makeError("Error while uploading proof. Please note that parts of the proof may have been successfully saved.");
-                console.error(error);
-            });
-    }
-
     /** The user could interact with this component with the keyboard too. Here are the controls: */
     handleKeyPress(e:KeyboardEvent) {
         switch (e.keyCode) {
             case 32: //space bar (Action: switch base direction)
-                this.setBaseDir(this.state.player.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT);
+                this.props.ctrl.swapBaseDir();
                 break;
 
             case 13: //enter key (Action: perform replacement)
-                this.performReplacement();
+                this.props.ctrl.performReplacement();
                 break;
 
             case 38: //arrow up (Action: change selected target)
-                if (this.state.player.targets.length===0) break;
-
                 e.preventDefault();
-                if (this.state.player.selectedTargetIndex===0) this.selectTarget(null);
-                else if (this.state.player.selectedTargetIndex==null) this.selectTarget(this.state.player.targets.length-1);
-                else this.selectTarget(this.state.player.selectedTargetIndex-1);
+                this.props.ctrl.choosePrevTarget();
                 break;
 
             case 40: //arrow down (Action: change selected target)
-                if (this.state.player.targets.length===0) break;
-
                 e.preventDefault();
-                if (this.state.player.selectedTargetIndex===this.state.player.targets.length-1) this.selectTarget(null);
-                else if (this.state.player.selectedTargetIndex==null) this.selectTarget(0);
-                else this.selectTarget(this.state.player.selectedTargetIndex+1);
+                this.props.ctrl.chooseNextTarget();
                 break;
 
             case 37: //arrow left (Action: moves the selection to the left)
-                this.moveSelection(-1);
+                this.props.ctrl.moveSelection(-1);
                 break;
 
             case 39: //arrow right (Action: moves the selection to the right)
-                this.moveSelection(1);
+                this.props.ctrl.moveSelection(1);
                 break;
 
             case 65: //"a" key (Action: Select all)
-                this.changeSelectionType(SelectionType.ALL);
+                this.props.ctrl.changeSelectionType(SelectionType.ALL);
                 break;
 
             case 83: //"s" key (Action: select sentence)
-                this.switchToSelectSentenceMode();
+                this.props.ctrl.switchToSelectSentenceMode();
                 break;
 
             case 68: //"d" key (Action: Select distinct)
-                this.switchToSingleSelectionMode();
+                this.props.ctrl.switchToSingleSelectionMode();
                 break;
 
             case 88: //"x" key (Action: clone base - left side)
-                this.cloneBase(StatementSide.LEFT);
+                this.props.ctrl.cloneBase(StatementSide.LEFT);
                 break;
 
             case 67: //"c" key (Action: clone base)
-                this.cloneBase(StatementSide.BOTH);
+                this.props.ctrl.cloneBase(StatementSide.BOTH);
                 break;
 
             case 86: //"v" key (Action: clone base - right side)
-                this.cloneBase(StatementSide.RIGHT);
+                this.props.ctrl.cloneBase(StatementSide.RIGHT);
                 break;
 
             case 80: //"p" key (Action: persist selected template)
-                this.handleSaveClicked();
+                this.props.ctrl.handleSaveClicked();
                 break;
 
             case 66: //"b" key (Action: use target as base)
-                const selectedTarget = this.state.player.getSelectedTarget();
-                if (selectedTarget) this.setBase(selectedTarget);
+                this.props.ctrl.useTargetAsBase();
                 break;
 
             case 27: //escape key (Action: Select none)
-                this.changeSelectionType(SelectionType.NONE);
+                this.props.ctrl.changeSelectionType(SelectionType.NONE);
                 break;
 
             case 90: { //z key
-                const currentMoveIndex = this.state.player.currentMoveIndex;
-                const moveCount = this.state.player.getMoveCount();
-
-                if (e.shiftKey && e.ctrlKey) { //redo.
-                    if (moveCount!==0 && currentMoveIndex!==moveCount-1) this.goToMove(currentMoveIndex+1);
-                }
-                else if (e.ctrlKey) { //undo
-                    if (moveCount!==0 && currentMoveIndex>=0) this.goToMove(currentMoveIndex-1);
-                }
+                if (e.shiftKey && e.ctrlKey) this.props.ctrl.redoMove();
+                else if (e.ctrlKey) this.props.ctrl.undoMove();
                 break;
             }
         }
@@ -297,9 +124,9 @@ export default class TheoremCreator extends Component {
     renderTarget(target:MathAsmStatement, index:number) {
         if (!target) return <div>Empty target</div>;
 
-        const changeHandler = () => this.selectTarget(this.state.player.selectedTargetIndex===index? null : index);
+        const player = this.props.ctrl.player;
+        const changeHandler = () => this.props.ctrl.selectTarget(player.selectedTargetIndex===index? null : index);
 
-        const player = this.state.player;
         const isSelected = player.selectedTargetIndex===index;
         return <div key={index} className="MA_flexStartDown">
             <button
@@ -311,7 +138,7 @@ export default class TheoremCreator extends Component {
                     color:"green",
                     marginRight:"8px"
                 }}
-                onClick={e => this.setBase(player.targets[index])}>
+                onClick={e => this.props.ctrl.setBase(player.targets[index])}>
                 <FontAwesomeIcon icon="cog"/>
             </button>
             <button
@@ -325,7 +152,7 @@ export default class TheoremCreator extends Component {
                     backgroundColor:"transparent",
                     marginRight:"8px"
                 }}
-                onClick={()=>this.performReplacement()}>
+                onClick={()=>this.props.ctrl.performReplacement()}>
                 <FontAwesomeIcon icon="check"/>
             </button>
             <button
@@ -342,7 +169,7 @@ export default class TheoremCreator extends Component {
                 <FontAwesomeIcon icon="angle-right"/>
             </button>
             <Statement
-                symbolMap={this.props.symbolMap}
+                symbolMap={this.props.ctrl.symbolMap}
                 statement={target}
                 leftMatches={isSelected? player.leftMatches : null}
                 rightMatches={isSelected? player.rightMatches : null}
@@ -352,7 +179,7 @@ export default class TheoremCreator extends Component {
     }
 
     renderBase() {
-        const player = this.state.player;
+        const player = this.props.ctrl.player;
         if (!player.base) return <div>Please select a base...</div>;
 
         const isBidirectional = player.base && player.base.isBidirectional;
@@ -367,15 +194,15 @@ export default class TheoremCreator extends Component {
                     marginRight:"8px"
                 }}
                 disabled={!isBidirectional}
-                onClick={()=>this.setBaseDir(player.baseSide===StatementSide.LEFT? StatementSide.RIGHT : StatementSide.LEFT)}>
+                onClick={()=>this.props.ctrl.swapBaseDir()}>
                 <FontAwesomeIcon icon="exchange-alt"/>
             </button>
-            <Statement symbolMap={this.props.symbolMap} statement={player.base} side={player.baseSide}/>
+            <Statement symbolMap={this.props.ctrl.symbolMap} statement={player.base} side={player.baseSide}/>
         </div>
     }
 
     renderButtons() {
-        const player = this.state.player;
+        const player = this.props.ctrl.player;
 
         return <div style={{margin:"16px 0"}} className="MA_flexStart">
             <button
@@ -389,7 +216,7 @@ export default class TheoremCreator extends Component {
                     fontSize: "14px",
                     margin:"0 4px"
                 }}
-                onClick={()=>this.cloneBase(StatementSide.LEFT)}>
+                onClick={()=>this.props.ctrl.cloneBase(StatementSide.LEFT)}>
                 <FontAwesomeIcon icon="ruler-combined" flip="horizontal"/>
             </button>
             <button
@@ -403,7 +230,7 @@ export default class TheoremCreator extends Component {
                     fontSize: "14px",
                     margin:"0 4px"
                 }}
-                onClick={()=>this.cloneBase(StatementSide.BOTH)}>
+                onClick={()=>this.props.ctrl.cloneBase(StatementSide.BOTH)}>
                 <FontAwesomeIcon icon="bolt"/>
             </button>
             <button
@@ -417,7 +244,7 @@ export default class TheoremCreator extends Component {
                     fontSize: "14px",
                     margin:"0 20px 0 4px"
                 }}
-                onClick={()=>this.cloneBase(StatementSide.RIGHT)}>
+                onClick={()=>this.props.ctrl.cloneBase(StatementSide.RIGHT)}>
                 <FontAwesomeIcon icon="ruler-combined"/>
             </button>
 
@@ -432,7 +259,7 @@ export default class TheoremCreator extends Component {
                     fontSize: "18px",
                     margin:"0 4px"
                 }}
-                onClick={()=>this.moveSelection(-1)}>
+                onClick={()=>this.props.ctrl.moveSelection(-1)}>
                 <FontAwesomeIcon icon="caret-left"/>
             </button>
             <button
@@ -446,7 +273,7 @@ export default class TheoremCreator extends Component {
                     fontSize: "14px",
                     margin:"0 4px"
                 }}
-                onClick={()=>this.changeSelectionType(SelectionType.ALL)}>
+                onClick={()=>this.props.ctrl.changeSelectionType(SelectionType.ALL)}>
                 <FontAwesomeIcon icon="asterisk"/>
             </button>
             <button
@@ -460,7 +287,7 @@ export default class TheoremCreator extends Component {
                     fontSize: "14px",
                     margin:"0 4px"
                 }}
-                onClick={()=>this.switchToSelectSentenceMode()}>
+                onClick={()=>this.props.ctrl.switchToSelectSentenceMode()}>
                 <FontAwesomeIcon icon="balance-scale"/>
             </button>
             <button
@@ -474,7 +301,7 @@ export default class TheoremCreator extends Component {
                     fontSize: "14px",
                     margin:"0 4px"
                 }}
-                onClick={()=>this.switchToSingleSelectionMode()}>
+                onClick={()=>this.props.ctrl.switchToSingleSelectionMode()}>
                 <FontAwesomeIcon icon="highlighter"/>
             </button>
             <button
@@ -488,13 +315,13 @@ export default class TheoremCreator extends Component {
                     fontSize: "18px",
                     margin:"0 20px 0 4px"
                 }}
-                onClick={()=>this.moveSelection(1)}>
+                onClick={()=>this.props.ctrl.moveSelection(1)}>
                 <FontAwesomeIcon icon="caret-right"/>
             </button>
 
             <button
                 className="MA_roundBut"
-                title={"Persist selected template under "+this.props.parentDir.name+" (p)"}
+                title={"Persist selected template under "+this.props.ctrl.getActiveDirName()+" (p)"}
                 style={{
                     visibility:player.selectedTargetIndex==null? "hidden" : "visible",
                     backgroundColor: "#5db969",
@@ -503,7 +330,7 @@ export default class TheoremCreator extends Component {
                     fontSize: "16px",
                     margin:"0 4px"
                 }}
-                onClick={()=>this.handleSaveClicked()}>
+                onClick={()=>this.props.ctrl.handleSaveClicked()}>
                 <FontAwesomeIcon icon="save"/>
             </button>
             <button
@@ -517,21 +344,20 @@ export default class TheoremCreator extends Component {
                     fontSize: "16px",
                     margin:"0 4px"
                 }}
-                onClick={()=>this.uploadProof()}>
+                onClick={()=>this.props.ctrl.uploadProof()}>
                 <FontAwesomeIcon icon="cloud-upload-alt"/>
             </button>
-
         </div>;
     }
 
     renderEmptyStmtDiv() {
         return (
             <div
-                onClick={() => this.selectTarget(null)}
+                onClick={() => this.props.ctrl.selectTarget(null)}
                 style={{
                     marginLeft:"48px",
                     marginTop:"16px",
-                    visibility:this.state.player.base==null? "hidden" : "visible"
+                    visibility:this.props.ctrl.player.base==null? "hidden" : "visible"
                 }}>
                 <button
                     className="MA_textBut"
@@ -539,11 +365,11 @@ export default class TheoremCreator extends Component {
                     style={{
                         width: "16px",
                         height: "16px",
-                        color:this.state.player.selectedTargetIndex==null? "#001fff" : "#001fff73",
+                        color:this.props.ctrl.player.selectedTargetIndex==null? "#001fff" : "#001fff73",
                         backgroundColor:"transparent",
                         marginRight:"8px"
                     }}
-                    onClick={() => this.selectTarget(null)}>
+                    onClick={() => this.props.ctrl.selectTarget(null)}>
                     <FontAwesomeIcon icon="angle-right"/>
                 </button>
                 <span>New...</span>
@@ -563,13 +389,13 @@ export default class TheoremCreator extends Component {
                     {this.renderBase()}
                     {this.renderButtons()}
                     <div>
-                        {this.state.player.targets.map((t,index) => this.renderTarget(t, index))}
+                        {this.props.ctrl.player.targets.map((t,index) => this.renderTarget(t, index))}
                         {this.renderEmptyStmtDiv()}
                     </div>
                 </div>
                 <ProofStepsViewer
-                    proofPlayer={this.state.player}
-                    onNavigateAction={index => this.goToMove(index)}/>
+                    proofPlayer={this.props.ctrl.player}
+                    onNavigateAction={index => this.props.ctrl.goToMove(index)}/>
             </div>
         );
     }

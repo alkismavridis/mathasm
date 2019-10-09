@@ -2,10 +2,11 @@ import {Subject} from "rxjs/index";
 import MathAsmDir from "../entities/backend/MathAsmDir";
 import MathAsmSymbol from "../entities/backend/MathAsmSymbol";
 import SortingUtils from "../utils/SortingUtils";
-import MainPageController, {SymbolClickInfo} from "./pages/MainPageController";
+import MainPageController from "./pages/main_page/MainPageController";
 import MathAsmStatement from "../entities/backend/MathAsmStatement";
 import App from "./App";
 import {MathAsmTabController} from "./MathAsmTabController";
+import SymbolSelectionInfo from "../entities/frontend/SymbolSelectionInfo";
 
 
 export default class DirViewerGroupController {
@@ -104,7 +105,7 @@ export default class DirViewerGroupController {
     }
 
 
-    handleSymbolClick(clickInfo:SymbolClickInfo) { this.mainPage.onSymbolClicked.next(clickInfo); }
+    handleSymbolClick(clickInfo:SymbolSelectionInfo) { this.mainPage.onSymbolClicked.next(clickInfo); }
     handleStatementClick(stmt:MathAsmStatement) { this.mainPage.onStmtClicked.next(stmt); }
     toggleSymbolCreationMode() { this.mainPage.toggleSymbolCreationMode(); }
     toggleAxiomCreationMode() { this.mainPage.toggleAxiomCreationMode(); }

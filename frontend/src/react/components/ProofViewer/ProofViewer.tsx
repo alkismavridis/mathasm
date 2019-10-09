@@ -14,118 +14,56 @@ import ProofPlayer from "../../../core/entities/frontend/ProofPlayer";
 import {SymbolRangeUtils} from "../../../core/utils/SymbolRangeUtils";
 import q from "./ProofViewer.graphql";
 import App from "../../../core/app/App";
-import MainPageController from "../../../core/app/pages/MainPageController";
+import MainPageController from "../../../core/app/pages/main_page/MainPageController";
 import MathAsmSymbol from "../../../core/entities/backend/MathAsmSymbol";
+import ProofViewerController from "../../../core/app/pages/main_page/content/ProofViewerController";
+import {unsubscribeAll, updateOn} from "../../utils/SubscriptionUtils";
+import {Subscription} from "rxjs";
 
 
 
 class ProofViewer extends Component {
-    //region FIELDS
+    //SECTION FIELDS
     props : {
-        //data
-        app:App,
-        controller:MainPageController,
-        symbolMap:Map<number, MathAsmSymbol>,
-        parentDir:MathAsmDir,
-        statement:MathAsmStatement,
-
-        //actions
-
-        //styling
+        ctrl:ProofViewerController,
         style?: CSSProperties,
         className?: string,
     };
 
-    state = {
-        player: new ProofPlayer(),
-
-        targets:[] as MathAsmStatement[],
-        selectedTargetIndex:null as number,
-
-
-        //selection
-        base:null as MathAsmStatement,
-        baseSide:StatementSide.LEFT,
-        leftMatches:[] as SentenceMatch[], //notNull
-        rightMatches:[] as SentenceMatch[], //notNull
-        selectionType:SelectionType.NONE,
-    };
-
     _rootRef = null;
-    //endregion
+    subscriptions:Subscription[] = [];
 
 
-    //region LIFE CYCLE
-    // constructor(props) { super(props); }
+    //SECTION LIFE CYCLE
     componentDidMount() {
-        this.fetchProof();
+        updateOn(this.props.ctrl.onChange, this);
     }
 
-    componentDidUpdate(prevProps) {
-        if(this.props.statement != prevProps.statement) this.fetchProof();
+    componentWillUnmount() {
+        unsubscribeAll(this);
     }
 
-    fetchProof() {
-        if (this.props.statement==null) return;
 
-        this.props.app.graphql.run(q.FETCH_PROOF, {id:this.props.statement.id}).then(resp=> {
-            this.state.player.setupFrom(resp.statement.proof);
-            this.checkForMissingSymbols(resp.statement.proof.bases);
-            this.forceUpdate();
-            if(this._rootRef) this._rootRef.focus();
-        });
-    }
-    //endregion
-
-
-    //region EVENT HANDLERS
-    checkForMissingSymbols(statements:MathAsmStatement[]) {
-        const missingIds = SymbolRangeUtils.getMissingIdsFromStatements(statements, this.props.symbolMap);
-        if (missingIds.size === 0) return;
-
-        this.props.app.graphql.run(q.FETCH_SYMBOLS, {ids:Array.from(missingIds)}).then(resp => {
-            SymbolRangeUtils.addSymbolsToMap(this.props.symbolMap, resp.symbols);
-            this.props.controller.onSymbolMapUpdated.next(this.props.symbolMap);
-        });
-    }
-    //endregion
-
-
-
-    //region EVENT HANDLERS
+    //SECTION EVENT HANDLERS
     /** The user could interact with this component with the keyboard too. Here are the controls: */
     handleKeyPress(e:KeyboardEvent) {
         switch (e.keyCode) {
-            case 38: { //arrow up (Action: change selected target)
-                const currentMoveIndex = this.state.player.currentMoveIndex;
-                const moveCount = this.state.player.getMoveCount();
-                if (moveCount!==0 && currentMoveIndex>=0) this.goToMove(currentMoveIndex-1);
+            case 38: //arrow up
+                this.props.ctrl.goToPrevMove();
                 break;
-            }
 
-            case 40: { //arrow down (Action: change selected target)
-                const currentMoveIndex = this.state.player.currentMoveIndex;
-                const moveCount = this.state.player.getMoveCount();
-                if (moveCount!==0 && currentMoveIndex!==moveCount-1) this.goToMove(currentMoveIndex+1);
+            case 40: //arrow down
+                this.props.ctrl.goToNextMove();
                 break;
-            }
         }
     }
 
-    /** Navigates to the selected move of the proof. */
-    goToMove(index:number) {
-        this.state.player.goToMove(index);
-        this.setState({player:this.state.player});
-    }
-    //endregion
 
-
-
-    //region RENDERING
+    //SECTION RENDERING
     renderTarget(target:MathAsmStatement, index:number) {
         if (!target) return <div>Empty target</div>;
 
-        const player = this.state.player;
+        const player = this.props.ctrl.player;
         const isSelected = player.selectedTargetIndex===index;
         return <div key={index} className="MA_flexStartDown">
             <div
@@ -141,7 +79,7 @@ class ProofViewer extends Component {
                 <FontAwesomeIcon icon="angle-right"/>
             </div>
             <Statement
-                symbolMap={this.props.symbolMap}
+                symbolMap={this.props.ctrl.symbolMap}
                 statement={target}
                 leftMatches={isSelected? player.leftMatches : null}
                 rightMatches={isSelected? player.rightMatches : null}
@@ -150,14 +88,14 @@ class ProofViewer extends Component {
     }
 
     renderBase() {
-        const player = this.state.player;
+        const player = this.props.ctrl.player;
 
         return <div className="ProofViewer_base">
             <div>{player.base?
                 "Base for next move: "+MathAsmStatement.getDisplayName(player.base) :
                 "No base selected..."
             }</div>
-            {player.base && <Statement symbolMap={this.props.symbolMap} statement={player.base} side={player.baseSide}/>}
+            {player.base && <Statement symbolMap={this.props.ctrl.symbolMap} statement={player.base} side={player.baseSide}/>}
         </div>;
     }
 
@@ -170,19 +108,17 @@ class ProofViewer extends Component {
                 ref={el => this._rootRef = el}
                 tabIndex={0}>
                 <ProofStepsViewer
-                    proofPlayer={this.state.player}
-                    onNavigateAction={index => this.goToMove(index)}/>
+                    proofPlayer={this.props.ctrl.player}
+                    onNavigateAction={index => this.props.ctrl.goToMove(index)}/>
                 <div className="ProofViewer_main">
                     {this.renderBase()}
                     <div>
-                        {this.state.player.targets.map((t,index) => this.renderTarget(t, index))}
+                        {this.props.ctrl.player.targets.map((t,index) => this.renderTarget(t, index))}
                     </div>
                 </div>
             </div>
         );
     }
-
-    //endregion
 }
 
 export default ProofViewer;

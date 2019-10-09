@@ -2,210 +2,77 @@ import React, {Component} from 'react';
 import "./AxiomCreator.scss";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome/index.es";
 import Connection from "../ReusableComponents/Connection/Connection";
-import ConnectionEditDialog from "../Modals/ConnectionEditDialog/ConnectionEditDialog";
-import MathAsmDir from "../../../core/entities/backend/MathAsmDir";
 import MathAsmSymbol from "../../../core/entities/backend/MathAsmSymbol";
-import App from "../../../core/app/App";
-import {Subscription} from "rxjs/index";
-import TextGetterState from "../../../core/app/modals/TextGetterState";
-import ConnectionEditController from "../../../core/app/modals/ConnectionEditController";
-import MainPageController from "../../../core/app/pages/MainPageController";
+import {Subscription} from "rxjs";
+import AxiomCreatorController from "../../../core/app/pages/main_page/content/AxiomCreatorController";
+import {unsubscribeAll, updateOn} from "../../utils/SubscriptionUtils";
 
 
-const q = {
-    MAKE_AXIOM : `mutation($parentId:Long!, $name:String!, $left:[Long!]!, $grade:Int, $isBidirectional: Boolean, $right:[Long!]!){
-      statementWSector {
-        createAxiom(parentId:$parentId, name:$name, left:$left, grade:$grade, isBidirectional:$isBidirectional, right:$right) {
-	        id,name,type,left,right,grade,isBidirectional
-        }
-      }
-    }`
-};
+
 
 
 export default class AxiomCreator extends Component {
-    //region STATIC
+    //region FIELDS
     props : {
-        //data
-        app:App,
-        controller:MainPageController,
-        parentDir:MathAsmDir,
-
-        //actions
-
-        //styling
-    };
-
-    //static defaultProps = {};
-
-
-    state = {
-        left:[] as MathAsmSymbol[],
-        right:[] as MathAsmSymbol[],
-        grade:0,
-        isBidirectional:true,
-
-        axiomDir:null as MathAsmDir,
-        cursor:0,
-        isCursorLeft:true
+        ctrl:AxiomCreatorController,
     };
 
     _rootRef = null;
 
-    private subscriptions:Subscription[] = [];
+    subscriptions:Subscription[] = [];
     //endregion
 
 
 
     //region LIFE CYCLE
     componentDidMount() {
-        this.subscriptions.push(
-            this.props.controller.onSymbolClicked.subscribe(info => {
-                this.addSymbol(info.symbol);
-                this.focus();
-            })
-        );
+        updateOn(this.props.ctrl.onChange, this);
     }
 
-    componentWillUnmount() {
-        this.subscriptions.forEach(s => s.unsubscribe());
-        this.subscriptions = [];
-    }
-
-    // shouldComponentUpdate(nextProps, nextState) { return true; }
-    // getSnapshotBeforeUpdate(prevProps, prevState) { return null; }
-    // componentDidUpdate(prevProps, prevState, snapshot) {}
-    // componentDidCatch(error, info) { console.error("Exception caught"); }
+    componentWillUnmount() { unsubscribeAll(this); }
     //endregion
 
-
-    //region UTILS
-    /** return either this.state.left or this.state.right depending on this.state.isCursorLeft. */
-    getCurrentSentence() {
-        return this.state.isCursorLeft? this.state.left : this.state.right;
-    }
-    //endregion
 
 
 
     //region EVENT HANDLERS
-    /** opens a dialog in order to edit the connection. */
-    handleConnectionClick() {
-        this.props.app.modals.addModal(new ConnectionEditController(
-            this.props.app,
-            this.state.grade+"",
-            this.state.isBidirectional,
-            (ctrl:ConnectionEditController) => {
-                this.setState({grade:ctrl.getGradeAsNumber(), isBidirectional:ctrl.isBidirectional});
-            }
-        ));
-    }
-
     /** If this component is selected, a key listener will track key events. Here is the handler. */
     handleKeyPress(e) {
         switch (e.keyCode) {
             case 38: //arrow up
-                this.setState({cursor: 0, isCursorLeft: true});
+                this.props.ctrl.changeSentence(true);
                 break;
 
             case 40: //arrow down
-                this.setState({cursor: 0, isCursorLeft: false});
+                this.props.ctrl.changeSentence(false);
                 break;
 
             case 37: //arrow left
-                this.setState({cursor: Math.max(0, this.state.cursor - 1)});
+                this.props.ctrl.moveCursor(false);
                 break;
 
             case 39: //arrow right
-                const len = this.getCurrentSentence().length;
-                this.setState({cursor: Math.min(len, this.state.cursor + 1)});
+                this.props.ctrl.moveCursor(true);
                 break;
 
-            case 8: { //backspace
-                const array = this.getCurrentSentence().slice();
-                if (this.state.cursor === 0 || array.length === 0) return;
-                array.splice(this.state.cursor - 1, 1);
-
-
-                const newState: any = {cursor: this.state.cursor - 1};
-                if (this.state.isCursorLeft) newState.left = array;
-                else newState.right = array;
-                this.setState(newState);
-
+            case 8:  //backspace
+                this.props.ctrl.deleteBackwards();
                 break;
-            }
 
-            case 46: { //delete
-                const array = this.getCurrentSentence().slice();
-                if (this.state.cursor === array.length || array.length === 0) return;
-                array.splice(this.state.cursor, 1);
-
-                const newState:any = {};
-                if (this.state.isCursorLeft) newState.left = array;
-                else newState.right = array;
-                this.setState(newState);
-
+            case 46: //delete
+                this.props.ctrl.deleteForward();
                 break;
-            }
 
             case 13:
-                this.handleSaveClicked();
+                this.props.ctrl.showSaveDialog();
                 break;
         }
 
-    }
-
-    /** Sends a save request to the server in order to save the axiom with the given name. */
-    commitSaveRequest(name:string, data:TextGetterState) {
-        const dataToSend = {
-            parentId: this.props.parentDir.id,
-            name: name,
-            left: this.state.left.map(s => s.uid),
-            grade: this.state.grade,
-            isBidirectional: this.state.isBidirectional,
-            right: this.state.right.map(s => s.uid)
-        };
-
-        this.props.app.graphql.run(q.MAKE_AXIOM, dataToSend).then(resp => {
-            this.props.controller.onAxiomSaved.next({
-                statement:resp.statementWSector.createAxiom,
-                parentDirId:this.props.parentDir.id
-            });
-            this.props.app.modals.removeModal(data.modalId);
-        })
-        .catch(err => {
-            this.props.app.quickInfos.makeError("Error while creating axiom...")
-        });
-    }
-
-    /** Fired when the save button is clicked. Will open a dialog to get the new axiom's name. */
-    handleSaveClicked() {
-        this.props.app.modals.showTextGetter(
-            "Save under "+this.props.parentDir.name,
-            "Axiom's name...",
-            this.commitSaveRequest.bind(this)
-        );
     }
     //endregion
 
 
     //region API
-    /** cat be called by the parent component. Adds a symbol into the current cursor position. */
-    addSymbol(sym:MathAsmSymbol) {
-        //1. Create the new sentence
-        const newSentence = this.getCurrentSentence().slice();
-        newSentence.splice(this.state.cursor, 0, sym);
-
-        //2. Integrate the new sentence into the state.
-        const newState:any = this.state.isCursorLeft?
-            {left:newSentence}:
-            {right:newSentence};
-
-        //Advance the cursor too
-        newState.cursor = this.state.cursor+1;
-        this.setState(newState);
-    }
-
     focus() {
         if (this._rootRef) this._rootRef.focus();
     }
@@ -222,10 +89,7 @@ export default class AxiomCreator extends Component {
         return <div
             key={"c"+currentIndex}
             className="AxiomCreator_midDiv"
-            onClick={e => {
-                e.stopPropagation();
-                this.setState({cursor:currentIndex, isCursorLeft:isLeft});
-            }}>
+            onClick={e => {e.stopPropagation(); this.props.ctrl.goTo(currentIndex, isLeft);}}>
             {cursorPos===currentIndex && <div className="AxiomCreator_cursor"/>}
         </div>;
     }
@@ -234,7 +98,7 @@ export default class AxiomCreator extends Component {
      * Renders a sentence.
      * The isLeft parameter refers to the sentence to be rendered, NOT to the currently selected one.
      * */
-    renderSentence(sentence:MathAsmSymbol[], cursorPos:number, isLeft:boolean) {
+    renderSentence(sentence:ReadonlyArray<MathAsmSymbol>, cursorPos:number, isLeft:boolean) {
         const symbolDivs = [];
         sentence.forEach((s,index) => {
             symbolDivs.push(this.renderMidSymbolDiv(cursorPos, index, isLeft));
@@ -242,10 +106,7 @@ export default class AxiomCreator extends Component {
                 <div
                     key={index}
                     className="AxiomCreator_sym"
-                    onClick={e => {
-                        e.stopPropagation();
-                        this.addSymbol(s);
-                    }}>
+                    onClick={e => {e.stopPropagation(); this.props.ctrl.addSymbol(s);}}>
                     {s.text}
                 </div>
             );
@@ -254,7 +115,7 @@ export default class AxiomCreator extends Component {
 
 
         return <div
-            onClick={e => this.setState({cursor:sentence.length, isCursorLeft:isLeft})}
+            onClick={e => this.props.ctrl.goTo(sentence.length, isLeft)}
             className="MA_flexStart AxiomCreator_sen">
             {symbolDivs}
         </div>;
@@ -263,23 +124,25 @@ export default class AxiomCreator extends Component {
     renderConnection() {
         return <Connection
             style={{margin:"8px"}}
-            grade={this.state.grade}
-            isBidirectional={this.state.isBidirectional}
-            onClick={this.handleConnectionClick.bind(this)}/>
+            grade={this.props.ctrl.grade}
+            isBidirectional={this.props.ctrl.isBidirectional}
+            onClick={()=>this.props.ctrl.showConnectionEditMenu()}/>
     }
 
     render() {
+        const ctrl = this.props.ctrl;
+
         return (
             <div ref={el => this._rootRef = el} className="AxiomCreator_root" onKeyDown={this.handleKeyPress.bind(this)} tabIndex={0}>
                 <div className="MA_14px MA_bold">New axiom:</div>
-                {this.renderSentence(this.state.left, this.state.isCursorLeft? this.state.cursor : null, true)}
+                {this.renderSentence(ctrl.left, ctrl.isCursorLeft? ctrl.cursor : null, true)}
                 {this.renderConnection()}
-                {this.renderSentence(this.state.right, this.state.isCursorLeft? null : this.state.cursor, false)}
+                {this.renderSentence(ctrl.right, ctrl.isCursorLeft? null : ctrl.cursor, false)}
                 <div>
                     <button
                         className="MA_roundBut"
                         style={{width:"32px", height:"32px", marginTop:"8px"}}
-                        onClick={this.handleSaveClicked.bind(this)}>
+                        onClick={e=>ctrl.showSaveDialog()}>
                         <FontAwesomeIcon icon="save"/>
                     </button>
                 </div>

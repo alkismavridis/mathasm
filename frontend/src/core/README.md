@@ -1,12 +1,14 @@
-This directory contains all business logic of our frontend application.
+### This directory contains all business logic of our frontend application.
 
 Guidelines:
 1. The code in this directory is framework agnostic.
-There will be NOTHING in this directory that "smells" react or angular or whatever.
+There will be **NOTHING** in this directory that "smells" react or angular or whatever.
 If for whatever reason we chose to change our framework tomorrow, this directory will stay INTACT!
+We can even create a CLI node application out of this. Everything is possible if we stay
+UI agnostic!
 
 2. We put AS MUCH CODE AS POSSIBLE in this directory.
-Bussiness logic here Http requests here. URL Routing here. It is all here.
+Business logic here Http requests here. URL Routing here. It is all here.
 
 3. We put AS LESS CODE AS POSSIBLE outside of this directory.
 And this code should be dumm and stupid. All important stuff will go into this directory.

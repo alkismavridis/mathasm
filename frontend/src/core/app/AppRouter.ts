@@ -2,7 +2,7 @@ import Router from 'url-router';
 import App from "./App";
 import {Subject} from "rxjs/index";
 import PageController from "./pages/PageController";
-import MainPageController from "./pages/MainPageController";
+import MainPageController from "./pages/main_page/MainPageController";
 import BasicPageController from "./pages/BasicPageController";
 import PageType from "../enums/frontend/PageType";
 import Constants from "../Constants";

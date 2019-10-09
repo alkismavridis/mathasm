@@ -8,13 +8,19 @@ import ProofViewer from "../../ProofViewer/ProofViewer";
 import App from "../../../../core/app/App";
 import {Subscription} from "rxjs/index";
 import {unsubscribeAll, updateOn} from "../../../utils/SubscriptionUtils";
-import MainPageController, {MainPageMode} from "../../../../core/app/pages/MainPageController";
+import MainPageController from "../../../../core/app/pages/main_page/MainPageController";
+import MainPageContentController from "../../../../core/app/pages/main_page/content/MainPageContentController";
+import SymbolCreatorController from "../../../../core/app/pages/main_page/content/SymbolCreatorController";
+import MainPageMode from "../../../../core/app/pages/main_page/MainPageMode";
+import AxiomCreatorController from "../../../../core/app/pages/main_page/content/AxiomCreatorController";
+import TheoremCreatorController from "../../../../core/app/pages/main_page/content/TheoremCreatorController";
+import ProofViewerController from "../../../../core/app/pages/main_page/content/ProofViewerController";
 
 
 
 
 export default class MainPage extends Component {
-    //region FIELDS
+    //SECTION FIELDS
     props : {
         app:App,
         ctrl:MainPageController,
@@ -23,77 +29,49 @@ export default class MainPage extends Component {
     };
 
     subscriptions:Subscription[] = [];
-    //endregion
 
 
 
-    //region LIFE CYCLE
-    constructor(props) {
-        super(props);
-
-        updateOn(this.props.ctrl.onModeChanged, this);
+    //SECTION LIFE CYCLE
+    componentDidMount() {
+        updateOn(this.props.ctrl.onContentChanged, this);
         updateOn(this.props.ctrl.onActiveDirChanged, this);
         updateOn(this.props.ctrl.onSymbolMapUpdated, this);
     }
 
-    componentWillUnmount() {
-        unsubscribeAll(this);
-    }
-    //endregion
+    componentWillUnmount() { unsubscribeAll(this); }
 
 
+    //SECTION RENDERING
+    renderContent(contentCtrl:MainPageContentController) {
+        if(!contentCtrl) return null;
+        switch(contentCtrl.mode) {
+            case MainPageMode.CREATE_SYMBOL:
+                return <SymbolCreator ctrl={contentCtrl as SymbolCreatorController}/>;
 
+            case MainPageMode.CREATE_AXIOM:
+                return <AxiomCreator ctrl={contentCtrl as AxiomCreatorController} />;
 
-    //region RENDERING
-    renderSymbolCreator() {
-        return <SymbolCreator
-            app={this.props.app}
-            parentDir={this.props.ctrl.dirViewer.activeDir}
-            style={{marginLeft:"8px"}}
-            onSymbolCreated={s => this.props.ctrl.symbolCreated(s)}/>;
-    }
+            case MainPageMode.CREATE_THEOREM: return <TheoremCreator
+                ctrl={contentCtrl as TheoremCreatorController}
+                style={{maxHeight:"30vh"}}
+            />;
+            
+            case MainPageMode.SHOW_PROOF: return <ProofViewer
+                ctrl={contentCtrl as ProofViewerController}
+                style={{maxHeight:"50vh"}}
+            />;
+        }
 
-    renderAxiomCreator() {
-        return <AxiomCreator
-            app={this.props.app}
-            controller={this.props.ctrl}
-            parentDir={this.props.ctrl.dirViewer.activeDir}/>;
-    }
-
-    renderTheoremCreator() {
-        return <TheoremCreator
-            app={this.props.app}
-            controller={this.props.ctrl}
-            symbolMap={this.props.ctrl.symbolMap}
-            parentDir={this.props.ctrl.dirViewer.activeDir}
-            style={{maxHeight:"30vh"}}
-        />;
-    }
-
-    renderProofViewer() {
-        return <ProofViewer
-            app={this.props.app}
-            controller={this.props.ctrl}
-            symbolMap={this.props.ctrl.symbolMap}
-            parentDir={this.props.ctrl.dirViewer.activeDir}
-            statement={this.props.ctrl.statementForProof}
-            style={{maxHeight:"50vh"}}
-        />;
+        return null;
     }
 
     render() {
         return (
             <div className={`MainPage_root ${this.props.className || ""}`} style={this.props.style}>
-                {this.props.ctrl.mode === MainPageMode.CREATE_SYMBOL && this.renderSymbolCreator()}
-                {this.props.ctrl.mode === MainPageMode.CREATE_AXIOM && this.renderAxiomCreator()}
-                {this.props.ctrl.mode === MainPageMode.CREATE_THEOREM && this.renderTheoremCreator()}
-                {this.props.ctrl.mode === MainPageMode.SHOW_PROOF && this.renderProofViewer()}
-
-                <DirViewerGroup
-                    ctrl={this.props.ctrl.dirViewer}
-                    style={{flex:1}}/>
+                {this.renderContent(this.props.ctrl.content)}
+                <DirViewerGroup ctrl={this.props.ctrl.dirViewer} style={{flex:1}} />
             </div>
         );
     }
-    //endregion
 }

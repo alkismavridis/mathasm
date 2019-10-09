@@ -5,69 +5,30 @@ import ErrorCode from "../../../core/enums/ErrorCode";
 import DomUtils from "../../../core/utils/DomUtils";
 import App from "../../../core/app/App";
 import MathAsmDir from "../../../core/entities/backend/MathAsmDir";
+import SymbolCreatorController from "../../../core/app/pages/main_page/content/SymbolCreatorController";
+import {unsubscribeAll, updateOn} from "../../utils/SubscriptionUtils";
+import {Subscription} from "rxjs";
 
 
-const CREATE_SYMBOL = `mutation($text:String!, $uid:Long!, $parentId:Long!) {
-    symbolWSector {
-        createSymbol(parentId:$parentId, text:$text, uid:$uid) {uid,text}
-    }
-}`;
+
 
 class SymbolCreator extends Component {
     //region FIELDS
     props : {
-        //data
-        app:App,
-        parentDir:MathAsmDir,
-
-        //actions
-        onSymbolCreated?:Function,
-
-        //styling
+        ctrl:SymbolCreatorController,
         style?: CSSProperties,
     };
 
-    state = {
-        text:"",
-        uid:"",
-        isLoading:false,
-    };
+    subscriptions:Subscription[] = [];
     //endregion
 
 
-
-    //region EVENT HANDLERS
-    submitSymbol() {
-        if(!this.props.parentDir) return;
-        this.setState({isLoading:true});
-
-        this.props.app.graphql.run(CREATE_SYMBOL, {parentId:this.props.parentDir.id, text:this.state.text, uid:this.state.uid})
-            .then(resp => {
-                this.props.app.quickInfos.makeSuccess(`Symbol "${this.state.text}" successfully created.`);
-
-                this.setState({
-                    isLoading:false,
-                    text:"",
-                    uid:+this.state.uid+1,
-                });
-
-                this.props.onSymbolCreated(resp.symbolWSector.symbolCreated);
-            })
-            .catch(err => {
-                this.handleSubmitError(err);
-                this.setState({isLoading:false})
-            });
+    //region LIFE CYCLE
+    componentDidMount(): void {
+        updateOn(this.props.ctrl.onChange, this);
     }
 
-    handleSubmitError(err) {
-        if (err.code === ErrorCode.SYMBOL_TEXT_ALREADY_REGISTERED) {
-            this.props.app.quickInfos.makeError(`Symbol "${this.state.text}" is already registered.`);
-        }
-        else if (err.code === ErrorCode.SYMBOL_UID_ALREADY_REGISTERED) {
-            this.props.app.quickInfos.makeError(`Symbol ${this.state.uid} is already registered.`);
-        }
-        else this.props.app.quickInfos.makeError(`Could not create symbol "${this.state.text}".`);
-    }
+    componentWillUnmount(): void { unsubscribeAll(this); }
     //endregion
 
 
@@ -77,23 +38,23 @@ class SymbolCreator extends Component {
             <div className="SymbolCreator_root" style={this.props.style}>
                 <div>New Symbol:</div>
                 <input
-                    value={this.state.text}
+                    value={this.props.ctrl.text}
                     placeholder="Symbol text"
                     style={{marginBottom:"8px"}}
-                    onKeyDown={DomUtils.handleEnter(this.submitSymbol.bind(this))}
-                    onChange={e => this.setState({text:e.target.value})}
+                    onKeyDown={DomUtils.handleEnter(()=>this.props.ctrl.submitSymbol())}
+                    onChange={e => this.props.ctrl.text = e.target.value}
                     className="MA_inp MA_block"/>
                 <input
-                    value={this.state.uid}
+                    value={this.props.ctrl.uid}
                     type="number"
                     placeholder="Symbol Id"
                     style={{marginBottom:"8px"}}
-                    onChange={e => this.setState({uid:e.target.value})}
-                    onKeyDown={DomUtils.handleEnter(this.submitSymbol.bind(this))}
+                    onChange={e => this.props.ctrl.uid = e.target.value}
+                    onKeyDown={DomUtils.handleEnter(()=>this.props.ctrl.submitSymbol())}
                     className="MA_inp MA_block" />
-                <div style={{marginBottom:"8px"}}>{this.state.isLoading?
-                    <FontAwesomeIcon icon="spinner" spin={true}/> :
-                    <button onClick={this.submitSymbol.bind(this)} className="MA_but MA_block">Save</button>
+                <div style={{marginBottom:"8px"}}>{this.props.ctrl.isLoading
+                    ? <FontAwesomeIcon icon="spinner" spin={true}/>
+                    : <button onClick={()=>this.props.ctrl.submitSymbol()} className="MA_but MA_block">Save</button>
                 }</div>
             </div>
         );

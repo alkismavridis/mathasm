@@ -11,14 +11,14 @@ export default class TextGetterState implements ModalState {
     private _title:string = "";
     private _placeholder:string = "";
     private _value:string = "";
-    onSubmit?: (string, TextGetterState?)=>void; //emits the name written by the user and this object
+    onSubmit?: (t:string, s:TextGetterState)=>void; //emits the name written by the user and this object
 
     readonly onChange = new Subject<any>(); //no parameters
     //endregion
 
 
 
-    constructor(title:string, placeholder:string, onSubmit:(string, TextGetterState?)=>void) {
+    constructor(title:string, placeholder:string, onSubmit:(t:string, s:TextGetterState)=>void) {
         this._title = title;
         this._placeholder = placeholder;
         this.onSubmit = onSubmit;

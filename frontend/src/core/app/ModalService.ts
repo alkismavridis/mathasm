@@ -57,7 +57,7 @@ export default class ModalService {
         this.addModal(new LoginDialogState(this.app));
     }
 
-    showTextGetter(title:string, placeholder:string, onSubmit:(string, TextGetterState?)=>void) {
+    showTextGetter(title:string, placeholder:string, onSubmit:(t:string, s:TextGetterState)=>void) {
         this.addModal(new TextGetterState(
             title,
             placeholder,

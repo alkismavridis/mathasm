@@ -24,7 +24,7 @@ import QuickInfos from "../QuickInfos/QuickInfos";
 import PageType from "../../../core/enums/frontend/PageType";
 import GlobalHeader from "../GlobalHeader/GlobalHeader";
 import GraphiqlPageController from "../../../core/app/pages/GraphiqlPageController";
-import MainPageController from "../../../core/app/pages/MainPageController";
+import MainPageController from "../../../core/app/pages/main_page/MainPageController";
 
 library.add(fas);
 

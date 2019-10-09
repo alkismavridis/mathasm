@@ -5,7 +5,6 @@ import TextGetterState from "./modals/TextGetterState";
 import DomUtils from "../utils/DomUtils";
 import MathAsmStatement from "../entities/backend/MathAsmStatement";
 import MathAsmSymbol from "../entities/backend/MathAsmSymbol";
-import {SymbolClickInfo} from "./pages/MainPageController";
 import {Subject} from "rxjs/index";
 import ArrayUtils from "../utils/ArrayUtils";
 import SavedTheoremInfo from "../entities/backend/SavedTheoremInfo";
@@ -14,6 +13,7 @@ import ModalType from "../enums/frontend/ModalType";
 import StmtMenuController from "./modals/StmtMenuController";
 import SymbolMenuController from "./modals/SymbolMenuController";
 import DirMenuController from "./modals/DirMenuController";
+import SymbolSelectionInfo from "../entities/frontend/SymbolSelectionInfo";
 
 
 const q = {
@@ -401,7 +401,7 @@ export class MathAsmTabController {
     }
 
     handleStatementClick(stmt:MathAsmStatement) { this.group.handleStatementClick(stmt); }
-    handleSymbolClick(clickInfo:SymbolClickInfo) { this.group.handleSymbolClick(clickInfo); }
+    handleSymbolClick(clickInfo:SymbolSelectionInfo) { this.group.handleSymbolClick(clickInfo); }
     toggleSymbolCreationMode() { this.group.toggleSymbolCreationMode(); }
     toggleAxiomCreationMode() { this.group.toggleAxiomCreationMode(); }
     toggleTheoremCreationMode() { this.group.toggleTheoremCreationMode(); }

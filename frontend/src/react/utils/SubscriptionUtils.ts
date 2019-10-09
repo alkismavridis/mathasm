@@ -1,7 +1,7 @@
 import {Subject, Subscription} from "rxjs/index";
 
 interface ComponentWithSubs {
-    subscriptions?:Subscription[];
+    subscriptions:Subscription[];
     forceUpdate(callback?);
 }
 
