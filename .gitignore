@@ -11,11 +11,9 @@
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea/workspace.xml
-.idea/modules.xml
 usage.statistics.xml
 tasks.xml
-.idea/libraries
+.idea/
 *.iws
 *.iml
 *.ipr
