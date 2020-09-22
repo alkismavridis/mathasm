@@ -150,6 +150,3 @@ input LogicMove {
     parentId:Long
     name:String
 }
-
-
-

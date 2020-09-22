@@ -3,6 +3,7 @@ package eu.alkismavridis.mathasm
 import com.fasterxml.jackson.databind.JsonNode
 import java.nio.file.Path
 
+//TODO Clean Architecture - remove that thing
 class MathAsmConfig {
     //region FIELDS
     val dataDir:Path

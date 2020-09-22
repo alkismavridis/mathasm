@@ -1,0 +1,27 @@
+
+csquid:S00112"FDefine and throw a dedicated exception instead of using a generic one.(˜¡‚ûÿÿÿÿ
+csquid:UselessImportCheck":Remove this unused import 'java.io.FileNotFoundException'.(·î™ùÿÿÿÿ
+T
+squid:S106Q"9Replace this use of System.out or System.err by a logger.(—ı’¥ùÿÿÿÿ
+T
+squid:S106N"9Replace this use of System.out or System.err by a logger.(¾Â£åÿÿÿÿÿ
+N
+squid:S106\"9Replace this use of System.out or System.err by a logger.(¥Òïf
+lsquid:UselessImportCheck"CRemove this unused import 'org.springframework.util.ResourceUtils'.(Š’Ğ¦úÿÿÿÿ
+^squid:S00112`"FDefine and throw a dedicated exception instead of using a generic one.(Ü«ì°
+O
+squid:S106 "9Replace this use of System.out or System.err by a logger.(ç ÒØ
+T
+squid:S106]"9Replace this use of System.out or System.err by a logger.(œƒ—‚şÿÿÿÿ
+csquid:S00112"FDefine and throw a dedicated exception instead of using a generic one.(­²¥‹ûÿÿÿÿ
+T
+squid:S106o"9Replace this use of System.out or System.err by a logger.(Ù¤Óşÿÿÿÿ
+:squid:S1148n"#Use a logger to log this exception.(Ç’Çê
+O
+squid:S106^"9Replace this use of System.out or System.err by a logger.(¦¯Å¢
+Qsquid:S3725M":Replace this with a call to the "toFile().exists()" method(¶ã¬ÿ
+N
+squid:S106f"9Replace this use of System.out or System.err by a logger.(ó”§9
+Qsquid:S3725Y":Replace this with a call to the "toFile().exists()" method(ÇóöÖ
+`squid:S2583"DChange this condition so that it does not always evaluate to "false"(­²¥‹ûÿÿÿÿ
+^squid:S00112A"FDefine and throw a dedicated exception instead of using a generic one.(ã¥›ñ

@@ -1,0 +1,3 @@
+package eu.alkismavridis.mathasm.infrastructure.api.resolvers
+
+//Nothing to test at the moment...

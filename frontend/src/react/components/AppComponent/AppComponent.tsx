@@ -29,28 +29,25 @@ import MainPageController from "../../../core/app/pages/main_page/MainPageContro
 library.add(fas);
 
 export default class AppComponent extends Component {
-    //region FIELDS
+    /// FIELDS
     _history = null;
 
     private app= new App(window.location.href);
     subscriptions: Subscription[] = [];
-    //endregion
 
 
-    //region LIFE CYCLE
+    /// LIFE CYCLE
     constructor(props) {
         super(props);
     }
 
 
     componentDidMount() {
-        //STEP Setup the history object
         this._history = createHistory();
         this._history.listen((location, action) => {
             console.log("ROUTE CHANGED!", location);
         });
 
-        //STEP setup subscriptions
         updateOn(this.app.auth.onUserChanged, this);
     }
 
@@ -59,10 +56,7 @@ export default class AppComponent extends Component {
     }
 
 
-    //endregion
-
-
-    //region RENDERING
+    /// RENDERING
     renderPage() {
         switch(this.app.router.pageController.type) {
             case PageType.MAIN: return <MainPage app={this.app} ctrl={this.app.router.pageController as MainPageController}/>;
@@ -83,6 +77,4 @@ export default class AppComponent extends Component {
             <QuickInfos key="4" app={this.app}/>
         ];
     }
-
-    //endregion
 }
